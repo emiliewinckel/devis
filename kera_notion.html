@@ -416,6 +416,13 @@ function init() {
   }).then(function() {
     ref();
     setStatus('', '');
+    // Ouvrir directement un objet si paramètre ?lot= dans l'URL
+    var urlParams = new URLSearchParams(window.location.search);
+    var lotParam = urlParams.get('lot');
+    if (lotParam) {
+      var lotCible = A.lots.find(function(l) { return l.id === lotParam; });
+      if (lotCible) ouvrirLot(lotCible.id);
+    }
   }).catch(function(e) {
     setStatus('Erreur Notion : ' + e.message, 'error');
     ref();
@@ -1107,7 +1114,7 @@ function creerLot() {
     A.lots.push(lot);
     A.lastLotId = lot.id;
     var qz = gid('qr-out'); qz.innerHTML = '';
-    new QRCode(qz, {text: 'kera://objet/' + lot.id, width: 130, height: 130, colorDark: '#125c8a', colorLight: '#fff'});
+    new QRCode(qz, {text: 'https://emiliewinckel.github.io/devis/kera_notion.html?lot=' + lot.id, width: 130, height: 130, colorDark: '#125c8a', colorLight: '#fff'});
     gid('lp-name').textContent = lot.int; gid('lp-ref').textContent = lot.ref;
     gid('lp-det').textContent = (lot.dateDebut || '-') + ' — ' + lot.poids + 'g / ' + lot.volume + 'L';
     gid('lp').style.display = 'block'; gid('btn-print').style.display = 'inline-flex';
@@ -1543,7 +1550,7 @@ function imprimerEtiquette(lid) {
   var tmp = document.createElement('div');
   tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:200px;height:200px';
   document.body.appendChild(tmp);
-  new QRCode(tmp, {text: 'kera://objet/' + lot.id, width: 200, height: 200, colorDark: '#125c8a', colorLight: '#ffffff'});
+  new QRCode(tmp, {text: 'https://emiliewinckel.github.io/devis/kera_notion.html?lot=' + lot.id, width: 200, height: 200, colorDark: '#125c8a', colorLight: '#ffffff'});
   setTimeout(function() {
     var el = tmp.querySelector('canvas') || tmp.querySelector('img');
     var src = el ? (el.tagName === 'CANVAS' ? el.toDataURL('image/png') : el.src) : '';
