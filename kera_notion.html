@@ -8,7 +8,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box;margin:0;padding:0} html{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}
 body,input,select,textarea,button{font-family:'Montserrat',sans-serif}
 body{background:#F0F4F8;color:#1A2A3A;font-size:14px;min-height:100vh}
 :root{
@@ -1299,7 +1299,7 @@ function expPDF() {
   var H = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KERA — Rapport ' + lot.ref + '</title>' +
     '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">' +
     '<style>' +
-    '*{box-sizing:border-box;margin:0;padding:0}' +
+    '*{box-sizing:border-box;margin:0;padding:0} html{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}' +
     'body{font-family:Montserrat,sans-serif;font-size:11px;color:#1A2A3A;background:#fff;padding:0}' +
     '.page{padding:14mm 14mm 10mm;max-width:210mm;margin:0 auto}' +
     '.header{background:#125c8a;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-radius:4px}' +
@@ -1337,7 +1337,7 @@ function expPDF() {
     '.notes b{color:#1A2A3A}' +
     '.footer{margin-top:14px;padding-top:8px;border-top:0.5px solid #D8E8F5;display:flex;justify-content:space-between;font-size:8px;color:#8A9FAD}' +
     'button{padding:8px 20px;background:#125c8a;color:#fff;border:none;border-radius:6px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;cursor:pointer;margin-top:10px}' +
-    '@media print{button{display:none}.page{padding:10mm}body{background:#fff}}' +
+    '@media print{button{display:none}.page{padding:10mm}body{background:#fff} .header{background:#125c8a !important;-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact;color:#fff !important} .info-cell{background:#EDF4FA !important;-webkit-print-color-adjust:exact;print-color-adjust:exact} .metric{background:#EDF4FA !important;-webkit-print-color-adjust:exact;print-color-adjust:exact} th{background:#125c8a !important;color:#fff !important;-webkit-print-color-adjust:exact;print-color-adjust:exact} .status-ok{background:#E5F5EA !important;-webkit-print-color-adjust:exact;print-color-adjust:exact} .status-warn{background:#FFF3DC !important;-webkit-print-color-adjust:exact;print-color-adjust:exact} .status-info{background:#EDF4FA !important;-webkit-print-color-adjust:exact;print-color-adjust:exact} .notes{background:#F8F8F8 !important;-webkit-print-color-adjust:exact;print-color-adjust:exact} tr:nth-child(even) td{background:#F5FAFF !important;-webkit-print-color-adjust:exact;print-color-adjust:exact}}' +
     '</style></head><body><div class="page">';
 
   H += '<div class="header">' +
@@ -1551,7 +1551,7 @@ function imprimerEtiquette(lid) {
     var nm = (lot.int || '').replace(/[<>&]/g, function(c) { return {'<': '&lt;', '>': '&gt;', '&': '&amp;'}[c]; });
     var rf = (lot.ref || '').replace(/[<>&]/g, function(c) { return {'<': '&lt;', '>': '&gt;', '&': '&amp;'}[c]; });
     var dt = (lot.dateDebut || '—') + ' · ' + (lot.poids || '—') + ' g · ' + (lot.volume || '—') + ' L';
-    var H = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KERA — Etiquette</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Montserrat,Arial,sans-serif;background:#f7f4ef;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 16px;gap:14px}.card{background:#fff;border:1.5px solid #125c8a;border-radius:12px;padding:22px 22px 18px;width:240px;text-align:center;box-shadow:0 2px 10px rgba(18,92,138,0.12)}.ktitle{font-size:20px;font-weight:700;letter-spacing:4px;color:#125c8a;margin-bottom:14px}.qr{width:150px;height:150px;margin:0 auto 14px;display:block}.sep{height:1px;background:#d8e4ee;margin:12px 0}.nm{font-size:12px;font-weight:600;color:#1A2A3A;margin-bottom:4px;line-height:1.4}.rf{font-size:10px;font-weight:600;color:#125c8a;margin-bottom:3px}.dt{font-size:9px;color:#8A9FAD}button{padding:9px 24px;background:#125c8a;color:#fff;border:none;border-radius:8px;font-family:Montserrat,Arial,sans-serif;font-size:12px;font-weight:600;cursor:pointer}@media print{button{display:none}body{padding:0;background:#fff}.card{box-shadow:none;border:1px solid #125c8a}}</style></head><body><div class="card"><div class="ktitle">KERA</div><img class="qr" src="' + src + '" alt="QR code"><div class="sep"></div><div class="nm">' + nm + '</div><div class="rf">' + rf + '</div><div class="dt">' + dt + '</div></div><button onclick="window.print()">🖨 Imprimer</button></body></html>';
+    var H = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KERA — Etiquette</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0} html{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}body{font-family:Montserrat,Arial,sans-serif;background:#f7f4ef;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 16px;gap:14px}.card{background:#fff;border:1.5px solid #125c8a;border-radius:12px;padding:22px 22px 18px;width:240px;text-align:center;box-shadow:0 2px 10px rgba(18,92,138,0.12)}.ktitle{font-size:20px;font-weight:700;letter-spacing:4px;color:#125c8a;margin-bottom:14px}.qr{width:150px;height:150px;margin:0 auto 14px;display:block}.sep{height:1px;background:#d8e4ee;margin:12px 0}.nm{font-size:12px;font-weight:600;color:#1A2A3A;margin-bottom:4px;line-height:1.4}.rf{font-size:10px;font-weight:600;color:#125c8a;margin-bottom:3px}.dt{font-size:9px;color:#8A9FAD}button{padding:9px 24px;background:#125c8a;color:#fff;border:none;border-radius:8px;font-family:Montserrat,Arial,sans-serif;font-size:12px;font-weight:600;cursor:pointer}@media print{button{display:none}body{padding:0;background:#fff}.card{box-shadow:none;border:1px solid #125c8a}}</style></head><body><div class="card"><div class="ktitle">KERA</div><img class="qr" src="' + src + '" alt="QR code"><div class="sep"></div><div class="nm">' + nm + '</div><div class="rf">' + rf + '</div><div class="dt">' + dt + '</div></div><button onclick="window.print()">🖨 Imprimer</button></body></html>';
     var w = window.open('', '_blank', 'width=320,height=520');
     w.document.open(); w.document.write(H); w.document.close();
   }, 300);
