@@ -1150,26 +1150,286 @@ function delMR(lid, i) { var l = gL(lid); if (!l || !confirm('Supprimer ?')) ret
 
 // Export PDF/CSV inchangés
 function expPDF() {
-  var id = gid('r-sel').value, lot = gL(id); if (!lot) { alert('Sélectionnez un objet.'); return; }
-  var nbNeg = checkConsecutiveNeg(lot), lastK = lot.mesures.length ? computeKadj(lot.mesures[lot.mesures.length - 1], lot) : null;
-  var fK = lot.mesures.filter(function(m) { return computeKadj(m, lot) != null; })[0];
-  var lK = lot.mesures.filter(function(m) { return computeKadj(m, lot) != null; }).slice(-1)[0];
-  var red = fK && lK ? ((computeKadj(fK, lot) - computeKadj(lK, lot)) / computeKadj(fK, lot) * 100).toFixed(1) + '%' : '—';
-  var lig = (!lot.mesures || !lot.mesures.length) ? '<tr><td colspan="8" style="text-align:center">Aucun bain</td></tr>' :
-    lot.mesures.map(function(m) {
-      var k = computeKadj(m, lot); var neg = anionNeg(m); var bg = k == null ? '' : k <= A.cfg.kadj && neg ? 'background:#E5F5EA' : k <= A.cfg.kadj ? 'background:#FFF3DC' : '';
-      return '<tr style="' + bg + '"><td>' + m.date + '</td><td>J+' + m.jplus + '</td><td>' + m.cycle + '</td><td>' + (m.cond != null ? m.cond + ' µS/cm' : '–') + '</td><td style="font-weight:bold">' + (k != null ? k.toFixed(3) : '–') + '</td><td>' + (m.cl || '–') + '</td><td>' + (m.no3 || '–') + '</td><td>' + (m.so4 || '–') + '</td></tr>';
+  var id = gid('r-sel').value, lot = gL(id);
+  if (!lot) { alert('Sélectionnez un objet.'); return; }
+
+  var nb = lot.mesures ? lot.mesures.length : 0;
+  var nbNeg = checkConsecutiveNeg(lot);
+  var lastK = nb ? computeKadj(lot.mesures[nb - 1], lot) : null;
+  var firstK = null;
+  for (var i = 0; i < lot.mesures.length; i++) {
+    var fk = computeKadj(lot.mesures[i], lot);
+    if (fk != null) { firstK = fk; break; }
+  }
+  var reduction = (firstK && lastK && firstK > 0) ? ((firstK - lastK) / firstK * 100).toFixed(1) : '—';
+  var duree = '—';
+  if (nb >= 2 && lot.mesures[0].date && lot.mesures[nb-1].date) {
+    var d1 = new Date(lot.mesures[0].date), d2 = new Date(lot.mesures[nb-1].date);
+    duree = Math.round((d2 - d1) / 86400000) + ' jours';
+  }
+
+  // Statut final
+  var statutFinal = '—';
+  if (lastK != null) {
+    if (lastK <= A.cfg.kadj && nbNeg >= A.cfg.cons) statutFinal = 'Critères atteints — K_adj plateau + anions négatifs';
+    else if (lastK <= A.cfg.kadj) statutFinal = 'K_adj plateau — anions à confirmer (' + nbNeg + '/' + A.cfg.cons + ')';
+    else statutFinal = 'Traitement en cours';
+  }
+
+  // Générer les points pour le graphique SVG K_adj
+  var mKv = (lot.mesures || []).filter(function(m) { return computeKadj(m, lot) != null; });
+  var svgKadj = '';
+  if (mKv.length >= 2) {
+    var kVals = mKv.map(function(m) { return computeKadj(m, lot); });
+    var kMax = Math.max.apply(null, kVals) * 1.1;
+    var kMin = 0;
+    var W = 580, H = 180, PL = 45, PR = 15, PT = 15, PB = 35;
+    var gW = W - PL - PR, gH = H - PT - PB;
+    var xScale = function(i) { return PL + (i / (mKv.length - 1)) * gW; };
+    var yScale = function(v) { return PT + gH - ((v - kMin) / (kMax - kMin)) * gH; };
+
+    // Aire
+    var areaPath = 'M' + xScale(0) + ',' + yScale(kVals[0]);
+    for (var i = 1; i < kVals.length; i++) areaPath += ' L' + xScale(i) + ',' + yScale(kVals[i]);
+    areaPath += ' L' + xScale(kVals.length-1) + ',' + (PT+gH) + ' L' + xScale(0) + ',' + (PT+gH) + ' Z';
+
+    // Ligne
+    var linePath = 'M' + xScale(0) + ',' + yScale(kVals[0]);
+    for (var i = 1; i < kVals.length; i++) linePath += ' L' + xScale(i) + ',' + yScale(kVals[i]);
+
+    // Seuil
+    var seuilY = yScale(A.cfg.kadj);
+    var seuilLine = 'M' + PL + ',' + seuilY + ' L' + (PL+gW) + ',' + seuilY;
+
+    // Points colorés
+    var points = kVals.map(function(k, i) {
+      var col = k <= A.cfg.kadj ? '#27623A' : k <= A.cfg.kadj * 2 ? '#B06B00' : '#7B1A1A';
+      return '<circle cx="' + xScale(i) + '" cy="' + yScale(k) + '" r="4" fill="' + col + '" stroke="white" stroke-width="1.5"/>';
     }).join('');
+
+    // Labels X
+    var labelsX = mKv.map(function(m, i) {
+      if (i % Math.ceil(mKv.length / 6) !== 0 && i !== mKv.length - 1) return '';
+      return '<text x="' + xScale(i) + '" y="' + (PT+gH+14) + '" text-anchor="middle" font-size="9" fill="#4A5F72">' + (m.jplus != null ? 'J+' + m.jplus : m.date ? m.date.slice(5) : '') + '</text>';
+    }).join('');
+
+    // Labels Y
+    var yTicks = [0, kMax/2, kMax].map(function(v) {
+      return '<text x="' + (PL-5) + '" y="' + (yScale(v)+3) + '" text-anchor="end" font-size="9" fill="#4A5F72">' + v.toFixed(1) + '</text>' +
+             '<line x1="' + PL + '" y1="' + yScale(v) + '" x2="' + (PL+gW) + '" y2="' + yScale(v) + '" stroke="#eee" stroke-width="0.5"/>';
+    }).join('');
+
+    svgKadj = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:' + H + 'px">' +
+      yTicks +
+      '<path d="' + areaPath + '" fill="rgba(18,92,138,0.08)"/>' +
+      '<path d="' + linePath + '" fill="none" stroke="#125c8a" stroke-width="2"/>' +
+      '<path d="' + seuilLine + '" fill="none" stroke="#27623A" stroke-width="1.5" stroke-dasharray="5,4"/>' +
+      points + labelsX +
+      '<text x="' + (PL+gW-2) + '" y="' + (seuilY-4) + '" text-anchor="end" font-size="9" fill="#27623A">Seuil K=' + A.cfg.kadj + '</text>' +
+      '<text x="' + (PL-35) + '" y="' + (PT+gH/2) + '" text-anchor="middle" font-size="9" fill="#4A5F72" transform="rotate(-90,' + (PL-35) + ',' + (PT+gH/2) + ')">K_adj</text>' +
+      '<text x="' + (PL+gW/2) + '" y="' + (H) + '" text-anchor="middle" font-size="9" fill="#4A5F72">J+ (jours depuis début)</text>' +
+      '</svg>';
+  }
+
+  // Graphique séchages SVG
+  var svgSech = '';
+  var sechs = lot.sechages || [];
+  if (sechs.length >= 1) {
+    var sW = 580, sH = 150, sPL = 55, sPR = 15, sPT = 15, sPB = 30;
+    var sgW = sW - sPL - sPR, sgH = sH - sPT - sPB;
+    var condVals = sechs.map(function(s) { return s.cond || 0; });
+    var condMax = Math.max.apply(null, condVals) * 1.15 || 100;
+    var sxScale = function(i) { return sPL + (sechs.length === 1 ? sgW/2 : (i / (sechs.length - 1)) * sgW); };
+    var syScale = function(v) { return sPT + sgH - (v / condMax) * sgH; };
+    var seuilSY = syScale(50);
+
+    var sBars = sechs.map(function(s, i) {
+      var bW = Math.min(40, sgW / sechs.length * 0.6);
+      var x = sxScale(i) - bW/2;
+      var y = syScale(s.cond || 0);
+      var col = (s.cond || 0) <= 50 ? '#27623A' : '#7B1A1A';
+      return '<rect x="' + x + '" y="' + y + '" width="' + bW + '" height="' + (sPT+sgH-y) + '" fill="' + col + '" opacity="0.8"/>' +
+             '<text x="' + sxScale(i) + '" y="' + (sPT+sgH+12) + '" text-anchor="middle" font-size="9" fill="#4A5F72">R.' + (i+1) + '</text>' +
+             '<text x="' + sxScale(i) + '" y="' + (y-3) + '" text-anchor="middle" font-size="8" fill="' + col + '">' + (s.cond||0) + '</text>';
+    }).join('');
+
+    svgSech = '<svg viewBox="0 0 ' + sW + ' ' + sH + '" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:' + sH + 'px">' +
+      '<line x1="' + sPL + '" y1="' + seuilSY + '" x2="' + (sPL+sgW) + '" y2="' + seuilSY + '" stroke="#27623A" stroke-width="1.5" stroke-dasharray="5,4"/>' +
+      '<text x="' + (sPL+sgW-2) + '" y="' + (seuilSY-4) + '" text-anchor="end" font-size="9" fill="#27623A">Cible 50 µS/cm</text>' +
+      sBars +
+      '<text x="' + (sPL-40) + '" y="' + (sPT+sgH/2) + '" text-anchor="middle" font-size="9" fill="#4A5F72" transform="rotate(-90,' + (sPL-40) + ',' + (sPT+sgH/2) + ')">Cond. µS/cm</text>' +
+      '</svg>';
+  }
+
+  // Tableau des bains
+  var lignes = (!nb ? '<tr><td colspan="9" style="text-align:center;padding:10px">Aucun bain</td></tr>' :
+    (lot.mesures || []).map(function(m) {
+      var k = computeKadj(m, lot);
+      var neg = anionNeg(m);
+      var bg = k == null ? '' : k <= A.cfg.kadj && neg ? 'background:#E5F5EA' : k <= A.cfg.kadj ? 'background:#FFF3DC' : '';
+      var statut = k == null ? '—' : k <= A.cfg.kadj && neg ? '✓ OK' : k <= A.cfg.kadj ? 'Plateau' : k <= A.cfg.kadj*3 ? 'En cours' : 'Actif';
+      var clIcon = function(v) { return v === '-' ? '●' : v === 'tr' ? '◐' : v === '+' ? '○' : v === '++' ? '◌' : '—'; };
+      return '<tr style="' + bg + '">' +
+        '<td>' + (m.date || '—') + '</td>' +
+        '<td style="text-align:center">J+' + (m.jplus || 0) + '</td>' +
+        '<td style="text-align:center">' + (m.cycle || '—') + '</td>' +
+        '<td style="text-align:center">' + (m.temp != null ? m.temp + ' °C' : '—') + '</td>' +
+        '<td style="text-align:center">' + (m.cond != null ? m.cond : '—') + '</td>' +
+        '<td style="text-align:center;font-weight:600;color:' + (k != null && k <= A.cfg.kadj ? '#27623A' : '#125c8a') + '">' + (k != null ? k.toFixed(2) : '—') + '</td>' +
+        '<td style="text-align:center">' + (m.cl ? '<span style="color:' + (m.cl==='-'?'#27623A':m.cl==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.cl) + ' ' + m.cl + '</span>' : '—') + '</td>' +
+        '<td style="text-align:center">' + (m.no3 ? '<span style="color:' + (m.no3==='-'?'#27623A':m.no3==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.no3) + ' ' + m.no3 + '</span>' : '—') + '</td>' +
+        '<td style="text-align:center">' + (m.so4 ? '<span style="color:' + (m.so4==='-'?'#27623A':m.so4==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.so4) + ' ' + m.so4 + '</span>' : '—') + '</td>' +
+        '<td>' + (m.obs || '') + '</td>' +
+        '</tr>';
+    }).join(''));
+
+  // Tableau séchages
+  var lignesSech = (!sechs.length ? '' :
+    '<h2>Contrôles de séchage</h2>' +
+    '<table><thead><tr><th>Date</th><th>J+</th><th>Cond. résid. µS/cm</th><th>HR %</th><th>Cristallisations</th><th>Observations</th></tr></thead><tbody>' +
+    sechs.map(function(s) {
+      var ok = (s.cond || 999) <= 50 && s.cryst !== 'oui';
+      var bg = ok ? 'background:#E5F5EA' : s.cryst === 'oui' ? 'background:#FDECEA' : '';
+      return '<tr style="' + bg + '"><td>' + (s.date||'—') + '</td><td>J+' + (s.num||0) + '</td><td style="text-align:center">' + (s.cond||'—') + '</td><td style="text-align:center">' + (s.hr||'—') + '</td><td>' + (s.cryst||'—') + '</td><td>' + (s.obs||'') + '</td></tr>';
+    }).join('') + '</tbody></table>');
+
+  var now = new Date();
+  var dateStr = now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
+
+  var H = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KERA — Rapport ' + lot.ref + '</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">' +
+    '<style>' +
+    '*{box-sizing:border-box;margin:0;padding:0}' +
+    'body{font-family:Montserrat,sans-serif;font-size:11px;color:#1A2A3A;background:#fff;padding:0}' +
+    '.page{padding:14mm 14mm 10mm;max-width:210mm;margin:0 auto}' +
+    '.header{background:#125c8a;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-radius:4px}' +
+    '.header-logo{font-size:18px;font-weight:700;letter-spacing:3px}' +
+    '.header-sub{font-size:9px;opacity:0.75;margin-top:2px}' +
+    '.header-ref{text-align:right;font-size:12px;font-weight:600}' +
+    '.header-ref-sub{font-size:9px;opacity:0.75}' +
+    'h2{font-size:10px;font-weight:700;color:#125c8a;text-transform:uppercase;letter-spacing:0.6px;margin:14px 0 6px;border-bottom:1.5px solid #A8CFEA;padding-bottom:3px}' +
+    '.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}' +
+    '.info-cell{background:#EDF4FA;padding:5px 8px;border-radius:3px;border-left:2px solid #125c8a}' +
+    '.info-label{font-size:9px;font-weight:600;color:#0A3D5C;text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:1px}' +
+    '.info-val{font-size:11px;color:#1A2A3A}' +
+    '.synthese-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px}' +
+    '.metric{background:#EDF4FA;padding:8px;border-radius:3px;text-align:center}' +
+    '.metric-val{font-size:16px;font-weight:700;color:#125c8a;line-height:1}' +
+    '.metric-lbl{font-size:8px;color:#4A5F72;margin-top:2px;text-transform:uppercase;letter-spacing:0.3px}' +
+    '.metric.ok .metric-val{color:#27623A}' +
+    '.synthese-table{width:100%;border-collapse:collapse;margin-bottom:10px}' +
+    '.synthese-table td{padding:4px 8px;border-bottom:0.5px solid #D8E8F5;font-size:11px}' +
+    '.synthese-table td:first-child{color:#4A5F72;font-size:10px;width:45%}' +
+    '.synthese-table td:last-child{color:#4A5F72;font-size:9px;font-style:italic}' +
+    '.chart-box{background:#FAFCFF;border:1px solid #D8E8F5;border-radius:4px;padding:10px;margin-bottom:10px}' +
+    '.chart-title{font-size:10px;font-weight:600;color:#125c8a;margin-bottom:6px}' +
+    '.chart-legend{display:flex;gap:14px;margin-top:5px;font-size:9px;color:#4A5F72}' +
+    '.chart-legend span{display:flex;align-items:center;gap:4px}' +
+    'table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:10px}' +
+    'th{background:#125c8a;color:#fff;padding:4px 6px;text-align:left;font-size:9px;font-weight:600}' +
+    'td{padding:3px 6px;border-bottom:0.5px solid #D8E8F5}' +
+    'tr:nth-child(even) td{background:#F5FAFF}' +
+    '.status-box{padding:8px 12px;border-radius:4px;margin:10px 0;font-size:11px;font-weight:500}' +
+    '.status-ok{background:#E5F5EA;color:#27623A;border-left:3px solid #27623A}' +
+    '.status-warn{background:#FFF3DC;color:#B06B00;border-left:3px solid #B06B00}' +
+    '.status-info{background:#EDF4FA;color:#125c8a;border-left:3px solid #125c8a}' +
+    '.notes{background:#F8F8F8;border:1px solid #E0E0E0;border-radius:4px;padding:10px;margin-top:10px;font-size:9px;color:#4A5F72;line-height:1.7}' +
+    '.notes b{color:#1A2A3A}' +
+    '.footer{margin-top:14px;padding-top:8px;border-top:0.5px solid #D8E8F5;display:flex;justify-content:space-between;font-size:8px;color:#8A9FAD}' +
+    'button{padding:8px 20px;background:#125c8a;color:#fff;border:none;border-radius:6px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;cursor:pointer;margin-top:10px}' +
+    '@media print{button{display:none}.page{padding:10mm}body{background:#fff}}' +
+    '</style></head><body><div class="page">';
+
+  H += '<div class="header">' +
+    '<div><div class="header-logo">KERA</div><div class="header-sub">Conservation-Restauration — Dessalement céramique archéologique</div></div>' +
+    '<div class="header-ref"><div>' + lot.ref + '</div><div class="header-ref-sub">' + lot.int + '</div></div>' +
+    '</div>';
+
+  H += '<h2>Identification</h2>' +
+    '<div class="info-grid">' +
+    '<div class="info-cell"><span class="info-label">Référence</span><span class="info-val">' + (lot.ref||'—') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Désignation</span><span class="info-val">' + (lot.int||'—') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Opération / Collection</span><span class="info-val">' + (lot.operation||'—') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Responsable</span><span class="info-val">' + (lot.responsable||'—') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Début traitement</span><span class="info-val">' + (lot.dateDebut||'—') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Poids sec / Volume bain</span><span class="info-val">' + (lot.poids||'—') + ' g / ' + (lot.volume||'—') + ' L</span></div>' +
+    '<div class="info-cell"><span class="info-label">Consolidation</span><span class="info-val">' + (lot.consol||'non') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Fragilité</span><span class="info-val">' + (lot.fragilite||'—') + '</span></div>' +
+    '</div>';
+
+  H += '<h2>Synthèse du traitement</h2>' +
+    '<div class="synthese-grid">' +
+    '<div class="metric"><div class="metric-val">' + nb + '</div><div class="metric-lbl">Bains</div></div>' +
+    '<div class="metric ' + (lastK != null && lastK <= A.cfg.kadj ? 'ok' : '') + '"><div class="metric-val">' + (lastK != null ? lastK.toFixed(2) : '—') + '</div><div class="metric-lbl">K_adj final</div></div>' +
+    '<div class="metric ' + (nbNeg >= A.cfg.cons ? 'ok' : '') + '"><div class="metric-val">' + nbNeg + '</div><div class="metric-lbl">Bains négatifs consécutifs</div></div>' +
+    '</div>' +
+    '<table class="synthese-table"><tbody>' +
+    '<tr><td>Durée totale</td><td><b>' + duree + '</b></td><td></td></tr>' +
+    '<tr><td>K_adj initial</td><td><b>' + (firstK != null ? firstK.toFixed(2) : '—') + '</b></td><td>Premier bain</td></tr>' +
+    '<tr><td>K_adj final</td><td><b>' + (lastK != null ? lastK.toFixed(2) : '—') + '</b></td><td>' + (lastK != null && lastK <= A.cfg.kadj ? 'Sous seuil (' + A.cfg.kadj + ')' : 'Seuil : ' + A.cfg.kadj) + '</td></tr>' +
+    '<tr><td>Réduction K_adj</td><td><b>' + reduction + ' %</b></td><td>vs. mesure initiale</td></tr>' +
+    '<tr><td>Statut fin traitement</td><td><b>' + statutFinal + '</b></td><td></td></tr>' +
+    '</tbody></table>';
+
+  var statusClass = lastK != null && lastK <= A.cfg.kadj && nbNeg >= A.cfg.cons ? 'status-ok' :
+                    lastK != null && lastK <= A.cfg.kadj ? 'status-warn' : 'status-info';
+  var statusMsg = lastK != null && lastK <= A.cfg.kadj && nbNeg >= A.cfg.cons ?
+    '✅ Critères d\'arrêt atteints — K_adj ≤ ' + A.cfg.kadj + ' et ' + nbNeg + ' bains anioniques négatifs consécutifs.' :
+    lastK != null && lastK <= A.cfg.kadj ?
+    '⚠ K_adj plateau atteint — confirmer arrêt sur anions (' + nbNeg + '/' + A.cfg.cons + ' bains négatifs consécutifs requis).' :
+    'ℹ Traitement en cours — K_adj = ' + (lastK != null ? lastK.toFixed(2) : '—') + '. Poursuivre le dessalement.';
+  H += '<div class="status-box ' + statusClass + '">' + statusMsg + '</div>';
+
+  if (svgKadj) {
+    H += '<h2>Évolution de K_adj</h2>' +
+      '<div class="chart-box"><div class="chart-title">K_adj = (Conductivité − C₀) × Volume(L) / Poids sec(g)</div>' +
+      svgKadj +
+      '<div class="chart-legend">' +
+      '<span><svg width="14" height="8"><line x1="0" y1="4" x2="14" y2="4" stroke="#125c8a" stroke-width="2"/></svg> K_adj mesuré</span>' +
+      '<span><svg width="14" height="8"><line x1="0" y1="4" x2="14" y2="4" stroke="#27623A" stroke-width="1.5" stroke-dasharray="4,3"/></svg> Seuil plateau (' + A.cfg.kadj + ')</span>' +
+      '<span><circle cx="5" cy="4" r="4" fill="#27623A"/> Sous seuil</span>' +
+      '<span><circle cx="5" cy="4" r="4" fill="#B06B00"/> À surveiller</span>' +
+      '<span><circle cx="5" cy="4" r="4" fill="#7B1A1A"/> Élevé</span>' +
+      '</div></div>';
+  }
+
+  H += '<h2>Détail des mesures — bains de dessalement</h2>' +
+    '<table><thead><tr>' +
+    '<th>Date</th><th>J+</th><th>Bain</th><th>T °C</th><th>Cond. µS/cm</th><th>K_adj</th><th>Cl⁻</th><th>NO₃⁻</th><th>SO₄²⁻</th><th>Observations</th>' +
+    '</tr></thead><tbody>' + lignes + '</tbody></table>';
+
+  if (sechs.length) {
+    H += lignesSech;
+    if (svgSech) {
+      H += '<h2>Évolution de la conductivité — rinçages</h2>' +
+        '<div class="chart-box"><div class="chart-title">Conductivité résiduelle lors des contrôles de séchage (µS/cm) — cible : &lt; 50 µS/cm</div>' +
+        svgSech + '</div>';
+    }
+  }
+
+  H += '<div class="notes">' +
+    '<b>Formules :</b> K_adj = (Conductivité mesurée − C₀ cycle) × V_bain(L) / Poids sec(g). C₀ = conductivité de l\'eau neuve en début de cycle.<br>' +
+    '<b>Critères d\'arrêt KERA :</b> K_adj ≤ ' + A.cfg.kadj + ' (plateau) ET Cl⁻ / NO₃⁻ / SO₄²⁻ négatifs sur ' + A.cfg.cons + ' bains consécutifs.<br>' +
+    '<b>Tests anioniques :</b> bandelettes semi-quantitatives (Quantofix / Merck / Hach) ou chromatographie ionique. ++ = fort, + = présent, tr = traces, − = négatif.<br>' +
+    '<b>Séchage :</b> Critères de fin — conductivité résiduelle &lt; 50 µS/cm, absence de cristallisations à la surface.<br>' +
+    '<b>Références :</b> Unruh 2001 ; Liégey 2012 ; Montana 2018.<br>' +
+    '</div>';
+
+  H += '<div class="footer">' +
+    '<span>Rapport généré le ' + dateStr + '</span>' +
+    '<span>KERA — Conservation-Restauration des céramiques archéologiques</span>' +
+    '<span>' + lot.ref + ' — ' + lot.int + '</span>' +
+    '</div>';
+
+  H += '</div><div style="text-align:center;padding:10px"><button onclick="window.print()">🖨 Imprimer / Enregistrer en PDF</button></div>';
+  H += '</body></html>';
+
   var w = window.open('', '_blank');
-  w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KERA — ' + lot.ref + '</title><style>@import url("https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap");*{box-sizing:border-box;margin:0;padding:0}body{font-family:Montserrat,sans-serif;font-size:11px;color:#1A2A3A;padding:14mm}.hdr{background:#125c8a;color:#fff;padding:9px 13px;display:flex;justify-content:space-between;align-items:center;margin-bottom:13px;border-radius:4px}.hn{font-size:15px;font-weight:600;letter-spacing:2px}h2{font-size:11px;font-weight:600;color:#125c8a;text-transform:uppercase;letter-spacing:0.5px;margin:13px 0 5px;border-bottom:1px solid #A8CFEA;padding-bottom:3px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:11px}.field{background:#E6F2FA;padding:5px 8px;border-radius:3px}.field label{font-size:9px;color:#0A3D5C;display:block;font-weight:600}.mets{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:11px}.met{background:#E6F2FA;padding:7px;border-radius:3px;text-align:center}.mv{font-size:15px;font-weight:600;color:#125c8a}.ml{font-size:9px;color:#0A3D5C}table{width:100%;border-collapse:collapse;margin-bottom:9px}th{background:#125c8a;color:#fff;padding:4px 5px;font-size:9px;text-align:left}td{padding:4px 5px;border-bottom:0.5px solid #A8CFEA}.note{font-size:9px;color:#888;margin-top:5px;line-height:1.5}@media print{body{padding:10mm}}</style></head><body>');
-  w.document.write('<div class="hdr"><div><div class="hn">KERA</div><div style="font-size:9px;opacity:0.8">Conservation-Restauration — Dessalement céramique</div></div><div style="text-align:right"><div style="font-weight:600">' + lot.ref + '</div><div style="font-size:9px;opacity:0.8">' + lot.int + '</div></div></div>');
-  w.document.write('<h2>Identification</h2><div class="grid"><div class="field"><label>Référence</label>' + lot.ref + '</div><div class="field"><label>Désignation</label>' + lot.int + '</div><div class="field"><label>Collection</label>' + (lot.operation || '—') + '</div><div class="field"><label>Responsable</label>' + (lot.responsable || '—') + '</div><div class="field"><label>Poids sec</label>' + (lot.poids || '—') + ' g</div><div class="field"><label>Volume bain</label>' + (lot.volume || '—') + ' L</div><div class="field"><label>Consolidation</label>' + (lot.consol || 'non') + '</div><div class="field"><label>Fragilité</label>' + (lot.fragilite || '—') + '</div></div>');
-  w.document.write('<h2>Synthèse</h2><div class="mets"><div class="met"><div class="mv">' + (lot.mesures ? lot.mesures.length : 0) + '</div><div class="ml">Bains</div></div><div class="met"><div class="mv">' + (lastK != null ? lastK.toFixed(2) : '—') + '</div><div class="ml">K_adj final</div></div><div class="met"><div class="mv">' + nbNeg + '</div><div class="ml">Bains négatifs consécutifs</div></div></div>');
-  w.document.write('<h2>Tableau des bains</h2><table><thead><tr><th>Date</th><th>J+</th><th>Bain</th><th>Cond. (µS/cm)</th><th>K_adj</th><th>Cl⁻</th><th>NO₃⁻</th><th>SO₄²⁻</th></tr></thead><tbody>' + lig + '</tbody></table>');
-  w.document.write('<div class="note">Critères d\'arrêt KERA : K_adj ≤ ' + A.cfg.kadj + ' (plateau) ET Cl⁻/NO₃⁻/SO₄²⁻ négatifs sur ' + A.cfg.cons + ' bains consécutifs. K_adj = (Cond − C₀) × V(L) / Poids(g). Sources : Unruh 2001, Liégey 2012, Montana 2018.</div>');
-  w.document.write('<div class="note" style="margin-top:7px;color:#125c8a">Rapport généré le ' + new Date().toLocaleDateString('fr-FR') + ' par KERA — Conservation-Restauration des céramiques archéologiques</div>');
-  w.document.write('</body></html>'); w.document.close(); setTimeout(function() { w.print(); }, 700);
+  w.document.open();
+  w.document.write(H);
+  w.document.close();
 }
+
 
 function expCSV() {
   var id = gid('r-sel').value, lot = gL(id); if (!lot || !lot.mesures.length) { alert('Aucun bain.'); return; }
