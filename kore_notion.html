@@ -150,7 +150,7 @@ input:focus,select:focus{border-color:#8B3A2A;box-shadow:0 0 0 2px rgba(139,58,4
 
 <!-- ACCUEIL -->
 <div class="page active" id="page-accueil">
-  <div class="auth-bar"><div><div class="auth-name" id="auth-name">Non connecté</div><div class="auth-email" id="auth-email">Connectez-vous pour synchroniser avec Google Drive</div></div><button class="btn btn-p btn-sm" onclick="handleAuth()">Connexion Google</button></div>
+  <div class="auth-bar"><div><div class="auth-name" id="auth-name">Non connecté</div><div class="auth-email" id="auth-email">Connectez-vous pour synchroniser avec Google Drive</div></div><button class="btn btn-p btn-sm" onclick="handleAuth()">Connexion</button><button class="btn btn-sm btn-d" id="btn-lo" style="display:none" onclick="logout()">Déconnexion</button></div>
   <div class="sh"><h2>Lots en cours</h2><button class="btn btn-p btn-sm" onclick="showPage('nouveau')">+ Nouveau lot</button></div>
   <div id="notion-status" class="alert a-info" style="display:none;margin-bottom:9px"></div>
   <div id="lots-list" class="lot-list"></div>
@@ -1183,9 +1183,34 @@ function expCSV() {
 // ============================================================
 // AUTH
 // ============================================================
-function handleAuth(){var e=prompt('Email :');if(!e||!e.includes('@'))return;A.user={email:e,name:e.split('@')[0]};localStorage.setItem('kore_user',JSON.stringify(A.user));uAuth();}
+function handleAuth(){
+  var e=prompt('Adresse email (@eveha.fr ou autre) :');
+  if(!e||!e.includes('@'))return;
+  // Formater le nom : "emilie.winckel" → "Emilie Winckel"
+  var rawName=e.split('@')[0].replace('.',' ');
+  var name=rawName.replace(/\b\w/g,function(c){return c.toUpperCase();});
+  A.user={email:e,name:name};
+  localStorage.setItem('kore_user',JSON.stringify(A.user));
+  uAuth();
+  alert('Connecté : '+name+' ('+e+')');
+}
 function logout(){A.user=null;localStorage.removeItem('kore_user');uAuth();}
-function uAuth(){var u=A.user;gid('auth-name').textContent=u?(u.name||u.email):'Non connecté';gid('auth-email').textContent=u?u.email+' — données dans Notion':'Proxy Cloudflare actif';var bl=gid('btn-lo');if(bl)bl.style.display=u?'inline-flex':'none';}
+function uAuth(){
+  var u=A.user;
+  // Barre auth accueil
+  var an=gid('auth-name'),ae=gid('auth-email');
+  if(an)an.textContent=u?(u.name||u.email):'Non connecté';
+  if(ae)ae.textContent=u?u.email+' — données dans Notion ('+APP_KEY+')':'Connectez-vous pour identifier vos saisies';
+  // Boutons déconnexion (btn-lo et btn-lo2)
+  var bl=gid('btn-lo');if(bl)bl.style.display=u?'inline-flex':'none';
+  var bl2=gid('btn-lo2');if(bl2)bl2.style.display=u?'inline-flex':'none';
+  // Statut dans config
+  var ca=gid('cfg-a');
+  if(ca){
+    ca.textContent=u?'Connecté : '+u.email+' — données dans Notion.':'Non connecté — données dans Notion (anonyme).';
+    ca.className='alert '+(u?'a-ok':'a-info');
+  }
+}
 
 // ============================================================
 // UTILITAIRES
