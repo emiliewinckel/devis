@@ -1,0 +1,1185 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Korè — Suivi déchloruration</title>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body,input,select,textarea,button{font-family:'Montserrat',sans-serif}
+body{background:#F4F2EF;color:#2C2C2A;font-size:14px;min-height:100vh}
+:root{--rust:#8B3A2A;--rust-l:#F5E8E5;--rust-mid:#D4917E;--rust-d:#5C1F12;--green:#3B6D11;--green-l:#EAF3DE;--amber:#BA7517;--amber-l:#FAEEDA;--red:#E24B4A;--red-l:#FCEBEB;--blue:#185FA5;--blue-l:#E6F1FB;--bg:#F4F2EF;--card:#fff;--border:#E8E6E0;--txt2:#6B6966;--txt3:#9B9895}
+.app{display:flex;flex-direction:column;max-width:980px;margin:0 auto;min-height:100vh}
+/* TOPBAR */
+.topbar{background:#8B3A2A;padding:0 16px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;height:52px;gap:10px;box-shadow:0 2px 8px rgba(0,0,0,0.15)}
+.topbar img{height:32px;width:auto}
+.nav{display:flex;gap:2px;background:rgba(0,0,0,0.18);border-radius:8px;padding:3px;flex-wrap:wrap}
+.nav button{padding:5px 11px;border:none;background:transparent;border-radius:6px;font-size:11px;font-family:'Montserrat',sans-serif;cursor:pointer;color:rgba(255,255,255,0.72);font-weight:500;transition:all 0.15s}
+.nav button.active{background:rgba(255,255,255,0.2);color:#fff;font-weight:600}
+.nav button:hover{color:#fff}
+/* LAYOUT */
+.content{flex:1;padding:14px 16px 40px}
+.page{display:none}.page.active{display:block}
+/* CARDS */
+.card{background:#fff;border:0.5px solid #E8E6E0;border-radius:12px;padding:14px 16px;margin-bottom:10px}
+.card-title{font-size:11px;font-weight:600;letter-spacing:0.7px;text-transform:uppercase;color:#6B6966;margin-bottom:10px}
+/* FORMS */
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
+.row.trio{grid-template-columns:1fr 1fr 1fr}.row.solo{grid-template-columns:1fr}
+label{font-size:11px;font-weight:600;color:#6B6966;display:block;margin-bottom:3px}
+input,select,textarea{width:100%;padding:7px 9px;border:0.5px solid #D3D1C7;border-radius:8px;font-size:12px;font-family:'Montserrat',sans-serif;background:#fff;color:#2C2C2A;outline:none}
+input:focus,select:focus{border-color:#8B3A2A;box-shadow:0 0 0 2px rgba(139,58,42,0.1)}
+/* BUTTONS */
+.btn{padding:7px 14px;border-radius:8px;border:0.5px solid #D3D1C7;background:#fff;color:#2C2C2A;font-size:11px;font-family:'Montserrat',sans-serif;cursor:pointer;font-weight:600;transition:all 0.15s}
+.btn:hover{background:#F4F2EF}
+.btn-p{background:#8B3A2A;border-color:#8B3A2A;color:#fff}.btn-p:hover{background:#5C1F12}
+.btn-sm{padding:4px 10px;font-size:10px}
+.btn-d{background:#FCEBEB;border-color:#F7C1C1;color:#791F1F}
+.btn-row{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}
+/* BADGES */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:10px;font-weight:600}
+.b-ok{background:#EAF3DE;color:#27500A}.b-warn{background:#FAEEDA;color:#633806}
+.b-alert{background:#FCEBEB;color:#791F1F}.b-neu{background:#F4F2EF;color:#6B6966}
+/* ALERTS */
+.alert{padding:8px 11px;border-radius:8px;font-size:11px;margin-bottom:7px;border:0.5px solid;font-weight:500;line-height:1.5}
+.a-ok{background:#EAF3DE;border-color:#C0DD97;color:#27500A}
+.a-warn{background:#FAEEDA;border-color:#FAC775;color:#633806}
+.a-alert{background:#FCEBEB;border-color:#F7C1C1;color:#791F1F}
+.a-info{background:#E6F1FB;border-color:#B5D4F4;color:#0C447C}
+/* AUTH BAR */
+.auth-bar{background:#F5E8E5;border:0.5px solid #D4917E;border-radius:12px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:10px}
+.auth-name{font-size:13px;font-weight:600;color:#5C1F12}
+.auth-email{font-size:11px;color:#6B6966}
+/* LOTS LIST */
+.lot-list{display:flex;flex-direction:column;gap:7px}
+.lot-item{background:#fff;border:0.5px solid #E8E6E0;border-radius:12px;padding:12px 15px;transition:all 0.15s;display:flex;align-items:center;justify-content:space-between}
+.lot-item:hover{border-color:#8B3A2A;background:#F5E8E5}
+.lot-click{flex:1;min-width:0;cursor:pointer}
+.lot-name{font-size:13px;font-weight:600;margin-bottom:2px}
+.lot-sub{font-size:10px;color:#6B6966}
+.lot-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+/* SAISIE */
+.saisie-layout{display:grid;grid-template-columns:1fr 275px;gap:12px;align-items:start}
+.saisie-side{position:sticky;top:64px}
+/* HISTORIQUE PANEL */
+.hist-panel{background:#fff;border:0.5px solid #E8E6E0;border-radius:12px;overflow:hidden}
+.hist-hdr{padding:9px 13px;background:#8B3A2A;display:flex;align-items:center;justify-content:space-between}
+.hist-htitle{font-size:10px;font-weight:600;letter-spacing:0.7px;text-transform:uppercase;color:#fff}
+.hist-nb{font-size:10px;color:rgba(255,255,255,0.7)}
+.hist-cz{padding:8px 12px;border-bottom:0.5px solid #E8E6E0}
+.hist-cw{height:80px;position:relative}
+.hist-rows{padding:8px 12px}
+.hist-row{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:0.5px solid #E8E6E0;font-size:11px}
+.hist-row:last-child{border-bottom:none}
+.hist-date{color:#6B6966;font-size:10px}
+.hist-cl{font-weight:600;font-size:13px}
+.hist-delta{font-size:9px;color:#6B6966}
+.hist-foot{padding:9px 12px;border-top:0.5px solid #E8E6E0}
+.hist-empty{padding:16px;text-align:center;color:#6B6966;font-size:11px}
+/* MOB HIST */
+.mob-btn{display:none;background:#F5E8E5;border:0.5px solid #D4917E;border-radius:8px;padding:8px 12px;margin-bottom:9px;cursor:pointer;width:100%;text-align:left;font-family:'Montserrat',sans-serif;font-size:11px;font-weight:600;color:#5C1F12}
+.mob-panel{display:none}.mob-panel.open{display:block}
+/* TABS */
+.tabs{display:flex;gap:5px;margin-bottom:11px}
+.tabs button{padding:5px 13px;border:0.5px solid #D3D1C7;border-radius:20px;background:transparent;font-size:11px;font-family:'Montserrat',sans-serif;cursor:pointer;color:#6B6966;font-weight:600}
+.tabs button.active{background:#8B3A2A;border-color:#8B3A2A;color:#fff}
+/* RESULT BOX */
+.result-box{background:#F5E8E5;border:0.5px solid #D4917E;border-radius:8px;padding:12px 14px;margin:8px 0}
+.result-cl{font-size:24px;font-weight:600;color:#8B3A2A}
+.result-sub{font-size:10px;color:#5C1F12;margin-top:2px}
+/* METRICS */
+.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:11px}
+.metric{background:#F4F2EF;border-radius:8px;padding:10px;text-align:center}
+.metric-val{font-size:18px;font-weight:600}
+.metric-lbl{font-size:9px;color:#6B6966;margin-top:2px}
+/* MISC */
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:13px}
+.sh h2{font-size:15px;font-weight:600}
+.info-row{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:0.5px solid #E8E6E0;font-size:11px}
+.info-row:last-child{border-bottom:none}
+.info-lbl{color:#6B6966}.info-val{font-weight:600}
+.tip-btn{display:inline-flex;font-size:10px;color:#6B6966;background:#F4F2EF;border:0.5px solid #E8E6E0;border-radius:20px;padding:1px 6px;cursor:pointer;margin-left:4px}
+.tip{display:none;background:#fff;border:0.5px solid #D3D1C7;border-radius:8px;padding:8px 10px;font-size:10px;line-height:1.5;color:#2C2C2A;margin-top:4px}
+.tip.show{display:block}
+.chart-wrap{height:190px;position:relative;margin-top:9px}
+.ht{width:100%;font-size:10px;border-collapse:collapse;table-layout:fixed}
+.ht th{padding:5px 5px;background:#8B3A2A;color:#fff;font-size:9px;font-weight:600;text-transform:uppercase;text-align:left}
+.ht td{padding:5px;border-bottom:0.5px solid #E8E6E0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.ht tr:nth-child(even) td{background:#F5E8E5}
+.qr-zone{display:flex;flex-direction:column;align-items:center;padding:14px 0}
+.lp{border:1px dashed #D3D1C7;border-radius:12px;padding:12px 16px;min-width:200px;text-align:center;background:#fff;margin:0 auto}
+.lp-name{font-size:12px;font-weight:600;margin:7px 0 3px}
+.lp-ref{font-size:10px;color:#6B6966}
+.lp-det{font-size:9px;color:#9B9895;margin-top:2px}
+.x-btn{background:none;border:none;cursor:pointer;color:#9B9895;font-size:14px;padding:2px 5px;border-radius:4px;line-height:1;flex-shrink:0}
+.x-btn:hover{color:#E24B4A;background:#FCEBEB}
+.mlist{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.mlist-row{display:flex;align-items:center;justify-content:space-between;padding:5px 9px;background:#F4F2EF;border-radius:8px;font-size:11px;gap:8px}
+.mlist-row span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.empty-s{text-align:center;padding:32px 16px;color:#6B6966}
+@media(max-width:640px){
+  .saisie-layout{grid-template-columns:1fr}
+  .saisie-side{display:none}
+  .mob-btn{display:block}
+  .row{grid-template-columns:1fr}
+  .row.trio{grid-template-columns:1fr 1fr}
+  .metrics{grid-template-columns:1fr 1fr}
+  .nav button{font-size:10px;padding:4px 8px}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="topbar">
+  <img src="data:image/png;base64,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" alt="Korè" style="height:32px">
+  <div class="nav">
+    <button class="active" onclick="showPage('accueil')">Accueil</button>
+    <button onclick="showPage('nouveau')">+ Lot</button>
+    <button onclick="showPage('saisie')">Saisie</button>
+    <button onclick="showPage('calcul')">Calcul</button>
+    <button onclick="showPage('rapport')">Rapport</button>
+    <button onclick="showPage('config')">⚙</button>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- ACCUEIL -->
+<div class="page active" id="page-accueil">
+  <div class="auth-bar"><div><div class="auth-name" id="auth-name">Non connecté</div><div class="auth-email" id="auth-email">Connectez-vous pour synchroniser avec Google Drive</div></div><button class="btn btn-p btn-sm" onclick="handleAuth()">Connexion Google</button></div>
+  <div class="sh"><h2>Lots en cours</h2><button class="btn btn-p btn-sm" onclick="showPage('nouveau')">+ Nouveau lot</button></div>
+  <div id="notion-status" class="alert a-info" style="display:none;margin-bottom:9px"></div>
+  <div id="lots-list" class="lot-list"></div>
+</div>
+
+<!-- NOUVEAU LOT -->
+<div class="page" id="page-nouveau">
+  <div class="sh"><h2>Enregistrer un lot</h2><button class="btn btn-sm" onclick="showPage('accueil')">← Retour</button></div>
+  <div class="card">
+    <div class="card-title">Identification</div>
+    <div class="row"><div><label>Type</label><select id="lot-type"><option value="objet">Objet unique</option><option value="lot">Lot d'objets</option></select></div><div><label>Référence</label><input type="text" id="lot-ref" placeholder="ex : 2025-NOR-047"></div></div>
+    <div class="row solo"><div><label>Intitulé</label><input type="text" id="lot-int" placeholder="ex : Clous de charpente, médiéval"></div></div>
+    <div class="row"><div><label>Opération archéologique</label><input type="text" id="lot-op" placeholder="Fouille Saint-Lô 2024"></div><div><label>Responsable</label><input type="text" id="lot-resp" placeholder="Nom"></div></div>
+    <div class="row trio"><div><label>Date début</label><input type="date" id="lot-dd"></div><div><label>Solution</label><select id="lot-sol"><option>NaOH 0,5 M + Na₂SO₃ 0,05 M</option><option>NaOH 0,1 M + Na₂SO₃ 0,05 M</option><option>NaOH 0,1 M</option><option>Autre</option></select></div><div><label>Poids de l'objet (g)</label><input type="number" id="lot-poids" placeholder="ex : 450" step="1" oninput="updVolInfo()"></div></div>
+    <div class="row"><div><label>Volume solution (L)</label><input type="number" id="lot-vol" placeholder="ex : 2" step="0.1" oninput="updVolInfo()"></div><div><label>Enjeu conservation</label><select id="lot-enjeu"><option value="courant">Courant — seuil &lt; 5 mg/L</option><option value="fort">Fort enjeu / exposition — seuil &lt; 5 mg/L</option></select></div></div>
+    <div id="vol-info" style="margin-bottom:8px"></div>
+    <div class="row"><div><label>Fréquence relevés</label><select id="lot-freq"><option value="7">Hebdomadaire (7 j)</option><option value="14">Bimensuelle (14 j)</option><option value="30">Mensuelle (30 j)</option></select></div><div></div></div>
+  </div>
+  <div class="card">
+    <div class="card-title">QR code & étiquette</div>
+    <div class="qr-zone"><div id="qr-out"></div><div class="lp" id="lp" style="display:none"><div id="lp-name" class="lp-name">-</div><div id="lp-ref" class="lp-ref">-</div><div id="lp-det" class="lp-det">-</div></div></div>
+    <div class="btn-row" style="justify-content:center"><button class="btn btn-p" onclick="creerLot()">Créer le lot + QR code</button><button class="btn btn-sm" id="btn-print" style="display:none" onclick="imprimerEtiquette()">🖨 Étiquette</button></div>
+  </div>
+</div>
+
+<!-- SAISIE -->
+<div class="page" id="page-saisie">
+  <div class="sh"><h2>Saisir une mesure</h2><button class="btn btn-sm" onclick="showPage('accueil')">← Retour</button></div>
+  <div class="card" style="margin-bottom:9px"><div class="card-title">Lot concerné</div><select id="s-sel" onchange="chargerLot()"><option value="">— Sélectionner —</option></select><div id="lot-ctx" style="display:none;margin-top:8px;font-size:11px;line-height:1.7"></div></div>
+  <div id="s-zone" style="display:none">
+    <div class="tabs"><button class="active" id="tab-bain" onclick="swTab('bain')">Bain</button><button id="tab-rinc" onclick="swTab('rinc')">Rinçage</button><button id="tab-mes" onclick="swTab('mes')">Mes mesures</button></div>
+    <button class="mob-btn" onclick="gid('mob-p').classList.toggle('open')">📊 Historique <span id="mob-s"></span></button>
+    <div class="mob-panel" id="mob-p"><div class="card" id="mob-c" style="margin-bottom:9px"></div></div>
+    <div class="saisie-layout">
+      <div>
+        <div id="form-bain">
+          <div class="card"><div class="card-title">Paramètres</div>
+            <div class="row trio"><div><label>Date</label><input type="date" id="b-date"></div><div><label>J+</label><input type="number" id="b-jp" placeholder="0" min="0"></div><div><label>Cycle</label><input type="number" id="b-cy" value="1" min="1"></div></div>
+            <div class="row trio"><div><label>Volume (L)</label><input type="number" id="b-vol" step="0.5"></div><div><label>Temp. (°C)</label><input type="number" id="b-tmp" step="0.5"></div><div><label>pH</label><input type="number" id="b-ph" step="0.1"></div></div>
+          </div>
+          <div class="card"><div class="card-title">Conductivité <span class="tip-btn" onclick="swTip('tc')">i</span></div>
+            <div class="tip" id="tc">mS/cm pour bains alcalins. C₀ = conductivité bain neuf, constante sur le cycle.</div>
+            <div class="row"><div><label>C₀ cycle (mS/cm)</label><input type="number" id="b-c0" step="0.01" oninput="calcDC()"></div><div><label>Conductivité mesurée (mS/cm)</label><input type="number" id="b-cd" step="0.01" oninput="calcDC()"></div></div>
+            <div id="dc-r"></div>
+          </div>
+          <div class="card"><div class="card-title">Titrage [Cl⁻] <span class="tip-btn" onclick="swTip('tt')">i</span></div>
+            <div class="tip" id="tt">[Cl⁻] = V_AgNO₃ × N × 35 450 / V_éch. Acidifier vers pH ~7 si protocole.</div>
+            <div class="row trio"><div><label>V AgNO₃ (mL)</label><input type="number" id="b-v" step="0.01" oninput="calcCl()"></div><div><label>N AgNO₃ (mol/L)</label><input type="number" id="b-n" value="0.05" step="0.001" oninput="calcCl()"></div><div><label>V éch (mL)</label><input type="number" id="b-ve" value="5" step="0.5" oninput="calcCl()"></div></div>
+            <div id="cl-box" style="display:none"><div class="result-box"><div class="result-cl" id="cl-v">-</div><div class="result-sub" id="cl-f">-</div></div><div id="cl-a"></div></div>
+          </div>
+          <div id="act-box"></div>
+          <div class="card"><div class="card-title">Observations</div><textarea id="b-obs" rows="2" placeholder="Couleur du bain, dépôts, état de l'objet..."></textarea></div>
+          <div class="btn-row"><button class="btn btn-p" onclick="enregB()">💾 Enregistrer</button><button class="btn btn-sm" onclick="addCal()">📅 Planifier relevé</button></div>
+        </div>
+        <div id="form-rinc" style="display:none">
+          <div class="card"><div class="card-title">Rinçage <span class="tip-btn" onclick="swTip('tr')">i</span></div>
+            <div class="tip" id="tr">Unités : µS/cm (≠ mS/cm). Fin = cond. < 50 µS/cm ET pH 6–8 ET AgNO₃ négatif.</div>
+            <div class="row"><div><label>Date</label><input type="date" id="r-date"></div><div><label>N° rinçage</label><input type="number" id="r-n" value="1" min="1"></div></div>
+            <div class="row"><div><label>Cond. AVANT (µS/cm)</label><input type="number" id="r-ca" step="0.1" oninput="evalR()"></div><div><label>Cond. APRÈS (µS/cm)</label><input type="number" id="r-cp" step="0.1" oninput="evalR()"></div></div>
+            <div class="row"><div><label>pH</label><input type="number" id="r-ph" step="0.1" oninput="evalR()"></div><div><label>Test AgNO₃</label><select id="r-ag" onchange="evalR()"><option value="">— Résultat —</option><option value="++">++ très positif</option><option value="+">+ positif</option><option value="+-">+/− douteux</option><option value="-">− négatif</option><option value="ND">Non fait</option></select></div></div>
+            <div id="r-eval"></div>
+            <div style="margin-top:8px"><label>Observations</label><input type="text" id="r-obs" placeholder="Couleur, dépôts..."></div>
+            <div class="btn-row"><button class="btn btn-p" onclick="enregR()">💾 Enregistrer</button><button class="btn btn-sm" onclick="addCal()">📅 Planifier</button></div>
+          </div>
+        </div>
+        <div id="form-mes" style="display:none">
+          <div class="card"><div class="card-title">Mesures enregistrées</div><div id="mes-list"></div></div>
+          <div class="card"><div class="card-title">Rinçages enregistrés</div><div id="rinc-list"></div></div>
+        </div>
+      </div>
+      <div class="saisie-side">
+        <div class="hist-panel">
+          <div class="hist-hdr"><span class="hist-htitle">Historique</span><span class="hist-nb" id="h-nb">-</span></div>
+          <div id="h-cz" class="hist-cz" style="display:none"><div class="hist-cw"><canvas id="h-chart"></canvas></div></div>
+          <div class="hist-rows" id="h-rows"><div class="hist-empty">Sélectionnez un lot</div></div>
+          <div id="h-foot" style="display:none" class="hist-foot"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CALCUL -->
+<div class="page" id="page-calcul">
+  <div class="sh"><h2>Calculatrice [Cl⁻]</h2></div>
+  <div class="card"><div class="card-title">Argentométrie — Méthode de Mohr</div>
+    <div class="row trio"><div><label>V AgNO₃ (mL)</label><input type="number" id="c-v" step="0.01" oninput="calcC()"></div><div><label>N AgNO₃ (mol/L)</label><input type="number" id="c-n" value="0.05" step="0.001" oninput="calcC()"></div><div><label>V éch (mL)</label><input type="number" id="c-ve" value="5" step="0.5" oninput="calcC()"></div></div>
+    <div class="row"><div><label>Facteur dilution</label><input type="number" id="c-d" value="1" step="0.1" oninput="calcC()"></div><div></div></div>
+    <div class="result-box"><div class="result-cl" id="c-val">— mg/L</div><div class="result-sub" id="c-int">Entrez les valeurs</div><div style="font-size:9px;color:#5C1F12;margin-top:5px">[Cl⁻] = V_AgNO₃ × N × 35 450 / V_éch × dilution</div></div>
+    <div id="c-al"></div>
+  </div>
+  <div class="card"><div class="card-title">Référence</div>
+    <div class="info-row"><span class="info-lbl">Seuil conservation courante</span><span class="info-val">&lt; 200 mg/L</span></div>
+    <div class="info-row"><span class="info-lbl">Seuil fort enjeu / exposition</span><span class="info-val">&lt; 100 mg/L</span></div>
+    <div class="info-row"><span class="info-lbl">Bains — conductivité</span><span class="info-val">mS/cm</span></div>
+    <div class="info-row"><span class="info-lbl">Rinçages — conductivité</span><span class="info-val">µS/cm (ne pas comparer)</span></div>
+    <div class="info-row"><span class="info-lbl">Critères fin rinçage</span><span class="info-val">&lt; 50 µS/cm + pH 6–8 + AgNO₃ neg.</span></div>
+  </div>
+</div>
+
+<!-- RAPPORT -->
+<div class="page" id="page-rapport">
+  <div class="sh"><h2>Rapport de traitement</h2></div>
+  <div class="card"><div class="card-title">Lot</div><select id="r-sel" onchange="loadRap()"><option value="">— Sélectionner —</option></select></div>
+  <div id="r-cont" style="display:none">
+    <div class="card"><div class="card-title">Synthèse</div><div id="r-info"></div><div class="metrics" id="r-met"></div></div>
+    <div class="card"><div class="card-title">Évolution [Cl⁻] mg/L</div><div class="chart-wrap"><canvas id="r-chart"></canvas></div></div>
+    <div class="card" id="rc-card" style="display:none"><div class="card-title">Conductivité rinçages (µS/cm)</div><div class="chart-wrap"><canvas id="rc-chart"></canvas></div></div>
+    <div class="card"><div class="card-title">Mesures bain</div>
+      <div style="overflow-x:auto"><table class="ht"><thead><tr><th style="width:16%">Date</th><th style="width:7%">J+</th><th style="width:6%">Cy.</th><th style="width:7%">pH</th><th style="width:11%">Cond.</th><th style="width:12%">[Cl⁻]</th><th style="width:9%">ΔCl⁻</th><th style="width:12%">Statut</th><th style="width:7%"></th></tr></thead><tbody id="r-tbody"></tbody></table></div>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-p" onclick="expPDF()">📄 Exporter PDF</button>
+      <button class="btn" onclick="expCSV()">📊 CSV</button>
+      <button class="btn" onclick="expDrive()">☁ Drive</button>
+    </div>
+  </div>
+</div>
+
+<!-- CONFIG -->
+<div class="page" id="page-config">
+  <div class="sh"><h2>Configuration</h2></div>
+  <div class="card"><div class="card-title">🔗 Connexion Notion</div>
+    <div id="notion-status" class="alert a-info" style="display:none;margin-bottom:9px"></div>
+    <div style="font-size:12px;color:#3A6B2A;margin-bottom:8px">✅ Proxy Cloudflare configuré — connexion sécurisée</div>
+    <div style="font-size:11px;color:#6B4040;line-height:1.6;margin-bottom:10px">Clé active : <code style="background:#F5E8E5;padding:1px 5px;border-radius:3px">KERA-EMILIE-PC</code><br>Token Notion stocké en sécurité dans le proxy Cloudflare.</div>
+    <div class="btn-row"><button class="btn btn-sm btn-p" onclick="recharger()">🔄 Recharger depuis Notion</button></div>
+  </div>
+  <div class="card"><div class="card-title">Compte</div>
+    <div id="cfg-a" class="alert a-info" style="margin-bottom:9px">Proxy Cloudflare actif — données dans Notion.</div>
+    <div class="btn-row"><button class="btn btn-p btn-sm" onclick="handleAuth()">Connexion</button><button class="btn btn-sm btn-d" id="btn-lo" style="display:none" onclick="logout()">Déconnexion</button></div>
+    <div style="font-size:10px;color:#6B6966;margin-top:9px;line-height:1.5">Chaque membre se connecte avec son propre compte (@eveha.fr ou autre). Données sauvegardées dans son Drive.</div>
+  </div>
+  <div class="card"><div class="card-title">Seuils d'alerte</div>
+    <div class="row"><div><label>Seuil conservation (mg/L)</label><input type="number" id="cfg-sc" value="200" oninput="saveCfg()"></div><div><label>Seuil fort enjeu (mg/L)</label><input type="number" id="cfg-sf" value="100" oninput="saveCfg()"></div></div>
+    <div class="row"><div><label>ΔCl⁻ seuil plateau (%)</label><input type="number" id="cfg-dc" value="5" oninput="saveCfg()"></div><div><label>Cible rinçage (µS/cm)</label><input type="number" id="cfg-cr" value="50" oninput="saveCfg()"></div></div>
+  </div>
+  <div class="card"><div class="card-title">Données</div>
+    <div class="btn-row"><button class="btn btn-sm" onclick="expAllCSV()">📦 Export global CSV</button><button class="btn btn-sm btn-d" onclick="resetD()">🗑 Réinitialiser</button></div>
+  </div>
+</div>
+
+</div></div>
+
+<script>
+
+// ============================================================
+// KORE — Notion API Backend
+// Bases : "KORE Objets" + "KORE Bains"
+// Proxy : https://kera-proxy.emiliewinckel.workers.dev
+// Clé   : KORE-EMILIE-PC (à adapter selon l'appareil)
+// ============================================================
+
+var PROXY_URL    = 'https://kera-proxy.emiliewinckel.workers.dev';
+var APP_KEY      = 'KERA-EMILIE-PC';
+var NOTION_VER   = '2022-06-28';
+var DB_OBJETS    = 'KORE Objets';
+var DB_BAINS     = 'KORE Bains';
+
+var A = {
+  lots: [],
+  cfg: {sc: 200, sf: 100, dc: 5, cr: 50},
+  user: null,
+  mc: null, rc: null, hc: null,
+  dbObjetsId: null,
+  dbBainsId: null,
+  loading: false
+};
+
+// ============================================================
+// INIT
+// ============================================================
+function init() {
+  try { Object.assign(A.cfg, JSON.parse(localStorage.getItem('kore_cfg') || '{}')); } catch(e) {}
+  try { A.user = JSON.parse(localStorage.getItem('kore_user') || 'null'); } catch(e) {}
+  lCfg(); uAuth();
+  var td = new Date().toISOString().split('T')[0];
+  document.querySelectorAll('input[type=date]').forEach(function(e) { if (!e.value) e.value = td; });
+
+  setStatus('Connexion à Notion…', 'info');
+  notionSetup().then(function() {
+    return loadLotsFromNotion();
+  }).then(function() {
+    ref();
+    setStatus('', '');
+  }).catch(function(e) {
+    setStatus('Erreur Notion : ' + e.message, 'error');
+    ref();
+  });
+}
+
+// ============================================================
+// NOTION — SETUP
+// ============================================================
+function notionSetup() {
+  return findOrCreateDb(DB_OBJETS, SCHEMA_OBJETS).then(function(id) {
+    A.dbObjetsId = id;
+    return findOrCreateDb(DB_BAINS, SCHEMA_BAINS);
+  }).then(function(id) {
+    A.dbBainsId = id;
+  });
+}
+
+var SCHEMA_OBJETS = {
+  'Intitulé':            {title: {}},
+  'KORE ID':             {rich_text: {}},
+  'Référence':           {rich_text: {}},
+  'Type':                {select: {options: [{name:'objet'},{name:'lot'}]}},
+  'Opération':           {rich_text: {}},
+  'Responsable':         {rich_text: {}},
+  'Date début':          {date: {}},
+  'Solution':            {select: {options: [{name:'NaOH 0.1M + Na2SO3 0.05M'},{name:'NaOH 0.5M + Na2SO3 0.5M'},{name:'NaOH 0.1M'},{name:'Eau déminéralisée'},{name:'Autre'}]}},
+  'Poids objet (g)':     {number: {format: 'number'}},
+  'Volume solution (L)': {number: {format: 'number'}},
+  'Enjeu conservation':  {select: {options: [{name:'courant'},{name:'fort'}]}},
+  'Fréquence relevés':   {select: {options: [{name:'1'},{name:'3'},{name:'7'},{name:'14'}]}},
+  'Statut':              {rich_text: {}},
+};
+
+var SCHEMA_BAINS = {
+  'Nom':               {title: {}},
+  'KORE ID Bain':      {rich_text: {}},
+  'KORE ID Objet':     {rich_text: {}},
+  'Type entrée':       {select: {options: [{name:'bain'},{name:'rincage'}]}},
+  'Date':              {date: {}},
+  'J+':                {number: {format: 'number'}},
+  'N° cycle':          {number: {format: 'number'}},
+  'Volume (L)':        {number: {format: 'number'}},
+  'Température (°C)':  {number: {format: 'number'}},
+  'pH':                {number: {format: 'number'}},
+  'C0 mS/cm':          {number: {format: 'number'}},
+  'Conductivité mS/cm':{number: {format: 'number'}},
+  'ΔC (%)':            {number: {format: 'number'}},
+  'V AgNO3 (mL)':      {number: {format: 'number'}},
+  'N AgNO3':           {number: {format: 'number'}},
+  'V échantillon (mL)':{number: {format: 'number'}},
+  '[Cl-] mg/L':        {number: {format: 'number'}},
+  'ΔCl- (%)':          {number: {format: 'number'}},
+  'Statut mesure':     {select: {options: [{name:'OK'},{name:'Surveiller'},{name:'Élevé'},{name:'ND'}]}},
+  // Rinçage spécifique
+  'N° rinçage':        {number: {format: 'number'}},
+  'Cond. avant µS/cm': {number: {format: 'number'}},
+  'Cond. après µS/cm': {number: {format: 'number'}},
+  'Variation µS/cm':   {number: {format: 'number'}},
+  'Test AgNO3':        {select: {options: [{name:'++'},{name:'+'},{name:'traces'},{name:'-'}]}},
+  'Observations':      {rich_text: {}},
+};
+
+// ============================================================
+// NOTION — API
+// ============================================================
+function notionFetch(path, method, body) {
+  var opts = {
+    method: method || 'GET',
+    headers: {
+      'Notion-Version': NOTION_VER,
+      'Content-Type': 'application/json',
+      'X-App-Key': APP_KEY
+    }
+  };
+  if (body) opts.body = JSON.stringify(body);
+  return fetch(PROXY_URL + path, opts).then(function(r) {
+    return r.json().then(function(data) {
+      if (!r.ok) throw new Error((data.message || data.code || r.status) + ' (' + path + ')');
+      return data;
+    });
+  });
+}
+
+function findOrCreateDb(name, schema) {
+  return notionFetch('/v1/search', 'POST', {
+    query: name,
+    filter: {value: 'database', property: 'object'},
+    page_size: 10
+  }).then(function(data) {
+    var results = data.results || [];
+    for (var i = 0; i < results.length; i++) {
+      var t = (results[i].title || []).map(function(x) { return x.plain_text || ''; }).join('');
+      if (t.trim() === name.trim()) return results[i].id;
+    }
+    return notionFetch('/v1/search', 'POST', {filter: {value: 'page', property: 'object'}, page_size: 1}).then(function(pages) {
+      if (!pages.results || !pages.results.length) throw new Error('Aucune page parente trouvée dans Notion. Créez une page "KORE" manuellement.');
+      return createDb(name, pages.results[0].id, schema);
+    });
+  });
+}
+
+function createDb(name, parentId, schema) {
+  return notionFetch('/v1/databases', 'POST', {
+    parent: {type: 'page_id', page_id: parentId},
+    title: [{type: 'text', text: {content: name}}],
+    properties: schema
+  }).then(function(db) { return db.id; });
+}
+
+// ============================================================
+// CHARGER LES LOTS
+// ============================================================
+function loadLotsFromNotion() {
+  if (!A.dbObjetsId) return Promise.resolve();
+  return queryAll(A.dbObjetsId).then(function(pages) {
+    A.lots = pages.map(pageToLot).filter(Boolean);
+    return loadAllBains();
+  });
+}
+
+function queryAll(dbId, cursor) {
+  var body = {page_size: 100};
+  if (cursor) body.start_cursor = cursor;
+  return notionFetch('/v1/databases/' + dbId + '/query', 'POST', body).then(function(data) {
+    var pages = data.results || [];
+    if (data.has_more && data.next_cursor) {
+      return queryAll(dbId, data.next_cursor).then(function(more) { return pages.concat(more); });
+    }
+    return pages;
+  });
+}
+
+function pt(page, prop) {
+  var p = page.properties || {};
+  if (!p[prop]) return '';
+  var arr = p[prop].rich_text || p[prop].title || [];
+  return arr.map(function(t) { return t.plain_text || ''; }).join('');
+}
+function pn(page, prop) { var p = page.properties || {}; return p[prop] && p[prop].number != null ? p[prop].number : null; }
+function ps(page, prop) { var p = page.properties || {}; return p[prop] && p[prop].select ? p[prop].select.name || '' : ''; }
+function pd(page, prop) { var p = page.properties || {}; return p[prop] && p[prop].date ? p[prop].date.start || '' : ''; }
+
+function pageToLot(page) {
+  return {
+    id:            pt(page, 'KORE ID') || page.id,
+    notionPageId:  page.id,
+    ref:           pt(page, 'Référence'),
+    int:           pt(page, 'Intitulé'),
+    type:          ps(page, 'Type'),
+    operation:     pt(page, 'Opération'),
+    responsable:   pt(page, 'Responsable'),
+    dateDebut:     pd(page, 'Date début'),
+    solution:      ps(page, 'Solution'),
+    poids:         pn(page, 'Poids objet (g)'),
+    volume:        pn(page, 'Volume solution (L)'),
+    enjeu:         ps(page, 'Enjeu conservation'),
+    freq:          ps(page, 'Fréquence relevés'),
+    mesures:       [],
+    rincages:      []
+  };
+}
+
+function loadAllBains() {
+  if (!A.dbBainsId) return Promise.resolve();
+  return queryAll(A.dbBainsId).then(function(pages) {
+    A.lots.forEach(function(l) { l.mesures = []; l.rincages = []; });
+    pages.forEach(function(page) {
+      var lotId = pt(page, 'KORE ID Objet');
+      var lot = A.lots.find(function(l) { return l.id === lotId; });
+      if (!lot) return;
+      var type = ps(page, 'Type entrée');
+      if (type === 'rincage') {
+        lot.rincages.push({
+          notionPageId: page.id,
+          date:       pd(page, 'Date'),
+          num:        pn(page, 'N° rinçage'),
+          ph:         pn(page, 'pH'),
+          condAvant:  pn(page, 'Cond. avant µS/cm'),
+          condApres:  pn(page, 'Cond. après µS/cm'),
+          variation:  pn(page, 'Variation µS/cm'),
+          agno3:      ps(page, 'Test AgNO3'),
+          obs:        pt(page, 'Observations')
+        });
+      } else {
+        lot.mesures.push({
+          notionPageId: page.id,
+          date:    pd(page, 'Date'),
+          jplus:   pn(page, 'J+'),
+          cycle:   pn(page, 'N° cycle'),
+          volume:  pn(page, 'Volume (L)'),
+          temp:    pn(page, 'Température (°C)'),
+          ph:      pn(page, 'pH'),
+          c0:      pn(page, 'C0 mS/cm'),
+          cond:    pn(page, 'Conductivité mS/cm'),
+          deltaC:  pn(page, 'ΔC (%)'),
+          vagno3:  pn(page, 'V AgNO3 (mL)'),
+          nagno3:  pn(page, 'N AgNO3'),
+          vech:    pn(page, 'V échantillon (mL)'),
+          cl:      pn(page, '[Cl-] mg/L'),
+          deltaCl: pn(page, 'ΔCl- (%)'),
+          statut:  ps(page, 'Statut mesure'),
+          obs:     pt(page, 'Observations')
+        });
+      }
+    });
+    A.lots.forEach(function(l) {
+      l.mesures.sort(function(a, b) { return (a.date||'').localeCompare(b.date||''); });
+      l.rincages.sort(function(a, b) { return (a.date||'').localeCompare(b.date||''); });
+    });
+  });
+}
+
+// ============================================================
+// CRÉER UN LOT
+// ============================================================
+function createLotInNotion(lot) {
+  var props = {
+    'Intitulé':            {title: [{text: {content: lot.int || ''}}]},
+    'KORE ID':             {rich_text: [{text: {content: lot.id}}]},
+    'Référence':           {rich_text: [{text: {content: lot.ref || ''}}]},
+    'Opération':           {rich_text: [{text: {content: lot.operation || ''}}]},
+    'Responsable':         {rich_text: [{text: {content: lot.responsable || ''}}]},
+  };
+  if (lot.type)      props['Type']                = {select: {name: lot.type}};
+  if (lot.dateDebut) props['Date début']          = {date: {start: lot.dateDebut}};
+  if (lot.solution)  props['Solution']            = {select: {name: lot.solution}};
+  if (lot.poids)     props['Poids objet (g)']    = {number: parseFloat(lot.poids)};
+  if (lot.volume)    props['Volume solution (L)'] = {number: parseFloat(lot.volume)};
+  if (lot.enjeu)     props['Enjeu conservation']  = {select: {name: lot.enjeu}};
+  if (lot.freq)      props['Fréquence relevés']   = {select: {name: String(lot.freq)}};
+  return notionFetch('/v1/pages', 'POST', {
+    parent: {database_id: A.dbObjetsId},
+    properties: props
+  }).then(function(page) { lot.notionPageId = page.id; return lot; });
+}
+
+// ============================================================
+// CRÉER UN BAIN
+// ============================================================
+function createBainInNotion(lot, m) {
+  var nom = '[Cl⁻] ' + (m.cl != null ? m.cl.toFixed(1) + ' mg/L' : 'ND') + ' — B.' + (m.cycle||'?') + ' — ' + (lot.ref || lot.int);
+  var props = {
+    'Nom':           {title: [{text: {content: nom}}]},
+    'KORE ID Bain':  {rich_text: [{text: {content: 'B' + Date.now().toString(36).toUpperCase()}}]},
+    'KORE ID Objet': {rich_text: [{text: {content: lot.id}}]},
+    'Type entrée':   {select: {name: 'bain'}},
+  };
+  if (m.date)              props['Date']                 = {date: {start: m.date}};
+  if (m.jplus != null)     props['J+']                   = {number: m.jplus};
+  if (m.cycle != null)     props['N° cycle']             = {number: m.cycle};
+  if (m.volume != null)    props['Volume (L)']           = {number: m.volume};
+  if (m.temp != null)      props['Température (°C)']     = {number: m.temp};
+  if (m.ph != null)        props['pH']                   = {number: m.ph};
+  if (m.c0 != null)        props['C0 mS/cm']             = {number: m.c0};
+  if (m.cond != null)      props['Conductivité mS/cm']   = {number: m.cond};
+  if (m.deltaC != null)    props['ΔC (%)']               = {number: parseFloat(m.deltaC.toFixed(2))};
+  if (m.vagno3 != null)    props['V AgNO3 (mL)']         = {number: m.vagno3};
+  if (m.nagno3 != null)    props['N AgNO3']              = {number: m.nagno3};
+  if (m.vech != null)      props['V échantillon (mL)']   = {number: m.vech};
+  if (m.cl != null)        props['[Cl-] mg/L']           = {number: parseFloat(m.cl.toFixed(2))};
+  if (m.deltaCl != null)   props['ΔCl- (%)']             = {number: parseFloat(m.deltaCl.toFixed(2))};
+  if (m.statut)            props['Statut mesure']        = {select: {name: m.statut}};
+  if (m.obs)               props['Observations']         = {rich_text: [{text: {content: m.obs.substring(0, 1900)}}]};
+  return notionFetch('/v1/pages', 'POST', {
+    parent: {database_id: A.dbBainsId},
+    properties: props
+  }).then(function(page) { m.notionPageId = page.id; return m; });
+}
+
+// ============================================================
+// CRÉER UN RINÇAGE
+// ============================================================
+function createRincageInNotion(lot, r) {
+  var nom = 'Rinçage ' + (r.num||'?') + ' — ' + (lot.ref || lot.int);
+  var props = {
+    'Nom':           {title: [{text: {content: nom}}]},
+    'KORE ID Bain':  {rich_text: [{text: {content: 'R' + Date.now().toString(36).toUpperCase()}}]},
+    'KORE ID Objet': {rich_text: [{text: {content: lot.id}}]},
+    'Type entrée':   {select: {name: 'rincage'}},
+  };
+  if (r.date)       props['Date']                = {date: {start: r.date}};
+  if (r.num != null)props['N° rinçage']          = {number: r.num};
+  if (r.ph != null) props['pH']                  = {number: r.ph};
+  if (r.condAvant)  props['Cond. avant µS/cm']   = {number: r.condAvant};
+  if (r.condApres)  props['Cond. après µS/cm']   = {number: r.condApres};
+  if (r.variation)  props['Variation µS/cm']     = {number: parseFloat(r.variation)};
+  if (r.agno3)      props['Test AgNO3']          = {select: {name: r.agno3}};
+  if (r.obs)        props['Observations']        = {rich_text: [{text: {content: r.obs.substring(0, 1900)}}]};
+  return notionFetch('/v1/pages', 'POST', {
+    parent: {database_id: A.dbBainsId},
+    properties: props
+  }).then(function(page) { r.notionPageId = page.id; return r; });
+}
+
+// ============================================================
+// ARCHIVER
+// ============================================================
+function archivePage(pageId) {
+  if (!pageId) return Promise.resolve();
+  return notionFetch('/v1/pages/' + pageId, 'PATCH', {archived: true}).catch(function(e) {
+    console.warn('Archive failed:', e.message);
+  });
+}
+
+// ============================================================
+// STATUT UI
+// ============================================================
+function setStatus(msg, type) {
+  var el = gid('notion-status');
+  if (!el) return;
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+  el.className = 'alert ' + ({info:'a-info', error:'a-alert', ok:'a-ok'}[type] || 'a-info');
+}
+function showLoading(msg) { setStatus(msg || 'Enregistrement…', 'info'); }
+function hideLoading() { setTimeout(function() { setStatus('', ''); }, 1500); }
+
+// ============================================================
+// FONCTIONS UTILITAIRES (inchangées)
+// ============================================================
+function gid(x) { return document.getElementById(x); }
+function fv(x) { var e = gid(x); return e ? parseFloat(e.value) : NaN; }
+function sv() { /* données dans Notion */ }
+function saveCfg() {
+  A.cfg.sc = fv('cfg-sc') || 200;
+  A.cfg.sf = fv('cfg-sf') || 100;
+  A.cfg.dc = fv('cfg-dc') || 5;
+  A.cfg.cr = fv('cfg-cr') || 50;
+  localStorage.setItem('kore_cfg', JSON.stringify(A.cfg));
+}
+function lCfg() {
+  gid('cfg-sc').value = A.cfg.sc;
+  gid('cfg-sf').value = A.cfg.sf;
+  gid('cfg-dc').value = A.cfg.dc;
+  gid('cfg-cr').value = A.cfg.cr;
+}
+function genId() { return 'L' + Date.now().toString(36).toUpperCase(); }
+function gL(id) { return A.lots.find(function(l) { return l.id === id; }); }
+function seuil(lot) { return lot && lot.enjeu === 'fort' ? A.cfg.sf : A.cfg.sc; }
+
+function showPage(id) {
+  document.querySelectorAll('.page').forEach(function(p) { p.classList.remove('active'); });
+  gid('page-' + id).classList.add('active');
+  var ix = {accueil:0, nouveau:1, saisie:2, calcul:3, rapport:4, config:5};
+  document.querySelectorAll('.nav button').forEach(function(b, i) { b.classList.toggle('active', i === ix[id]); });
+  if (id === 'saisie' || id === 'rapport') fillS();
+  if (id === 'accueil') ref();
+}
+
+function ref() {
+  var c = gid('lots-list');
+  if (!A.lots.length) {
+    c.innerHTML = '<div class="empty-s"><div style="font-size:32px;opacity:0.3;margin-bottom:9px">🏺</div><p style="font-size:12px;font-weight:500">Aucun lot — créez-en un !</p></div>';
+    return;
+  }
+  c.innerHTML = A.lots.map(function(lot) {
+    var s = seuil(lot);
+    var lCl = '—', sb = 'b-neu', st = 'Aucune mesure';
+    var nb = lot.mesures ? lot.mesures.length : 0;
+    if (nb) {
+      var last = lot.mesures.slice().reverse().find(function(m) { return m.cl != null; });
+      if (last) {
+        lCl = last.cl.toFixed(1) + ' mg/L';
+        if (last.cl <= s) { sb = 'b-ok'; st = 'Sous seuil ✓'; }
+        else if (last.cl <= s * 1.5) { sb = 'b-warn'; st = 'Surveiller'; }
+        else { sb = 'b-alert'; st = 'Élevé'; }
+      }
+    }
+    return '<div class="lot-item"><div class="lot-click" onclick="ouvrirLot(\'' + lot.id + '\')">' +
+      '<div class="lot-name">' + lot.int + '</div>' +
+      '<div class="lot-sub">' + lot.ref + (lot.operation ? ' — ' + lot.operation : '') + '</div></div>' +
+      '<div class="lot-right"><span class="badge ' + sb + '">' + st + '</span>' +
+      '<div style="font-size:10px;color:#6B6966;min-width:80px;text-align:right">[Cl⁻] ' + lCl + '</div>' +
+      '<button class="x-btn" onclick="delLot(\'' + lot.id + '\')">✕</button></div></div>';
+  }).join('');
+}
+
+function fillS() {
+  var s1 = gid('s-sel'), s2 = gid('r-sel');
+  var opts = A.lots.map(function(l) { return '<option value="' + l.id + '">' + l.ref + ' — ' + l.int + '</option>'; }).join('');
+  if (s1) s1.innerHTML = '<option value="">— Sélectionner —</option>' + opts;
+  if (s2) s2.innerHTML = '<option value="">— Sélectionner —</option>' + opts;
+}
+
+function ouvrirLot(id) { showPage('saisie'); fillS(); var s = gid('s-sel'); if (s) { s.value = id; chargerLot(); } }
+
+function chargerLot() {
+  var id = gid('s-sel').value, fz = gid('s-zone'), ctx = gid('lot-ctx'), ctxb = gid('lot-ctx-btns');
+  if (!id) { fz.style.display='none'; ctx.style.display='none'; if(ctxb)ctxb.style.display='none'; return; }
+  var lot = gL(id); if (!lot) return;
+  fz.style.display = 'block'; ctx.style.display = 'block'; if (ctxb) ctxb.style.display = 'block';
+  ctx.innerHTML = '<b>Solution :</b> ' + (lot.solution||'—') + ' &nbsp;|&nbsp; <b>Poids :</b> ' + (lot.poids||'—') + ' g &nbsp;|&nbsp; <b>Volume :</b> ' + (lot.volume||'—') + ' L &nbsp;|&nbsp; <b>Enjeu :</b> ' + (lot.enjeu||'—') + ' &nbsp;|&nbsp; <b>Seuil :</b> ' + seuil(lot) + ' mg/L &nbsp;|&nbsp; <b>Bains :</b> ' + (lot.mesures?lot.mesures.length:0);
+  gid('b-vol').value = lot.volume || '';
+  autoFillBain(lot);
+  affH(lot);
+}
+
+function autoFillBain(lot) {
+  if (!lot) return;
+  var lastCy = 0;
+  if (lot.mesures && lot.mesures.length) { var l = lot.mesures[lot.mesures.length-1]; if (l.cycle) lastCy = parseInt(l.cycle)||0; }
+  gid('b-cy').value = lastCy + 1;
+  var dv = gid('b-date').value;
+  if (lot.dateDebut && dv) {
+    var t0 = new Date(lot.dateDebut), t1 = new Date(dv);
+    gid('b-jp').value = Math.max(0, Math.round((t1-t0)/86400000));
+  }
+}
+
+function swTab(t) {
+  ['bain','rinc','mes'].forEach(function(x) {
+    gid('form-'+x).style.display = x===t ? 'block' : 'none';
+    gid('tab-'+x).classList.toggle('active', x===t);
+  });
+  if (t==='mes') { var l = gL(gid('s-sel').value); if (l) affMes(l); }
+}
+
+function affMes(lot) {
+  var ml = gid('mes-list');
+  ml.innerHTML = (!lot.mesures||!lot.mesures.length) ? '<div style="font-size:11px;color:#6B6966;padding:6px 0">Aucune mesure.</div>' :
+    '<div class="mlist">' + lot.mesures.map(function(m,i) {
+      return '<div class="mlist-row"><span>' + m.date + ' J+' + m.jplus + ' B.' + m.cycle + ' — [Cl⁻] ' + (m.cl!=null?m.cl.toFixed(1)+' mg/L':'ND') + ' (Cond. ' + (m.cond||'—') + ' mS/cm)</span><button class="x-btn" onclick="delM(\'' + lot.id + '\',' + i + ')">✕</button></div>';
+    }).join('') + '</div>';
+  var rl = gid('rinc-list');
+  if (rl) rl.innerHTML = (!lot.rincages||!lot.rincages.length) ? '<div style="font-size:11px;color:#6B6966;padding:6px 0">Aucun rinçage.</div>' :
+    '<div class="mlist">' + lot.rincages.map(function(r,i) {
+      return '<div class="mlist-row"><span>' + r.date + ' R.' + r.num + ' — Avant: ' + (r.condAvant||'—') + ' / Après: ' + (r.condApres||'—') + ' µS/cm — AgNO₃: ' + (r.agno3||'—') + '</span><button class="x-btn" onclick="delR(\'' + lot.id + '\',' + i + ')">✕</button></div>';
+    }).join('') + '</div>';
+}
+
+function delLot(id) {
+  if (!confirm('Supprimer ce lot et toutes ses mesures ?')) return;
+  var lot = gL(id); if (!lot) return;
+  showLoading('Suppression…');
+  var promises = [];
+  if (lot.notionPageId) promises.push(archivePage(lot.notionPageId));
+  (lot.mesures||[]).forEach(function(m) { if (m.notionPageId) promises.push(archivePage(m.notionPageId)); });
+  (lot.rincages||[]).forEach(function(r) { if (r.notionPageId) promises.push(archivePage(r.notionPageId)); });
+  Promise.all(promises).then(function() {
+    A.lots = A.lots.filter(function(l) { return l.id !== id; });
+    hideLoading(); ref();
+  }).catch(function(e) { setStatus('Erreur : ' + e.message, 'error'); });
+}
+
+function delM(lid, i) {
+  var l = gL(lid); if (!l||!confirm('Supprimer cette mesure ?')) return;
+  var m = l.mesures[i];
+  showLoading('Suppression…');
+  archivePage(m.notionPageId).then(function() {
+    l.mesures.splice(i, 1); hideLoading(); affH(l); affMes(l);
+  }).catch(function(e) { setStatus('Erreur : ' + e.message, 'error'); });
+}
+
+function delR(lid, i) {
+  var l = gL(lid); if (!l||!confirm('Supprimer ce rinçage ?')) return;
+  var r = l.rincages[i];
+  showLoading('Suppression…');
+  archivePage(r.notionPageId).then(function() {
+    l.rincages.splice(i, 1); hideLoading(); affMes(l);
+  }).catch(function(e) { setStatus('Erreur : ' + e.message, 'error'); });
+}
+
+function affH(lot) {
+  if (A.hc) { A.hc.destroy(); A.hc = null; }
+  var rows=gid('h-rows'),cz=gid('h-cz'),nb=gid('h-nb'),ft=gid('h-foot'),mc=gid('mob-c'),ms=gid('mob-s');
+  if (!lot||!lot.mesures||!lot.mesures.length) {
+    rows.innerHTML='<div class="hist-empty">Aucune mesure.</div>';cz.style.display='none';
+    nb.textContent='0';ft.style.display='none';
+    if(mc)mc.innerHTML='<div style="padding:8px;font-size:11px;color:#6B6966">Aucune mesure.</div>';return;
+  }
+  var mms=lot.mesures, s=seuil(lot);
+  nb.textContent=mms.length+' bains';
+  var l3=mms.slice(-3).reverse();
+  var rh=l3.map(function(m,i){
+    var cl=m.cl,tr='';
+    if(i<l3.length-1){var p=l3[i+1];if(cl!=null&&p.cl!=null){var d=cl-p.cl;tr=d<-0.1?'↘':d>0.1?'↗':'→';}}
+    var cc=cl==null?'#6B6966':cl<=s?'#3A6B2A':cl<=s*1.5?'#B06B00':'#8B3A2A';
+    return '<div class="hist-row"><div><div class="hist-date">'+m.date+' J+'+m.jplus+'</div><div style="font-size:9px;color:#6B6966">Cond. '+(m.cond||'—')+' mS/cm | pH '+(m.ph||'—')+'</div></div><div style="display:flex;align-items:center;gap:3px"><span class="hist-val" style="color:'+cc+'">'+(cl!=null?cl.toFixed(1)+' mg/L':'ND')+'</span>'+(tr?'<span style="color:'+cc+'">'+tr+'</span>':'')+' </div></div>';
+  }).join('');
+  rows.innerHTML=rh;
+  if(ms&&mms.length){var lm=mms[mms.length-1];if(lm.cl!=null)ms.textContent='— '+lm.cl.toFixed(1)+' mg/L';}
+  var mCv=mms.filter(function(m){return m.cl!=null;});
+  if(mCv.length>=2){
+    cz.style.display='block';
+    var ctx=gid('h-chart').getContext('2d');
+    A.hc=new Chart(ctx,{type:'line',data:{labels:mCv.map(function(m){return m.date?m.date.slice(5):'J+'+m.jplus;}),datasets:[{data:mCv.map(function(m){return parseFloat(m.cl.toFixed(1));}),borderColor:'#8B3A2A',backgroundColor:'rgba(139,58,42,0.08)',borderWidth:1.5,pointRadius:2,tension:0.3,fill:true},{label:'Seuil',data:mCv.map(function(){return s;}),borderColor:'#3A6B2A',borderDash:[4,3],borderWidth:1,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:9},maxTicksLimit:4}}}}});
+  } else cz.style.display='none';
+  var lastCl=mms.length?mms[mms.length-1].cl:null;
+  var ac='',acl='a-info';
+  if(lastCl!=null){
+    if(lastCl<=s){ac='✅ [Cl⁻] sous seuil ('+lastCl.toFixed(1)+' mg/L ≤ '+s+' mg/L). Passer aux rinçages.';acl='a-ok';}
+    else if(lastCl<=s*1.5){ac='⚠ [Cl⁻] en baisse mais au-dessus du seuil. Renouveler le bain.';acl='a-warn';}
+    else{ac='🔴 [Cl⁻] élevée ('+lastCl.toFixed(1)+' mg/L). Extraction active — poursuivre.';acl='a-alert';}
+  }
+  if(ac){ft.style.display='block';ft.innerHTML='<div class="alert '+acl+'" style="margin:0;font-size:10px">'+ac+'</div>';}else ft.style.display='none';
+  if(mc)mc.innerHTML='<div style="padding:4px 0">'+rh+'</div>'+(ac?'<div class="alert '+acl+'" style="margin:7px 0 0;font-size:10px">'+ac+'</div>':'');
+}
+
+function calcCl() {
+  var v=fv('b-v'),n=fv('b-n')||0.05,ve=fv('b-ve')||5;
+  var box=gid('cl-display');if(!box)return;
+  if(isNaN(v)){box.innerHTML='<div style="font-size:10px;color:#6B6966;margin-top:6px">Entrez le volume AgNO₃ versé</div>';return;}
+  var id=gid('s-sel')?gid('s-sel').value:'',lot=gL(id),s=lot?seuil(lot):A.cfg.sc;
+  var cl=v*n*35450/ve;
+  var cl2=gid('b-cl-dil')?v*n*35450/ve*(fv('b-cl-dil')||1):cl;
+  var cc=cl<=s?'#3A6B2A':cl<=s*1.5?'#B06B00':'#8B3A2A';
+  var msg=cl<=A.cfg.sf?'✓ Excellent — sous seuil fort enjeu ('+A.cfg.sf+' mg/L)':cl<=A.cfg.sc?'✓ Acceptable — sous seuil courant ('+A.cfg.sc+' mg/L)':cl<=A.cfg.sc*1.5?'⚠ Au-dessus du seuil — surveiller':'🔴 Élevé — renouveler le bain';
+  box.innerHTML='<div class="kadj-box"><div class="kadj-val" style="color:'+cc+'">[Cl⁻] = '+cl.toFixed(1)+' mg/L</div><div class="kadj-lbl">'+v+' mL × '+n+' × 35450 / '+ve+' mL</div></div><div class="alert '+(cl<=s?'a-ok':cl<=s*1.5?'a-warn':'a-alert')+'" style="margin:6px 0 0;font-size:10px">'+msg+'</div>';
+}
+
+function evalRinc() {
+  var ca=fv('r-ca'),cp=fv('r-cp'),ag=gid('r-ag')?gid('r-ag').value:'',box=gid('r-eval');if(!box||isNaN(ca)||isNaN(cp))return;
+  var v=cp-ca;var ok=cp<=A.cfg.cr&&ag==='-';
+  box.innerHTML='<div class="alert '+(ok?'a-ok':cp<=A.cfg.cr?'a-warn':'a-alert')+'" style="margin:8px 0 0;font-size:11px">'+(ok?'✅ Critères atteints ('+cp+' µS/cm ≤ '+A.cfg.cr+' µS/cm et AgNO₃ négatif)':'Variation : '+v.toFixed(1)+' µS/cm — '+(cp<=A.cfg.cr?'Conductivité OK mais AgNO₃ '+ag:'Conductivité encore élevée ('+cp+' µS/cm > '+A.cfg.cr+' µS/cm)'))+'</div>';
+}
+
+// ============================================================
+// ENREGISTRER UN BAIN — avec Notion
+// ============================================================
+function enregB() {
+  var id=gid('s-sel').value,lot=gL(id);
+  if(!lot){alert('Sélectionnez un lot.');return;}
+  var v=fv('b-v'),n=fv('b-n')||0.05,ve=fv('b-ve')||5;
+  var cl=(!isNaN(v)&&v>=0)?v*n*35450/ve:null;
+  var c0=fv('b-c0')||null,cm=fv('b-cd')||null;
+  var m={
+    date:gid('b-date').value,jplus:parseInt(gid('b-jp').value)||0,
+    cycle:parseInt(gid('b-cy').value)||1,volume:fv('b-vol')||null,
+    temp:fv('b-tmp')||null,ph:fv('b-ph')||null,
+    c0:c0,cond:cm,deltaC:(c0&&cm&&c0!==0)?((cm-c0)/c0*100):null,
+    vagno3:v,nagno3:n,vech:ve,cl:cl,obs:gid('b-obs').value
+  };
+  if(lot.mesures.length&&cl!=null){var pv=lot.mesures.slice().reverse().find(function(x){return x.cl!=null;});if(pv&&pv.cl)m.deltaCl=((cl-pv.cl)/pv.cl*100);}
+  var s=seuil(lot);m.statut=cl==null?'ND':cl>s*1.5?'Élevé':cl>s?'Surveiller':'OK';
+  showLoading('Enregistrement du bain…');
+  createBainInNotion(lot, m).then(function() {
+    lot.mesures.push(m);
+    gid('b-obs').value='';
+    hideLoading();
+    affH(lot);
+    var msg='✅ Mesure enregistrée !';
+    if(cl!=null&&cl<=s) msg+='\n\n[Cl⁻] sous seuil ('+cl.toFixed(1)+' mg/L). Vous pouvez passer aux rinçages.';
+    alert(msg);
+  }).catch(function(e){setStatus('Erreur Notion : '+e.message,'error');});
+}
+
+// ============================================================
+// ENREGISTRER UN RINÇAGE — avec Notion
+// ============================================================
+function enregR() {
+  var id=gid('s-sel').value,lot=gL(id);
+  if(!lot){alert('Sélectionnez un lot.');return;}
+  var ca=fv('r-ca')||null,cp=fv('r-cp')||null;
+  var r={
+    date:gid('r-date').value,num:parseInt(gid('r-n').value)||1,
+    ph:fv('r-ph')||null,condAvant:ca,condApres:cp,
+    variation:(ca&&cp)?(cp-ca).toFixed(1):null,
+    agno3:gid('r-ag').value,obs:gid('r-obs').value
+  };
+  showLoading('Enregistrement du rinçage…');
+  createRincageInNotion(lot, r).then(function() {
+    if(!lot.rincages)lot.rincages=[];
+    lot.rincages.push(r);
+    hideLoading();
+    affMes(lot);
+    alert('✅ Rinçage enregistré !');
+  }).catch(function(e){setStatus('Erreur Notion : '+e.message,'error');});
+}
+
+// ============================================================
+// CRÉER UN LOT — avec Notion
+// ============================================================
+function creerLot() {
+  var ref=gid('lot-ref').value.trim(),int=gid('lot-int').value.trim();
+  if(!ref||!int){alert('Référence et intitulé requis.');return;}
+  var lot={
+    id:genId(),ref:ref,int:int,type:gid('lot-type').value,
+    operation:gid('lot-op').value.trim(),responsable:gid('lot-resp').value.trim(),
+    dateDebut:gid('lot-dd').value,solution:gid('lot-sol').value,
+    poids:gid('lot-poids').value,volume:gid('lot-vol').value,
+    enjeu:gid('lot-enjeu').value,freq:gid('lot-freq').value,
+    mesures:[],rincages:[]
+  };
+  showLoading('Création dans Notion…');
+  createLotInNotion(lot).then(function() {
+    A.lots.push(lot);
+    var qz=gid('qr-out');qz.innerHTML='';
+    new QRCode(qz,{text:'https://emiliewinckel.github.io/devis/kore_notion.html?lot='+lot.id,width:130,height:130,colorDark:'#8B3A2A',colorLight:'#fff'});
+    gid('lp-name').textContent=lot.int;gid('lp-ref').textContent='Réf. '+lot.ref;
+    gid('lp-det').textContent=(lot.dateDebut||'-')+' — '+(lot.poids||'—')+' g / '+(lot.volume||'—')+' L';
+    gid('lp').style.display='block';gid('btn-print').style.display='inline-flex';
+    hideLoading();
+    alert('✅ Lot créé : '+lot.ref);
+    ref();
+  }).catch(function(e){setStatus('Erreur création Notion : '+e.message,'error');});
+}
+
+// ============================================================
+// RAPPORT
+// ============================================================
+function loadRap() {
+  var id=gid('r-sel').value,c=gid('r-cont');if(!id){c.style.display='none';return;}
+  var lot=gL(id);if(!lot)return;c.style.display='block';
+  if(A.mc){A.mc.destroy();A.mc=null;}if(A.rc){A.rc.destroy();A.rc=null;}
+  var s=seuil(lot),nb=lot.mesures?lot.mesures.length:0;
+  var fCl=lot.mesures.filter(function(m){return m.cl!=null;})[0];
+  var lCl=lot.mesures.filter(function(m){return m.cl!=null;}).slice(-1)[0];
+  var red=fCl&&lCl?((fCl.cl-lCl.cl)/fCl.cl*100).toFixed(1)+'%':'—';
+  var duree='—';
+  if(nb>=2&&lot.mesures[0].date&&lot.mesures[nb-1].date){
+    duree=Math.round((new Date(lot.mesures[nb-1].date)-new Date(lot.mesures[0].date))/86400000)+' jours';
+  }
+  gid('r-info').innerHTML='<div class="info-row"><span class="info-lbl">Référence</span><span class="info-val">'+lot.ref+'</span></div><div class="info-row"><span class="info-lbl">Intitulé</span><span class="info-val">'+lot.int+'</span></div><div class="info-row"><span class="info-lbl">Opération</span><span class="info-val">'+(lot.operation||'—')+'</span></div><div class="info-row"><span class="info-lbl">Solution</span><span class="info-val">'+(lot.solution||'—')+'</span></div><div class="info-row"><span class="info-lbl">Poids / Volume</span><span class="info-val">'+(lot.poids||'—')+' g / '+(lot.volume||'—')+' L</span></div><div class="info-row"><span class="info-lbl">Enjeu conservation</span><span class="info-val">'+(lot.enjeu||'—')+' — seuil '+s+' mg/L</span></div>';
+  gid('r-met').innerHTML='<div class="metric"><div class="metric-val">'+nb+'</div><div class="metric-lbl">Bains</div></div><div class="metric"><div class="metric-val" style="font-size:13px">'+(lCl?lCl.cl.toFixed(1)+' mg/L':'—')+'</div><div class="metric-lbl">[Cl⁻] dernier</div></div><div class="metric"><div class="metric-val">'+(lot.rincages?lot.rincages.length:0)+'</div><div class="metric-lbl">Rinçages</div></div>';
+  var mCv=lot.mesures.filter(function(m){return m.cl!=null;});
+  if(mCv.length){
+    var ctx=gid('r-chart').getContext('2d');
+    A.mc=new Chart(ctx,{type:'line',data:{labels:mCv.map(function(m){return m.date||'J+'+m.jplus;}),datasets:[{label:'[Cl⁻] mg/L',data:mCv.map(function(m){return parseFloat(m.cl.toFixed(1));}),borderColor:'#8B3A2A',backgroundColor:'rgba(139,58,42,0.08)',borderWidth:2,pointRadius:4,tension:0.3,fill:true},{label:'Seuil ('+s+' mg/L)',data:mCv.map(function(){return s;}),borderColor:'#3A6B2A',borderDash:[5,4],borderWidth:1,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:11},boxWidth:14}}},scales:{y:{title:{display:true,text:'[Cl⁻] mg/L'},grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:10}}},x:{grid:{display:false},ticks:{font:{size:10}}}}}});
+  }
+  var rin=lot.rincages||[],rcc=gid('rc-card');
+  if(rin.length&&rcc){
+    rcc.style.display='block';
+    var ctx2=gid('rc-chart').getContext('2d');
+    A.rc=new Chart(ctx2,{type:'bar',data:{labels:rin.map(function(r){return 'R.'+r.num+' '+r.date;}),datasets:[{label:'Avant (µS/cm)',data:rin.map(function(r){return r.condAvant||0;}),backgroundColor:'rgba(139,58,42,0.6)'},{label:'Après (µS/cm)',data:rin.map(function(r){return r.condApres||0;}),backgroundColor:'rgba(58,107,42,0.6)'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,labels:{font:{size:10},boxWidth:12}}},scales:{y:{title:{display:true,text:'Conductivité µS/cm'},ticks:{font:{size:10}}},x:{ticks:{font:{size:9}}}}}});
+  } else if(rcc) rcc.style.display='none';
+  gid('r-tbody').innerHTML=(!nb?'<tr><td colspan="10" style="text-align:center;padding:12px;color:#6B6966">Aucune mesure</td></tr>':
+    lot.mesures.map(function(m,i){
+      var cl=m.cl,bg=cl==null?'':cl<=s?'background:#EAF3DE':cl<=s*1.5?'background:#FAEEDA':'background:#F5E8E5';
+      var st=cl==null?'ND':cl<=s?'OK ✓':cl<=s*1.5?'Surveiller':'Élevé';
+      var sc=cl==null?'b-neu':cl<=s?'b-ok':cl<=s*1.5?'b-warn':'b-alert';
+      return '<tr style="'+bg+'"><td>'+m.date+'</td><td>J+'+(m.jplus||0)+'</td><td>'+(m.cycle||'—')+'</td><td>'+(m.temp!=null?m.temp+' °C':'—')+'</td><td>'+(m.ph!=null?m.ph:'—')+'</td><td>'+(m.c0!=null?m.c0:'—')+'</td><td>'+(m.cond!=null?m.cond:'—')+'</td><td style="font-weight:600">'+(cl!=null?cl.toFixed(1)+' mg/L':'ND')+'</td><td><span class="badge '+sc+'">'+st+'</span></td><td>'+button('x-btn','delMR(\''+lot.id+'\','+i+')','✕')+'</td></tr>';
+    }).join(''));
+  if(gid('r-rtbody'))gid('r-rtbody').innerHTML=(!rin.length?'<tr><td colspan="7" style="text-align:center;padding:10px;color:#6B6966">Aucun rinçage</td></tr>':
+    rin.map(function(r,i){
+      var ok=r.condApres&&r.condApres<=A.cfg.cr&&r.agno3==='-';
+      var bg=ok?'background:#EAF3DE':r.condApres&&r.condApres<=A.cfg.cr?'background:#FAEEDA':'';
+      return '<tr style="'+bg+'"><td>'+r.date+'</td><td>'+(r.num||'—')+'</td><td>'+(r.ph!=null?r.ph:'—')+'</td><td>'+(r.condAvant||'—')+' µS/cm</td><td>'+(r.condApres||'—')+' µS/cm</td><td>'+(r.agno3||'—')+'</td><td>'+button('x-btn','delRR(\''+lot.id+'\','+i+')','✕')+'</td></tr>';
+    }).join(''));
+}
+
+function button(cls,onclick,txt){return '<button class="'+cls+'" onclick="'+onclick+'">'+txt+'</button>';}
+function delMR(lid,i){var l=gL(lid);if(!l||!confirm('Supprimer ?'))return;showLoading('Suppression…');archivePage(l.mesures[i].notionPageId).then(function(){l.mesures.splice(i,1);hideLoading();loadRap();}).catch(function(e){setStatus('Erreur : '+e.message,'error');});}
+function delRR(lid,i){var l=gL(lid);if(!l||!confirm('Supprimer ?'))return;showLoading('Suppression…');archivePage(l.rincages[i].notionPageId).then(function(){l.rincages.splice(i,1);hideLoading();loadRap();}).catch(function(e){setStatus('Erreur : '+e.message,'error');});}
+
+// ============================================================
+// EXPORT PDF
+// ============================================================
+function expPDF() {
+  var id=gid('r-sel').value,lot=gL(id);
+  if(!lot){alert('Sélectionnez un lot.');return;}
+  var s=seuil(lot),nb=lot.mesures?lot.mesures.length:0;
+  var fCl=lot.mesures.filter(function(m){return m.cl!=null;})[0];
+  var lCl=lot.mesures.filter(function(m){return m.cl!=null;}).slice(-1)[0];
+  var red=fCl&&lCl?((fCl.cl-lCl.cl)/fCl.cl*100).toFixed(1)+'%':'—';
+  var duree='—';
+  if(nb>=2&&lot.mesures[0].date&&lot.mesures[nb-1].date)duree=Math.round((new Date(lot.mesures[nb-1].date)-new Date(lot.mesures[0].date))/86400000)+' jours';
+  var rin=lot.rincages||[];
+  var statut=lCl&&lCl.cl<=s?(rin.length&&rin[rin.length-1].agno3==='-'&&rin[rin.length-1].condApres<=A.cfg.cr?'Critères atteints pH + conductivité + AgNO₃':'[Cl⁻] sous seuil — rinçages à valider'):'Traitement en cours';
+
+  // SVG [Cl-]
+  var mCv=lot.mesures.filter(function(m){return m.cl!=null;});
+  var svgCl='';
+  if(mCv.length>=2){
+    var W=560,H=180,PL=50,PR=15,PT=15,PB=35,gW=W-PL-PR,gH=H-PT-PB;
+    var clMax=Math.max.apply(null,mCv.map(function(m){return m.cl;}))*1.1;
+    var xs=function(i){return PL+(i/(mCv.length-1))*gW;};
+    var ys=function(v){return PT+gH-(v/clMax)*gH;};
+    var area='M'+xs(0)+','+ys(mCv[0].cl);
+    mCv.forEach(function(m,i){if(i)area+=' L'+xs(i)+','+ys(m.cl);});
+    area+=' L'+xs(mCv.length-1)+','+(PT+gH)+' L'+xs(0)+','+(PT+gH)+' Z';
+    var line='M'+xs(0)+','+ys(mCv[0].cl);
+    mCv.forEach(function(m,i){if(i)line+=' L'+xs(i)+','+ys(m.cl);});
+    var sy=ys(s);
+    var pts=mCv.map(function(m,i){var c=m.cl<=s?'#3A6B2A':m.cl<=s*1.5?'#B06B00':'#8B3A2A';return '<circle cx="'+xs(i)+'" cy="'+ys(m.cl)+'" r="4" fill="'+c+'" stroke="white" stroke-width="1.5"/>';}).join('');
+    var lbx=mCv.map(function(m,i){if(i%Math.ceil(mCv.length/6)!==0&&i!==mCv.length-1)return '';return '<text x="'+xs(i)+'" y="'+(PT+gH+14)+'" text-anchor="middle" font-size="9" fill="#6B6966">'+(m.date?m.date.slice(5):'J+'+m.jplus)+'</text>';}).join('');
+    var lby=[0,clMax/4,clMax/2,clMax*3/4,clMax].map(function(v){return '<text x="'+(PL-5)+'" y="'+(ys(v)+3)+'" text-anchor="end" font-size="9" fill="#6B6966">'+v.toFixed(0)+'</text><line x1="'+PL+'" y1="'+ys(v)+'" x2="'+(PL+gW)+'" y2="'+ys(v)+'" stroke="#eee" stroke-width="0.5"/>';}).join('');
+    svgCl='<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:'+H+'px">'+lby+'<path d="'+area+'" fill="rgba(139,58,42,0.08)"/><path d="'+line+'" fill="none" stroke="#8B3A2A" stroke-width="2"/><line x1="'+PL+'" y1="'+sy+'" x2="'+(PL+gW)+'" y2="'+sy+'" stroke="#3A6B2A" stroke-width="1.5" stroke-dasharray="5,4"/><text x="'+(PL+gW-2)+'" y="'+(sy-4)+'" text-anchor="end" font-size="9" fill="#3A6B2A">Seuil cible ('+s+' mg/L)</text>'+pts+lbx+'<text x="'+(PL-40)+'" y="'+(PT+gH/2)+'" text-anchor="middle" font-size="9" fill="#6B6966" transform="rotate(-90,'+(PL-40)+','+(PT+gH/2)+')">[Cl⁻] mg/L</text><text x="'+(PL+gW/2)+'" y="'+H+'" text-anchor="middle" font-size="9" fill="#6B6966">J+ (jours depuis début de traitement)</text></svg>';
+  }
+
+  // SVG rinçages
+  var svgRinc='';
+  if(rin.length){
+    var rW=560,rH=140,rPL=55,rPR=15,rPT=15,rPB=30,rgW=rW-rPL-rPR,rgH=rH-rPT-rPB;
+    var vals=rin.map(function(r){return Math.max(r.condAvant||0,r.condApres||0);});
+    var vMax=Math.max.apply(null,vals)*1.15||100;
+    var rxs=function(i){return rin.length===1?rPL+rgW/2:rPL+(i/(rin.length-1))*rgW;};
+    var rys=function(v){return rPT+rgH-(v/vMax)*rgH;};
+    var bw=Math.min(30,rgW/rin.length*0.4);
+    var bars=rin.map(function(r,i){
+      var x=rxs(i),ya=rys(r.condAvant||0),yp=rys(r.condApres||0);
+      return '<rect x="'+(x-bw)+'" y="'+ya+'" width="'+bw+'" height="'+(rPT+rgH-ya)+'" fill="rgba(139,58,42,0.7)"/><rect x="'+x+'" y="'+yp+'" width="'+bw+'" height="'+(rPT+rgH-yp)+'" fill="'+(r.condApres<=A.cfg.cr?'#3A6B2A':'rgba(139,58,42,0.4)')+'"/><text x="'+(x+bw/2)+'" y="'+(rPT+rgH+12)+'" text-anchor="middle" font-size="9" fill="#6B6966">R.'+r.num+'</text>';
+    }).join('');
+    var cry=rys(A.cfg.cr);
+    svgRinc='<svg viewBox="0 0 '+rW+' '+rH+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:'+rH+'px"><line x1="'+rPL+'" y1="'+cry+'" x2="'+(rPL+rgW)+'" y2="'+cry+'" stroke="#3A6B2A" stroke-width="1.5" stroke-dasharray="5,4"/><text x="'+(rPL+rgW-2)+'" y="'+(cry-4)+'" text-anchor="end" font-size="9" fill="#3A6B2A">Cible ('+A.cfg.cr+' µS/cm)</text>'+bars+'<text x="'+(rPL-40)+'" y="'+(rPT+rgH/2)+'" text-anchor="middle" font-size="9" fill="#6B6966" transform="rotate(-90,'+(rPL-40)+','+(rPT+rgH/2)+')">Conductivité µS/cm</text></svg>';
+  }
+
+  // Tableau bains
+  var lig=(!nb?'<tr><td colspan="8" style="text-align:center;padding:10px">Aucune mesure</td></tr>':
+    lot.mesures.map(function(m){
+      var cl=m.cl,bg=cl==null?'':cl<=s?'background:#EAF3DE':cl<=s*1.5?'background:#FAEEDA':'';
+      var dcl=m.deltaCl!=null?m.deltaCl.toFixed(1)+'%':'—';
+      return '<tr style="'+bg+'"><td>'+m.date+'</td><td>J+'+(m.jplus||0)+'</td><td>'+(m.cycle||'—')+'</td><td>'+(m.temp!=null?m.temp:'—')+'</td><td>'+(m.ph!=null?m.ph:'—')+'</td><td>'+(m.cond!=null?m.cond:'—')+'</td><td style="font-weight:600;color:'+(cl!=null&&cl<=s?'#3A6B2A':cl!=null&&cl<=s*1.5?'#B06B00':'#8B3A2A')+'">'+(cl!=null?cl.toFixed(1)+' mg/L':'ND')+'</td><td>'+dcl+'</td></tr>';
+    }).join(''));
+
+  // Tableau rinçages
+  var ligR=(!rin.length?'':
+    '<h2>Suivi des rinçages</h2>'+
+    (rin.length?'<div class="chart-box">'+svgRinc+'</div>':'')+
+    '<table><thead><tr><th>N</th><th>Date</th><th>pH</th><th>Cond. avant µS/cm</th><th>Cond. après µS/cm</th><th>Variation µS/cm</th><th>AgNO₃</th><th>Observations</th></tr></thead><tbody>'+
+    rin.map(function(r){
+      var ok=r.condApres&&r.condApres<=A.cfg.cr&&r.agno3==='-';
+      var bg=ok?'background:#EAF3DE':r.condApres&&r.condApres<=A.cfg.cr?'background:#FAEEDA':'';
+      return '<tr style="'+bg+'"><td>'+(r.num||'—')+'</td><td>'+r.date+'</td><td>'+(r.ph||'—')+'</td><td>'+(r.condAvant||'—')+'</td><td>'+(r.condApres||'—')+'</td><td>'+(r.variation!=null?r.variation:'-')+'</td><td style="font-weight:600;color:'+(r.agno3==='-'?'#3A6B2A':'#8B3A2A')+'">'+(r.agno3||'—')+'</td><td>'+(r.obs||'')+'</td></tr>';
+    }).join('')+'</tbody></table>'+
+    '<div style="font-size:9px;color:#888;margin-top:4px;font-style:italic">Lignes vertes : tous les critères de fin de traitement sont remplis (conductivité &lt; '+A.cfg.cr+' µS/cm, pH 6–8, AgNO₃ négatif).</div>');
+
+  var now=new Date();
+  var dateStr=now.toLocaleDateString('fr-FR')+' à '+now.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+
+  var H_='<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KORE — Rapport '+lot.ref+'</title>'+
+    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">'+
+    '<style>'+
+    'html{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}'+
+    '*{box-sizing:border-box;margin:0;padding:0}'+
+    'body{font-family:Montserrat,sans-serif;font-size:11px;color:#1A1210;background:#fff;padding:0}'+
+    '.page{padding:14mm 14mm 10mm;max-width:210mm;margin:0 auto}'+
+    '.header{background:#8B3A2A;color:#fff;padding:10px 16px;display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;border-radius:4px;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.hn{font-size:18px;font-weight:700;letter-spacing:3px}.hsub{font-size:9px;opacity:0.75;margin-top:2px}'+
+    '.href{text-align:right;font-size:12px;font-weight:600}.hrsub{font-size:9px;opacity:0.75}'+
+    'h2{font-size:10px;font-weight:700;color:#8B3A2A;text-transform:uppercase;letter-spacing:0.6px;margin:14px 0 6px;border-bottom:1.5px solid #D4917E;padding-bottom:3px}'+
+    '.ig{display:grid;grid-template-columns:1fr 1fr;gap:5px;margin-bottom:10px}'+
+    '.ic{background:#F5E8E5;padding:5px 8px;border-radius:3px;border-left:2px solid #8B3A2A;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.il{font-size:9px;font-weight:600;color:#5A1A0A;text-transform:uppercase;letter-spacing:0.3px;display:block;margin-bottom:1px}'+
+    '.sg{display:grid;grid-template-columns:repeat(3,1fr);gap:5px;margin-bottom:10px}'+
+    '.metric{background:#F5E8E5;padding:8px;border-radius:3px;text-align:center;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.metric-val{font-size:16px;font-weight:700;color:#8B3A2A;line-height:1}.metric-lbl{font-size:8px;color:#6B4040;margin-top:2px;text-transform:uppercase}'+
+    '.st{width:100%;border-collapse:collapse;margin-bottom:10px}'+
+    '.st td{padding:4px 8px;border-bottom:0.5px solid #E8D5D0;font-size:11px}'+
+    '.st td:first-child{color:#6B4040;font-size:10px;width:45%}.st td:last-child{color:#6B4040;font-size:9px;font-style:italic}'+
+    '.chart-box{background:#FBF6F5;border:1px solid #E8D5D0;border-radius:4px;padding:10px;margin-bottom:10px}'+
+    'table{width:100%;border-collapse:collapse;margin-bottom:10px;font-size:10px}'+
+    'th{background:#8B3A2A;color:#fff;padding:4px 6px;text-align:left;font-size:9px;font-weight:600;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    'td{padding:3px 6px;border-bottom:0.5px solid #E8D5D0}'+
+    'tr:nth-child(even) td{background:#FBF6F5;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.sb{padding:8px 12px;border-radius:4px;margin:10px 0;font-size:11px;font-weight:500}'+
+    '.s-ok{background:#EAF3DE;color:#3A6B2A;border-left:3px solid #3A6B2A;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.s-warn{background:#FAEEDA;color:#B06B00;border-left:3px solid #B06B00;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.s-info{background:#F5E8E5;color:#8B3A2A;border-left:3px solid #8B3A2A;-webkit-print-color-adjust:exact;print-color-adjust:exact}'+
+    '.notes{background:#F8F4F3;border:1px solid #E0D0CC;border-radius:4px;padding:10px;margin-top:10px;font-size:9px;color:#6B4040;line-height:1.7}'+
+    '.footer{margin-top:14px;padding-top:8px;border-top:0.5px solid #E8D5D0;display:flex;justify-content:space-between;font-size:8px;color:#9B7070}'+
+    'button{padding:8px 20px;background:#8B3A2A;color:#fff;border:none;border-radius:6px;font-family:Montserrat,sans-serif;font-size:11px;font-weight:600;cursor:pointer;margin-top:10px}'+
+    '@media print{button{display:none}.page{padding:10mm}}'+
+    '</style></head><body><div class="page">';
+
+  H_+='<div class="header"><div><div class="hn">KORE</div><div class="hsub">Conservation-Restauration — Déchloruration du fer archéologique</div></div><div class="href"><div>'+lot.ref+'</div><div class="hrsub">'+lot.int+'</div></div></div>';
+  H_+='<h2>Identification</h2><div class="ig">'+
+    '<div class="ic"><span class="il">Référence</span>'+(lot.ref||'—')+'</div>'+
+    '<div class="ic"><span class="il">Responsable</span>'+(lot.responsable||'—')+'</div>'+
+    '<div class="ic"><span class="il">Objet / lot</span>'+(lot.int||'—')+'</div>'+
+    '<div class="ic"><span class="il">Opération archéologique</span>'+(lot.operation||'—')+'</div>'+
+    '<div class="ic"><span class="il">Solution utilisée</span>'+(lot.solution||'—')+'</div>'+
+    '<div class="ic"><span class="il">Volume bain</span>'+(lot.volume||'—')+' L</div>'+
+    '<div class="ic"><span class="il">Début traitement</span>'+(lot.dateDebut||'—')+'</div>'+
+    '<div class="ic"><span class="il">Enjeu conservation</span>'+(lot.enjeu||'—')+' (&lt; '+s+' mg/L)</div>'+
+    '</div>';
+  H_+='<h2>Synthèse du traitement</h2>'+
+    '<div class="sg">'+
+    '<div class="metric"><div class="metric-val">'+nb+'</div><div class="metric-lbl">Nombre de mesures bain</div></div>'+
+    '<div class="metric"><div class="metric-val" style="color:'+(lCl&&lCl.cl<=s?'#3A6B2A':'#8B3A2A')+'">'+(lCl?lCl.cl.toFixed(1)+' mg/L':'—')+'</div><div class="metric-lbl">[Cl⁻] finale</div></div>'+
+    '<div class="metric"><div class="metric-val">'+rin.length+'</div><div class="metric-lbl">Nombre de rinçages</div></div>'+
+    '</div>'+
+    '<table class="st"><tbody>'+
+    '<tr><td>Durée totale</td><td><b>'+duree+'</b></td><td></td></tr>'+
+    '<tr><td>[Cl⁻] initiale</td><td><b>'+(fCl?fCl.cl.toFixed(1)+' mg/L':'—')+'</b></td><td>Bain n°1</td></tr>'+
+    '<tr><td>[Cl⁻] finale</td><td><b>'+(lCl?lCl.cl.toFixed(1)+' mg/L':'—')+'</b></td><td>'+(lCl&&lCl.cl<=s?'Sous seuil':'Au-dessus du seuil ('+s+' mg/L)')+'</td></tr>'+
+    '<tr><td>Réduction [Cl⁻]</td><td><b>'+red+'</b></td><td>vs. mesure initiale</td></tr>'+
+    '<tr><td>Statut fin traitement</td><td><b>'+statut+'</b></td><td></td></tr>'+
+    '</tbody></table>';
+
+  var sc_=lCl&&lCl.cl<=s&&rin.length&&rin[rin.length-1].agno3==='-'&&rin[rin.length-1].condApres<=A.cfg.cr?'s-ok':lCl&&lCl.cl<=s?'s-warn':'s-info';
+  var sm_=lCl&&lCl.cl<=s&&rin.length&&rin[rin.length-1].agno3==='-'&&rin[rin.length-1].condApres<=A.cfg.cr?'✅ Critères d\'arrêt atteints — [Cl⁻] sous seuil et rinçages validés (pH + conductivité + AgNO₃).':lCl&&lCl.cl<=s?'⚠ [Cl⁻] sous seuil — valider les rinçages (pH 6–8, conductivité &lt; '+A.cfg.cr+' µS/cm, AgNO₃ négatif).':'ℹ Traitement en cours — [Cl⁻] = '+(lCl?lCl.cl.toFixed(1)+' mg/L':'ND')+'. Poursuivre les bains.';
+  H_+='<div class="sb '+sc_+'">'+sm_+'</div>';
+
+  if(svgCl)H_+='<h2>Évolution de la concentration en chlorures [Cl⁻]</h2><div class="chart-box">'+svgCl+'<div style="font-size:9px;color:#888;margin-top:5px;font-style:italic">La ligne en pointillé vert représente le seuil cible ('+s+' mg/L). Points verts = sous seuil, orange = surveiller, rouge = élevé.</div></div>';
+
+  H_+='<h2>Détail des mesures — bains de déchloruration</h2>'+
+    '<table><thead><tr><th>Date</th><th>J+</th><th>Cy.</th><th>T (°C)</th><th>pH</th><th>Cond. mS/cm</th><th>[Cl⁻] mg/L</th><th>ΔCl- %</th></tr></thead><tbody>'+lig+'</tbody></table>';
+
+  H_+=ligR;
+
+  H_+='<div class="notes">'+
+    '<b>Formules :</b> [Cl⁻] (mg/L) = V<sub>AgNO₃</sub> × N<sub>AgNO₃</sub> × 35 450 / V<sub>ech.</sub>. ΔCl- (%) = ([Cl⁻]n − [Cl⁻]n-1) / [Cl⁻]n-1 × 100. ΔC (%) = (Conductivité mesurée − C0 cycle) / C0 cycle × 100.<br>'+
+    '<b>Critères de décision :</b> Changer le bain si [Cl⁻] reste élevée et ΔCl- devient faible (plateau). Passer au rinçage si [Cl⁻] est basse et stable. Fin de traitement validée sur convergence : conductivité rinçage &lt; '+A.cfg.cr+' µS/cm, pH 6–8 et test AgNO₃ négatif.<br>'+
+    '<b>Attention unités :</b> bains en mS/cm, rinçages en µS/cm — ne pas comparer directement. Piloter sur [Cl⁻], pas uniquement sur la conductivité.<br>'+
+    '<b>Références :</b> Gilberg & Seeley 1982 ; North & Pearson 1975 ; Rimmer et al. 2012 ; Watkinson 2010.'+
+    '</div>';
+
+  H_+='<div class="footer"><span>Généré le '+dateStr+' — Solution : '+(lot.solution||'—')+'</span><span>KORE — Conservation-Restauration des fers archéologiques</span></div>';
+  H_+='</div><div style="text-align:center;padding:10px"><button onclick="window.print()">🖨 Imprimer / Enregistrer en PDF</button></div></body></html>';
+
+  var w=window.open('','_blank');w.document.open();w.document.write(H_);w.document.close();
+}
+
+// ============================================================
+// EXPORT CSV
+// ============================================================
+function expCSV() {
+  var id=gid('r-sel').value,lot=gL(id);if(!lot||!lot.mesures.length){alert('Aucune mesure.');return;}
+  var h='Date,J+,Cycle,Volume(L),Temp(C),pH,C0(mS/cm),Cond(mS/cm),DeltaC(%),V_AgNO3(mL),N_AgNO3,V_ech(mL),Cl(mg/L),DeltaCl(%),Statut,Observations\n';
+  var r=lot.mesures.map(function(m){return[m.date,m.jplus,m.cycle,m.volume||'',m.temp||'',m.ph||'',m.c0||'',m.cond||'',m.deltaC!=null?m.deltaC.toFixed(1):'',m.vagno3||'',m.nagno3||'',m.vech||'',m.cl!=null?m.cl.toFixed(2):'',m.deltaCl!=null?m.deltaCl.toFixed(1):'',m.statut||'','"'+(m.obs||'')+'"'].join(',');}).join('\n');
+  var b=new Blob(['\uFEFF'+h+r],{type:'text/csv;charset=utf-8;'});
+  var a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='kore_'+lot.ref+'_'+new Date().toISOString().slice(0,10)+'.csv';a.click();
+}
+
+// ============================================================
+// AUTH
+// ============================================================
+function handleAuth(){var e=prompt('Email :');if(!e||!e.includes('@'))return;A.user={email:e,name:e.split('@')[0]};localStorage.setItem('kore_user',JSON.stringify(A.user));uAuth();}
+function logout(){A.user=null;localStorage.removeItem('kore_user');uAuth();}
+function uAuth(){var u=A.user;gid('auth-name').textContent=u?(u.name||u.email):'Non connecté';gid('auth-email').textContent=u?u.email+' — données dans Notion':'Proxy Cloudflare actif';var bl=gid('btn-lo');if(bl)bl.style.display=u?'inline-flex':'none';}
+
+// ============================================================
+// UTILITAIRES
+// ============================================================
+function calcC(){var v=fv('c-v'),n=fv('c-n')||0.05,ve=fv('c-ve')||5,d=fv('c-d')||1;if(isNaN(v)){gid('c-val').textContent='— mg/L';gid('c-int').textContent='Entrez les valeurs';return;}var cl=v*n*35450/ve*d;gid('c-val').textContent=cl.toFixed(1)+' mg/L';gid('c-int').textContent=cl<=A.cfg.sf?'✓ Excellent — sous seuil fort enjeu':cl<=A.cfg.sc?'✓ Acceptable — sous seuil courant':'⚠ Au-dessus du seuil';}
+function imprimerEtiquette(lid){var lot=lid?gL(lid):A.lots[A.lots.length-1];if(!lot)return;var tmp=document.createElement('div');tmp.style.cssText='position:absolute;left:-9999px;top:-9999px;width:200px;height:200px';document.body.appendChild(tmp);new QRCode(tmp,{text:'https://emiliewinckel.github.io/devis/kore_notion.html?lot='+lot.id,width:200,height:200,colorDark:'#8B3A2A',colorLight:'#ffffff'});setTimeout(function(){var el=tmp.querySelector('canvas')||tmp.querySelector('img');var src=el?(el.tagName==='CANVAS'?el.toDataURL('image/png'):el.src):'';document.body.removeChild(tmp);var w=window.open('','_blank','width:320,height:520');w.document.open();w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Montserrat,Arial,sans-serif;background:#f7f4ef;display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:14px}.card{background:#fff;border:1.5px solid #8B3A2A;border-radius:12px;padding:22px;width:240px;text-align:center}.kt{font-size:20px;font-weight:700;letter-spacing:4px;color:#8B3A2A;margin-bottom:14px}.qr{width:150px;height:150px;margin:0 auto 14px}.sep{height:1px;background:#E8D5D0;margin:12px 0}.nm{font-size:12px;font-weight:600;color:#1A1210;margin-bottom:4px}.rf{font-size:10px;font-weight:600;color:#8B3A2A;margin-bottom:3px}.dt{font-size:9px;color:#9B7070}button{padding:9px 24px;background:#8B3A2A;color:#fff;border:none;border-radius:8px;font-family:Montserrat,sans-serif;font-size:12px;font-weight:600;cursor:pointer}@media print{button{display:none}}</style></head><body><div class="card"><div class="kt">KORE</div><img class="qr" src="'+src+'" alt="QR"><div class="sep"></div><div class="nm">'+lot.int+'</div><div class="rf">'+lot.ref+'</div><div class="dt">'+(lot.dateDebut||'—')+' · '+(lot.poids||'—')+' g · '+(lot.volume||'—')+' L</div></div><button onclick="window.print()">🖨 Imprimer</button></body></html>');w.document.close();},300);}
+function swTip(id){var e=gid(id);if(e)e.classList.toggle('show');setTimeout(function(){if(e)e.classList.remove('show');},6000);}
+function addCal(){var id=gid('s-sel')?gid('s-sel').value:'',lot=gL(id),freq=lot?parseInt(lot.freq||7):7,next=new Date(Date.now()+freq*864e5),pad=function(n){return n<10?'0'+n:n;},ymd=function(d){return d.getFullYear()+''+pad(d.getMonth()+1)+''+pad(d.getDate());};window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('KORE — Mesure'+(lot?' : '+lot.ref:''))+'&dates='+ymd(next)+'/'+ymd(new Date(next.getTime()+864e5)),'_blank');}
+function recharger(){setStatus('Rechargement…','info');loadLotsFromNotion().then(function(){ref();setStatus('✅ '+A.lots.length+' lot(s) rechargé(s)','ok');}).catch(function(e){setStatus('Erreur : '+e.message,'error');});}
+
+// Paramètre ?lot= dans l'URL
+document.addEventListener('DOMContentLoaded', function() {
+  init();
+  // Ouvrir directement un lot si ?lot= dans l'URL (depuis QR code)
+  setTimeout(function() {
+    var lotParam = new URLSearchParams(window.location.search).get('lot');
+    if (lotParam) {
+      var lotCible = A.lots.find(function(l) { return l.id === lotParam; });
+      if (lotCible) ouvrirLot(lotCible.id);
+    }
+  }, 2500); // laisser le temps de charger Notion
+});
+
+</script>
+</body>
+</html>
