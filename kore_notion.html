@@ -164,7 +164,7 @@ input:focus,select:focus{border-color:#8B3A2A;box-shadow:0 0 0 2px rgba(139,58,4
     <div class="row"><div><label>Type</label><select id="lot-type"><option value="objet">Objet unique</option><option value="lot">Lot d'objets</option></select></div><div><label>Référence</label><input type="text" id="lot-ref" placeholder="ex : 2025-NOR-047"></div></div>
     <div class="row solo"><div><label>Intitulé</label><input type="text" id="lot-int" placeholder="ex : Clous de charpente, médiéval"></div></div>
     <div class="row"><div><label>Opération archéologique</label><input type="text" id="lot-op" placeholder="Fouille Saint-Lô 2024"></div><div><label>Responsable</label><input type="text" id="lot-resp" placeholder="Nom"></div></div>
-    <div class="row trio"><div><label>Date début</label><input type="date" id="lot-dd"></div><div><label>Solution</label><select id="lot-sol"><option>NaOH 0,5 M + Na₂SO₃ 0,05 M</option><option>NaOH 0,1 M + Na₂SO₃ 0,05 M</option><option>NaOH 0,1 M</option><option>Autre</option></select></div><div><label>Poids de l'objet (g)</label><input type="number" id="lot-poids" placeholder="ex : 450" step="1" oninput="updVolInfo()"></div></div>
+    <div class="row trio"><div><label>Date début</label><input type="date" id="lot-dd"></div><div><label>Solution</label><select id="lot-sol"><option>NaOH 0.5 M + Na2SO3 0.05 M</option><option>NaOH 0.1 M + Na2SO3 0.05 M</option><option>NaOH 0.1 M</option><option>Autre</option></select></div><div><label>Poids de l'objet (g)</label><input type="number" id="lot-poids" placeholder="ex : 450" step="1" oninput="updVolInfo()"></div></div>
     <div class="row"><div><label>Volume solution (L)</label><input type="number" id="lot-vol" placeholder="ex : 2" step="0.1" oninput="updVolInfo()"></div><div><label>Enjeu conservation</label><select id="lot-enjeu"><option value="courant">Courant — seuil &lt; 5 mg/L</option><option value="fort">Fort enjeu / exposition — seuil &lt; 5 mg/L</option></select></div></div>
     <div id="vol-info" style="margin-bottom:8px"></div>
     <div class="row"><div><label>Fréquence relevés</label><select id="lot-freq"><option value="7">Hebdomadaire (7 j)</option><option value="14">Bimensuelle (14 j)</option><option value="30">Mensuelle (30 j)</option></select></div><div></div></div>
@@ -562,7 +562,7 @@ function createLotInNotion(lot) {
   };
   if (lot.type)      props['Type']                = {select: {name: lot.type}};
   if (lot.dateDebut) props['Date début']          = {date: {start: lot.dateDebut}};
-  if (lot.solution)  props['Solution']            = {select: {name: lot.solution}};
+  if (lot.solution)  props['Solution']            = {select: {name: lot.solution.replace(/,/g, '.').replace(/₂/g, '2')}};
   if (lot.poids)     props['Poids objet (g)']    = {number: parseFloat(lot.poids)};
   if (lot.volume)    props['Volume solution (L)'] = {number: parseFloat(lot.volume)};
   if (lot.enjeu)     props['Enjeu conservation']  = {select: {name: lot.enjeu}};
