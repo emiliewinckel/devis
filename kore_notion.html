@@ -570,7 +570,19 @@ function createLotInNotion(lot) {
   return notionFetch('/v1/pages', 'POST', {
     parent: {database_id: A.dbObjetsId},
     properties: props
-  }).then(function(page) { lot.notionPageId = page.id; return lot; });
+  }).then(function(page) { lot.notionPageId = page.id; return lot; })
+  .catch(function(e) {
+    console.error('Erreur création lot Notion:', e.message);
+    // Afficher le détail pour debug
+    return fetch('https://kera-proxy.emiliewinckel.workers.dev/v1/pages', {
+      method: 'POST',
+      headers: {'Notion-Version': NOTION_VER, 'Content-Type': 'application/json', 'X-App-Key': APP_KEY},
+      body: JSON.stringify({parent: {database_id: A.dbObjetsId}, properties: props})
+    }).then(function(r){return r.json();}).then(function(d){
+      console.error('Détail erreur Notion:', JSON.stringify(d));
+      throw new Error(d.message || 'Erreur 400 Notion');
+    });
+  });
 }
 
 // ============================================================
@@ -1161,6 +1173,13 @@ function uAuth(){var u=A.user;gid('auth-name').textContent=u?(u.name||u.email):'
 // ============================================================
 // UTILITAIRES
 // ============================================================
+function updVolInfo(){
+  var p=parseFloat(document.getElementById('lot-poids')&&document.getElementById('lot-poids').value||0);
+  var v=parseFloat(document.getElementById('lot-vol')&&document.getElementById('lot-vol').value||0);
+  var box=document.getElementById('vol-info');if(!box)return;
+  if(p>0&&v>0)box.textContent='Ratio : '+p+' g / '+v+' L = '+(p/v).toFixed(1)+' g/L';
+  else box.textContent='';
+}
 function calcC(){var v=fv('c-v'),n=fv('c-n')||0.05,ve=fv('c-ve')||5,d=fv('c-d')||1;if(isNaN(v)){gid('c-val').textContent='— mg/L';gid('c-int').textContent='Entrez les valeurs';return;}var cl=v*n*35450/ve*d;gid('c-val').textContent=cl.toFixed(1)+' mg/L';gid('c-int').textContent=cl<=A.cfg.sf?'✓ Excellent — sous seuil fort enjeu':cl<=A.cfg.sc?'✓ Acceptable — sous seuil courant':'⚠ Au-dessus du seuil';}
 function imprimerEtiquette(lid){var lot=lid?gL(lid):A.lots[A.lots.length-1];if(!lot)return;var tmp=document.createElement('div');tmp.style.cssText='position:absolute;left:-9999px;top:-9999px;width:200px;height:200px';document.body.appendChild(tmp);new QRCode(tmp,{text:'https://emiliewinckel.github.io/devis/kore_notion.html?lot='+lot.id,width:200,height:200,colorDark:'#8B3A2A',colorLight:'#ffffff'});setTimeout(function(){var el=tmp.querySelector('canvas')||tmp.querySelector('img');var src=el?(el.tagName==='CANVAS'?el.toDataURL('image/png'):el.src):'';document.body.removeChild(tmp);var w=window.open('','_blank','width:320,height:520');w.document.open();w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Montserrat,Arial,sans-serif;background:#f7f4ef;display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:14px}.card{background:#fff;border:1.5px solid #8B3A2A;border-radius:12px;padding:22px;width:240px;text-align:center}.kt{font-size:20px;font-weight:700;letter-spacing:4px;color:#8B3A2A;margin-bottom:14px}.qr{width:150px;height:150px;margin:0 auto 14px}.sep{height:1px;background:#E8D5D0;margin:12px 0}.nm{font-size:12px;font-weight:600;color:#1A1210;margin-bottom:4px}.rf{font-size:10px;font-weight:600;color:#8B3A2A;margin-bottom:3px}.dt{font-size:9px;color:#9B7070}button{padding:9px 24px;background:#8B3A2A;color:#fff;border:none;border-radius:8px;font-family:Montserrat,sans-serif;font-size:12px;font-weight:600;cursor:pointer}@media print{button{display:none}}</style></head><body><div class="card"><div class="kt">KORE</div><img class="qr" src="'+src+'" alt="QR"><div class="sep"></div><div class="nm">'+lot.int+'</div><div class="rf">'+lot.ref+'</div><div class="dt">'+(lot.dateDebut||'—')+' · '+(lot.poids||'—')+' g · '+(lot.volume||'—')+' L</div></div><button onclick="window.print()">🖨 Imprimer</button></body></html>');w.document.close();},300);}
 function swTip(id){var e=gid(id);if(e)e.classList.toggle('show');setTimeout(function(){if(e)e.classList.remove('show');},6000);}
