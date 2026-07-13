@@ -854,8 +854,12 @@ function ref() {
 function anionNeg(m) { return m && m.cl === '-' && m.no3 === '-' && m.so4 === '-'; }
 function computeKadj(m, lot) {
   if (!m || m.cond == null) return null;
-  var c0 = m.cond0 || 0, vol = m.volume || parseFloat(lot.volume || 0), poids = parseFloat(lot.poids || 0);
+  var vol = m.volume || parseFloat(lot.volume || 0), poids = parseFloat(lot.poids || 0);
   if (!vol || !poids) return null;
+  // Si C0 absent, on calcule mais on marque l'approximation (Unruh 2001)
+  // K_adj = (Cond - C0) x V / Poids : C0 = conductivité eau neuve du cycle
+  var c0 = (m.cond0 != null && m.cond0 > 0) ? m.cond0 : 0;
+  m._c0manquant = (m.cond0 == null || m.cond0 === 0); // flag pour l'UI
   return Math.max(0, (m.cond - c0) * vol / poids);
 }
 
@@ -973,7 +977,7 @@ function affH(lot) {
     var k = computeKadj(m, lot);
     var tr = '';
     if (i < l3.length - 1) { var p = l3[i + 1]; var pk = computeKadj(p, lot); if (k != null && pk != null) { var d = k - pk; if (d < -0.1) tr = '↘'; else if (d > 0.1) tr = '↗'; else tr = '→'; } }
-    var cc = k == null ? '#4A5F72' : k <= A.cfg.kadj ? '#27623A' : k <= A.cfg.kadj * 3 ? '#B06B00' : '#125c8a';
+    var cc = k == null ? '#4A5F72' : k <= A.cfg.kadj ? '#27623A' : k <= A.cfg.kadj * 2 ? '#B06B00' : '#125c8a';
     var anions = m.cl && m.no3 && m.so4 ? '<div style="font-size:9px;color:#4A5F72">Cl⁻' + m.cl + ' NO₃⁻' + m.no3 + ' SO₄²⁻' + m.so4 + '</div>' : '';
     return '<div class="hist-row"><div><div class="hist-date">' + m.date + ' J+' + m.jplus + '</div>' + anions + '</div><div style="display:flex;align-items:center;gap:3px"><span class="hist-val" style="color:' + cc + '">' + (k != null ? 'K=' + k.toFixed(2) : m.cond ? m.cond + ' µS/cm' : '-') + '</span>' + (tr ? '<span style="color:' + cc + '">' + tr + '</span>' : '') + '</div></div>';
   }).join('');
@@ -991,10 +995,12 @@ function affH(lot) {
   if (lastK != null) {
     if (lastK <= A.cfg.kadj && consNeg >= A.cfg.cons) { ac = '✅ Critères d\'arrêt atteints — K<sub>adj</sub> plateau + ' + consNeg + ' bains anioniques négatifs consécutifs.'; acl = 'a-ok'; }
     else if (lastK <= A.cfg.kadj) { ac = 'K<sub>adj</sub> plateau. Vérifier anions (' + consNeg + '/' + A.cfg.cons + ' bains négatifs consécutifs requis).'; acl = 'a-warn'; }
-    else if (lastK > A.cfg.kadj * 5) { ac = 'Dessalement actif — changer le bain et poursuivre.'; acl = 'a-alert'; }
-    else { ac = 'Dessalement en cours. K<sub>adj</sub> = ' + lastK.toFixed(2) + '. Poursuivre.'; acl = 'a-info'; }
+    else if (lastK > A.cfg.kadj * 5) { ac = 'Dessalement actif (K<sub>adj</sub> = ' + lastK.toFixed(2) + '). Extraction forte — relevé hebdomadaire recommandé.'; acl = 'a-alert'; }
+    else if (lastK > A.cfg.kadj * 2) { ac = 'Dessalement en cours (K<sub>adj</sub> = ' + lastK.toFixed(2) + '). Décroissance à surveiller — continuer.'; acl = 'a-info'; }
+    else { ac = 'K<sub>adj</sub> = ' + lastK.toFixed(2) + ' — proche du plateau. Vérifier la stabilité sur 2–3 bains avant de valider (Liégey 2012).'; acl = 'a-warn'; }
   }
-  if (ac) { ft.style.display = 'block'; ft.innerHTML = '<div class="alert ' + acl + '" style="margin:0;font-size:10px">' + ac + '</div>'; } else ft.style.display = 'none';
+  ft.style.display = (ac || c0WarnMsg) ? 'block' : 'none';
+  ft.innerHTML = c0WarnMsg + (ac ? '<div class="alert ' + acl + '" style="margin:0;font-size:10px">' + ac + '</div>' : '');
   if (mc) mc.innerHTML = '<div style="padding:4px 0">' + rh + '</div>' + (ac ? '<div class="alert ' + acl + '" style="margin:7px 0 0;font-size:10px">' + ac + '</div>' : '');
 }
 
@@ -1151,6 +1157,12 @@ function loadRap() {
   var lastK = nb ? computeKadj(lot.mesures[nb - 1], lot) : null;
   gid('r-info').innerHTML = '<div class="info-row"><span class="info-lbl">Référence</span><span class="info-val">' + lot.ref + '</span></div><div class="info-row"><span class="info-lbl">Désignation</span><span class="info-val">' + lot.int + '</span></div><div class="info-row"><span class="info-lbl">Collection</span><span class="info-val">' + (lot.operation || '—') + '</span></div><div class="info-row"><span class="info-lbl">Responsable</span><span class="info-val">' + (lot.responsable || '—') + '</span></div><div class="info-row"><span class="info-lbl">Poids / Volume</span><span class="info-val">' + (lot.poids || '—') + ' g / ' + (lot.volume || '—') + ' L</span></div><div class="info-row"><span class="info-lbl">Consolidation</span><span class="info-val">' + (lot.consol || 'non') + '</span></div><div class="info-row"><span class="info-lbl">Fragilité</span><span class="info-val">' + (lot.fragilite || '—') + '</span></div>';
   gid('r-met').innerHTML = '<div class="metric"><div class="metric-val">' + nb + '</div><div class="metric-lbl">Bains</div></div><div class="metric"><div class="metric-val" style="font-size:13px">' + (lastK != null ? lastK.toFixed(2) : '—') + '</div><div class="metric-lbl">K<sub>adj</sub> dernier</div></div><div class="metric"><div class="metric-val">' + nbNeg + '</div><div class="metric-lbl">Bains négatifs consécutifs</div></div>';
+  // Avertissement C0 manquant (Unruh 2001 : C0 requis pour K_adj rigoureux)
+  var lastMesure = mms[mms.length - 1];
+  var c0WarnMsg = '';
+  if (lastMesure && computeKadj(lastMesure, lot) != null && lastMesure._c0manquant) {
+    c0WarnMsg = '<div class="alert a-warn" style="margin:0 0 6px;font-size:10px">⚠ C₀ non renseigné — K_adj approximatif. Saisir la conductivité de l'eau neuve pour un calcul rigoureux.</div>';
+  }
   var mKv = lot.mesures.filter(function(m) { return computeKadj(m, lot) != null; });
   if (mKv.length) { var ctx = gid('r-chart').getContext('2d'); A.mc = new Chart(ctx, {type: 'line', data: {labels: mKv.map(function(m) { return m.date || 'J+' + m.jplus; }), datasets: [{label: 'K_adj', data: mKv.map(function(m) { return parseFloat(computeKadj(m, lot).toFixed(3)); }), borderColor: '#125c8a', backgroundColor: 'rgba(18,92,138,0.08)', borderWidth: 2, pointRadius: 4, tension: 0.3, fill: true}, {label: 'Seuil plateau', data: mKv.map(function() { return A.cfg.kadj; }), borderColor: '#27623A', borderDash: [5, 4], borderWidth: 1, pointRadius: 0}]}, options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: true, labels: {font: {size: 11}, boxWidth: 14}}}, scales: {y: {title: {display: true, text: 'K_adj'}, grid: {color: 'rgba(0,0,0,0.04)'}, ticks: {font: {size: 10}}}, x: {grid: {display: false}, ticks: {font: {size: 10}}}}}}); }
   var mCv = lot.mesures.filter(function(m) { return m.cond != null; });
