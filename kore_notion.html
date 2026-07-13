@@ -850,7 +850,7 @@ function affH(lot){
     } else if(!dcPlateau){
       ac='⏳ [Cl⁻] sous seuil mais ΔC = '+(lastDC!=null?lastDC.toFixed(1):'?')+'% > '+A.cfg.dc+'% — extraction encore active. Continuer (Watkinson 2010).';acl='a-warn';
     } else {
-      ac='✅ Critères d'arrêt atteints : [Cl⁻] = '+dCl.toFixed(0)+' mg/L ≤ '+s+' mg/L ET ΔC plateau. Passer aux rinçages.';acl='a-ok';
+      ac='✅ Critères d\'arrêt atteints : [Cl⁻] = '+dCl.toFixed(0)+' mg/L ≤ '+s+' mg/L ET ΔC plateau. Passer aux rinçages.';acl='a-ok';
     }
   }
   if(ac){ft.style.display='block';ft.innerHTML='<div class="alert '+acl+'" style="margin:0;font-size:10px">'+ac+'</div>';}else ft.style.display='none';
@@ -1268,7 +1268,7 @@ function aCl(cl,tid){
   if(cl>500){msg='[Cl⁻] très élevée (&gt;500 mg/L) — extraction forte, continuer';cls='a-alert';}
   else if(cl>s){msg='[Cl⁻] au-dessus du seuil courant (&gt;'+s+' mg/L) — extraction active';cls='a-warn';}
   else if(cl>sf){msg='[Cl⁻] sous seuil courant mais au-dessus du seuil fort enjeu (&gt;'+sf+' mg/L)';cls='a-warn';}
-  else{msg='[Cl⁻] sous le seuil cible ✓ — vérifier ΔC pour valider l'arrêt';cls='a-ok';}
+  else{msg='[Cl⁻] sous le seuil cible ✓ — vérifier ΔC pour valider l\'arrêt';cls='a-ok';}
   e.innerHTML='<div class="alert '+cls+'">'+msg+'</div>';
 }
 function eAct(cl){var box=gid('act-box');if(!box)return;var lot=gL(gid('s-sel').value),s=seuil(lot),ac='',cls='a-info';if(cl>500){ac='Changer le bain immédiatement.';cls='a-alert';}else if(cl>s*1.5){ac='Continuer — surveiller ΔCl⁻ pour décider du changement.';cls='a-warn';}else if(cl>s){ac='Proche seuil. ΔCl⁻ faible (plateau) → changer. Encore actif → continuer.';cls='a-warn';}else{ac='Sous seuil. Si stable sur 2–3 mesures → envisager les rinçages.';cls='a-ok';}box.innerHTML='<div class="card"><div class="card-title">Action suggérée</div><div class="alert '+cls+'" style="margin:0">'+ac+'</div></div>';}
