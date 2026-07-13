@@ -735,17 +735,16 @@ function fillS() {
 
 function ouvrirLot(id) { showPage('saisie'); fillS(); var s = gid('s-sel'); if (s) { s.value = id; chargerLot(); } }
 
-function chargerLot() {
-  var id = gid('s-sel').value, fz = gid('s-zone'), ctx = gid('lot-ctx'), ctxb = gid('lot-ctx-btns');
-  if (!id) { fz.style.display='none'; ctx.style.display='none'; if(ctxb)ctxb.style.display='none'; return; }
-  var lot = gL(id); if (!lot) return;
-  fz.style.display = 'block'; ctx.style.display = 'block'; if (ctxb) ctxb.style.display = 'block';
-  ctx.innerHTML = '<b>Solution :</b> ' + (lot.solution||'—') + ' &nbsp;|&nbsp; <b>Poids :</b> ' + (lot.poids||'—') + ' g &nbsp;|&nbsp; <b>Volume :</b> ' + (lot.volume||'—') + ' L &nbsp;|&nbsp; <b>Enjeu :</b> ' + (lot.enjeu||'—') + ' &nbsp;|&nbsp; <b>Seuil :</b> ' + seuil(lot) + ' mg/L &nbsp;|&nbsp; <b>Bains :</b> ' + (lot.mesures?lot.mesures.length:0);
-  gid('b-vol').value = lot.volume || '';
-  autoFillBain(lot);
+function chargerLot(){
+  var id=gid('s-sel').value,fz=gid('s-zone'),ctx=gid('lot-ctx');
+  if(!id){fz.style.display='none';ctx.style.display='none';affH(null);return;}
+  var lot=gL(id);if(!lot)return;
+  fz.style.display='block';ctx.style.display='block';
+  ctx.innerHTML='<b>Solution :</b> '+lot.solution+' &nbsp;|&nbsp; <b>Seuil :</b> &lt; '+seuil(lot)+' mg/L'+(lot.poids?' &nbsp;|&nbsp; <b>Poids :</b> '+lot.poids+' g':'')+' &nbsp;|&nbsp; <b>Vol. :</b> '+(lot.volume||'—')+' L &nbsp;|&nbsp; <b>Bains :</b> '+(lot.mesures?lot.mesures.length:0)+' / <b>Rinçages :</b> '+(lot.rincages?lot.rincages.length:0);
+  gid('b-vol').value=lot.volume||'';
+  if(lot.mesures&&lot.mesures.length){var l=lot.mesures[lot.mesures.length-1];if(l.cycle)gid('b-cy').value=l.cycle;if(l.nagno3)gid('b-n').value=l.nagno3;if(l.vech)gid('b-ve').value=l.vech;}
   affH(lot);
 }
-
 function autoFillBain(lot) {
   if (!lot) return;
   var lastCy = 0;
@@ -811,54 +810,33 @@ function delR(lid, i) {
   }).catch(function(e) { setStatus('Erreur : ' + e.message, 'error'); });
 }
 
-function affH(lot) {
-  if (A.hc) { A.hc.destroy(); A.hc = null; }
+function affH(lot){
+  if(A.hc){A.hc.destroy();A.hc=null;}
   var rows=gid('h-rows'),cz=gid('h-cz'),nb=gid('h-nb'),ft=gid('h-foot'),mc=gid('mob-c'),ms=gid('mob-s');
-  if (!lot||!lot.mesures||!lot.mesures.length) {
-    rows.innerHTML='<div class="hist-empty">Aucune mesure.</div>';cz.style.display='none';
-    nb.textContent='0';ft.style.display='none';
-    if(mc)mc.innerHTML='<div style="padding:8px;font-size:11px;color:#6B6966">Aucune mesure.</div>';return;
-  }
-  var mms=lot.mesures, s=seuil(lot);
-  nb.textContent=mms.length+' bains';
+  if(!lot||!lot.mesures||!lot.mesures.length){rows.innerHTML='<div class="hist-empty">Aucune mesure.</div>';cz.style.display='none';nb.textContent='0';ft.style.display='none';if(mc)mc.innerHTML='<div style="padding:8px;font-size:11px;color:#6B6966">Aucune mesure.</div>';return;}
+  var mms=lot.mesures,s=seuil(lot);nb.textContent=mms.length+'m';
+  var mCl=mms.filter(function(m){return m.cl!=null;}),dCl=mCl.length?mCl[mCl.length-1].cl:null;
   var l3=mms.slice(-3).reverse();
   var rh=l3.map(function(m,i){
-    var cl=m.cl,tr='';
-    if(i<l3.length-1){var p=l3[i+1];if(cl!=null&&p.cl!=null){var d=cl-p.cl;tr=d<-0.1?'↘':d>0.1?'↗':'→';}}
-    var cc=cl==null?'#6B6966':cl<=s?'#3A6B2A':cl<=s*1.5?'#B06B00':'#8B3A2A';
-    return '<div class="hist-row"><div><div class="hist-date">'+m.date+' J+'+m.jplus+'</div><div style="font-size:9px;color:#6B6966">Cond. '+(m.cond||'—')+' mS/cm | pH '+(m.ph||'—')+'</div></div><div style="display:flex;align-items:center;gap:3px"><span class="hist-val" style="color:'+cc+'">'+(cl!=null?cl.toFixed(1)+' mg/L':'ND')+'</span>'+(tr?'<span style="color:'+cc+'">'+tr+'</span>':'')+' </div></div>';
+    var tr='',tc='';if(i<l3.length-1){var p=l3[i+1];if(m.cl!=null&&p.cl!=null){var d=m.cl-p.cl;if(d<-2){tr='↘';tc='color:#3B6D11';}else if(d>2){tr='↗';tc='color:#E24B4A';}else{tr='→';tc='color:#6B6966';}}}
+    var cc=m.cl==null?'#6B6966':m.cl>s*1.5?'#E24B4A':m.cl>s?'#BA7517':'#8B3A2A';
+    var ds=m.deltaCl!=null?'<div class="hist-delta">ΔCl⁻ '+(m.deltaCl>0?'+':'')+m.deltaCl.toFixed(1)+'%</div>':'';
+    return '<div class="hist-row"><div><div class="hist-date">'+m.date+' J+'+m.jplus+'</div>'+ds+'</div><div style="display:flex;align-items:center;gap:3px"><span class="hist-cl" style="color:'+cc+'">'+(m.cl!=null?m.cl.toFixed(1)+' mg/L':'-')+'</span>'+(tr?'<span style="'+tc+'">'+tr+'</span>':'')+'</div></div>';
   }).join('');
-  rows.innerHTML=rh;
-  if(ms&&mms.length){var lm=mms[mms.length-1];if(lm.cl!=null)ms.textContent='— '+lm.cl.toFixed(1)+' mg/L';}
-  var mCv=mms.filter(function(m){return m.cl!=null;});
-  if(mCv.length>=2){
-    cz.style.display='block';
-    var ctx=gid('h-chart').getContext('2d');
-    A.hc=new Chart(ctx,{type:'line',data:{labels:mCv.map(function(m){return m.date?m.date.slice(5):'J+'+m.jplus;}),datasets:[{data:mCv.map(function(m){return parseFloat(m.cl.toFixed(1));}),borderColor:'#8B3A2A',backgroundColor:'rgba(139,58,42,0.08)',borderWidth:1.5,pointRadius:2,tension:0.3,fill:true},{label:'Seuil',data:mCv.map(function(){return s;}),borderColor:'#3A6B2A',borderDash:[4,3],borderWidth:1,pointRadius:0}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:9},maxTicksLimit:4}}}}});
-  } else cz.style.display='none';
-  var lastCl=mms.length?mms[mms.length-1].cl:null;
-  var ac='',acl='a-info';
-  if(lastCl!=null){
-    if(lastCl<=s){ac='✅ [Cl⁻] sous seuil ('+lastCl.toFixed(1)+' mg/L ≤ '+s+' mg/L). Passer aux rinçages.';acl='a-ok';}
-    else if(lastCl<=s*1.5){ac='⚠ [Cl⁻] en baisse mais au-dessus du seuil. Renouveler le bain.';acl='a-warn';}
-    else{ac='🔴 [Cl⁻] élevée ('+lastCl.toFixed(1)+' mg/L). Extraction active — poursuivre.';acl='a-alert';}
-  }
+  rows.innerHTML=rh;if(ms&&dCl!=null)ms.textContent='— '+dCl.toFixed(0)+' mg/L';
+  if(mCl.length>=2){cz.style.display='block';var ctx=gid('h-chart').getContext('2d');A.hc=new Chart(ctx,{type:'line',data:{labels:mCl.map(function(m){return m.date?m.date.slice(5):'J+'+m.jplus;}),datasets:[{data:mCl.map(function(m){return parseFloat(m.cl.toFixed(1));}),borderColor:'#8B3A2A',backgroundColor:'rgba(139,58,42,0.08)',borderWidth:1.5,pointRadius:2,tension:0.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:9},maxTicksLimit:4,callback:function(v){return v.toFixed(0);}}}}}});}else cz.style.display='none';
+  var ac='',acl='a-info';if(dCl!=null){if(dCl>500){ac='Changer le bain immédiatement.';acl='a-alert';}else if(dCl>s){ac='Surveiller ΔCl⁻ pour décider du changement.';acl='a-warn';}else{ac='Proche seuil — envisager rinçage si stable.';acl='a-ok';}}
   if(ac){ft.style.display='block';ft.innerHTML='<div class="alert '+acl+'" style="margin:0;font-size:10px">'+ac+'</div>';}else ft.style.display='none';
   if(mc)mc.innerHTML='<div style="padding:4px 0">'+rh+'</div>'+(ac?'<div class="alert '+acl+'" style="margin:7px 0 0;font-size:10px">'+ac+'</div>':'');
 }
-
-function calcCl() {
-  var v=fv('b-v'),n=fv('b-n')||0.05,ve=fv('b-ve')||5;
-  var box=gid('cl-display');if(!box)return;
-  if(isNaN(v)){box.innerHTML='<div style="font-size:10px;color:#6B6966;margin-top:6px">Entrez le volume AgNO₃ versé</div>';return;}
-  var id=gid('s-sel')?gid('s-sel').value:'',lot=gL(id),s=lot?seuil(lot):A.cfg.sc;
-  var cl=v*n*35450/ve;
-  var cl2=gid('b-cl-dil')?v*n*35450/ve*(fv('b-cl-dil')||1):cl;
-  var cc=cl<=s?'#3A6B2A':cl<=s*1.5?'#B06B00':'#8B3A2A';
-  var msg=cl<=A.cfg.sf?'✓ Excellent — sous seuil fort enjeu ('+A.cfg.sf+' mg/L)':cl<=A.cfg.sc?'✓ Acceptable — sous seuil courant ('+A.cfg.sc+' mg/L)':cl<=A.cfg.sc*1.5?'⚠ Au-dessus du seuil — surveiller':'🔴 Élevé — renouveler le bain';
-  box.innerHTML='<div class="kadj-box"><div class="kadj-val" style="color:'+cc+'">[Cl⁻] = '+cl.toFixed(1)+' mg/L</div><div class="kadj-lbl">'+v+' mL × '+n+' × 35450 / '+ve+' mL</div></div><div class="alert '+(cl<=s?'a-ok':cl<=s*1.5?'a-warn':'a-alert')+'" style="margin:6px 0 0;font-size:10px">'+msg+'</div>';
+function calcCl(){
+  var v=fv('b-v'),n=fv('b-n')||0.05,ve=fv('b-ve')||5,box=gid('cl-box');
+  if(isNaN(v)||v<0){box.style.display='none';return;}
+  var cl=v*n*35450/ve;box.style.display='block';
+  gid('cl-v').textContent=cl.toFixed(1)+' mg/L';gid('cl-f').textContent=v.toFixed(2)+' × '+n+' × 35450 / '+ve+' = '+cl.toFixed(1)+' mg/L';
+  aCl(cl,'cl-a');eAct(cl);
 }
-
+function evalR(){var cp=fv('r-cp'),ph=fv('r-ph'),ag=gid('r-ag').value,box=gid('r-eval'),ok_c=!isNaN(cp)&&cp<A.cfg.cr,ok_p=!isNaN(ph)&&ph>=6&&ph<=8,ok_a=ag==='-',items=[];if(!isNaN(cp))items.push({ok:ok_c,txt:'Cond. '+cp.toFixed(1)+' µS/cm '+(ok_c?'✓ OK':'hors cible <'+A.cfg.cr)});if(!isNaN(ph))items.push({ok:ok_p,txt:'pH '+ph.toFixed(1)+' '+(ok_p?'✓ OK (6–8)':'hors cible')});if(ag)items.push({ok:ok_a,txt:'AgNO₃ : '+ag+(ok_a?' ✓ négatif':ag==='ND'?' non fait':' positif')});if(!items.length){box.innerHTML='';return;}box.innerHTML='<div style="display:flex;flex-direction:column;gap:3px;margin-top:7px">'+items.map(function(it){return '<div style="font-size:11px;padding:3px 8px;background:#F4F2EF;border-radius:6px;color:'+(it.ok?'#27500A':'#633806')+'">'+it.txt+'</div>';}).join('')+'</div><div class="alert '+(ok_c&&ok_p&&ok_a?'a-ok':'a-warn')+'" style="margin:7px 0 0">'+(ok_c&&ok_p&&ok_a?'✅ Critères atteints — fin de traitement envisageable':'⏳ Poursuivre les rinçages')+'</div>';}
 function evalRinc() {
   var ca=fv('r-ca'),cp=fv('r-cp'),ag=gid('r-ag')?gid('r-ag').value:'',box=gid('r-eval');if(!box||isNaN(ca)||isNaN(cp))return;
   var v=cp-ca;var ok=cp<=A.cfg.cr&&ag==='-';
