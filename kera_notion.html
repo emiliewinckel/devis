@@ -353,7 +353,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
       Clé d'accès active : <code style="background:#eee;padding:1px 5px;border-radius:3px">KERA-EMILIE-PC</code>
     </div>
     <div class="btn-row" style="margin-top:10px">
-      <button class="btn btn-sm" onclick="rechargerDepuisNotion()">🔄 Recharger depuis Notion</button>
+      <div style="margin-bottom:8px"><label style="font-size:10px;color:#4A5F72;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:3px">Appareil</label><div style="display:flex;gap:6px"><select id="cfg-appkey-sel" style="flex:1;font-size:12px;margin-top:0"><option value="">Auto</option><option value="KERA-EMILIE-PC">PC</option><option value="KERA-EMILIE-PHONE">Téléphone</option><option value="KERA-EMILIE-TABLETTE">Tablette</option></select><button class="btn btn-sm" onclick="changerAppKey()">OK</button></div></div><button class="btn btn-sm" onclick="rechargerDepuisNotion()">🔄 Recharger depuis Notion</button>
     </div>
   </div>
 
@@ -383,6 +383,18 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 var NOTION_VERSION = '2022-06-28';
 var DB_OBJETS_NAME = 'KERA Objets';
 var DB_BAINS_NAME  = 'KERA Bains';
+
+function detectAppKey() {
+  var stored = localStorage.getItem('kera_app_key');
+  if (stored) return stored;
+  var ua = navigator.userAgent.toLowerCase();
+  var isMobile = /android|iphone|ipod/.test(ua);
+  var isTablet = /ipad|tablet/.test(ua) || (isMobile && window.screen.width >= 768);
+  if (isTablet) return 'KERA-EMILIE-TABLETTE';
+  if (isMobile) return 'KERA-EMILIE-PHONE';
+  return 'KERA-EMILIE-PC';
+}
+var APP_KEY = detectAppKey();
 
 // État global (identique à l'original + IDs des bases Notion)
 var A = {
@@ -810,6 +822,7 @@ function showPage(id) {
   document.querySelectorAll('.nav button').forEach(function(b, i) { b.classList.toggle('active', i === ix[id]); });
   if (id === 'saisie' || id === 'rapport') fillS();
   if (id === 'accueil') ref();
+  if (id === 'config') afficherAppKey();
   if (id === 'config') renderCfgNotion();
 }
 
@@ -1506,6 +1519,18 @@ function sauvegarderTokenNotion() {
   });
 }
 
+function changerAppKey(){
+  var sel=document.getElementById('cfg-appkey-sel');if(!sel)return;
+  if(sel.value){localStorage.setItem('kera_app_key',sel.value);APP_KEY=sel.value;}
+  else{localStorage.removeItem('kera_app_key');APP_KEY=detectAppKey();}
+  var d=document.getElementById('cfg-appkey-display');if(d)d.textContent=APP_KEY;
+  setStatus('Clé mise à jour : '+APP_KEY,'ok');
+}
+function afficherAppKey(){
+  var d=document.getElementById('cfg-appkey-display');if(d)d.textContent=APP_KEY;
+  var sel=document.getElementById('cfg-appkey-sel');
+  if(sel){var s=localStorage.getItem('kera_app_key');sel.value=s||'';}
+}
 function rechargerDepuisNotion() {
   if (!A.notionToken) { alert('Token non configuré.'); return; }
   setStatus('Rechargement…', 'info');
