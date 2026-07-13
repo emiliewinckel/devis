@@ -1161,7 +1161,7 @@ function loadRap() {
   var lastMesure = mms[mms.length - 1];
   var c0WarnMsg = '';
   if (lastMesure && computeKadj(lastMesure, lot) != null && lastMesure._c0manquant) {
-    c0WarnMsg = '<div class="alert a-warn" style="margin:0 0 6px;font-size:10px">⚠ C₀ non renseigné — K_adj approximatif. Saisir la conductivité de l'eau neuve pour un calcul rigoureux.</div>';
+    c0WarnMsg = '<div class="alert a-warn" style="margin:0 0 6px;font-size:10px">⚠ C₀ non renseigné — K_adj approximatif. Saisir la conductivité de l\'eau neuve pour un calcul rigoureux.</div>';
   }
   var mKv = lot.mesures.filter(function(m) { return computeKadj(m, lot) != null; });
   if (mKv.length) { var ctx = gid('r-chart').getContext('2d'); A.mc = new Chart(ctx, {type: 'line', data: {labels: mKv.map(function(m) { return m.date || 'J+' + m.jplus; }), datasets: [{label: 'K_adj', data: mKv.map(function(m) { return parseFloat(computeKadj(m, lot).toFixed(3)); }), borderColor: '#125c8a', backgroundColor: 'rgba(18,92,138,0.08)', borderWidth: 2, pointRadius: 4, tension: 0.3, fill: true}, {label: 'Seuil plateau', data: mKv.map(function() { return A.cfg.kadj; }), borderColor: '#27623A', borderDash: [5, 4], borderWidth: 1, pointRadius: 0}]}, options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: true, labels: {font: {size: 11}, boxWidth: 14}}}, scales: {y: {title: {display: true, text: 'K_adj'}, grid: {color: 'rgba(0,0,0,0.04)'}, ticks: {font: {size: 10}}}, x: {grid: {display: false}, ticks: {font: {size: 10}}}}}}); }
