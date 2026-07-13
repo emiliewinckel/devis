@@ -276,7 +276,8 @@ input:focus,select:focus{border-color:#8B3A2A;box-shadow:0 0 0 2px rgba(139,58,4
   <div class="card"><div class="card-title">🔗 Connexion Notion</div>
     <div id="notion-status" class="alert a-info" style="display:none;margin-bottom:9px"></div>
     <div style="font-size:12px;color:#3A6B2A;margin-bottom:8px">✅ Proxy Cloudflare configuré — connexion sécurisée</div>
-    <div style="font-size:11px;color:#6B4040;line-height:1.6;margin-bottom:10px">Clé active : <code style="background:#F5E8E5;padding:1px 5px;border-radius:3px">KERA-EMILIE-PC</code><br>Token Notion stocké en sécurité dans le proxy Cloudflare.</div>
+    <div style="font-size:11px;color:#6B4040;line-height:1.6;margin-bottom:10px">Clé active : <code id="cfg-appkey-display" style="background:#F5E8E5;padding:1px 5px;border-radius:3px">détection…</code><br>Token Notion stocké en sécurité dans le proxy Cloudflare.</div>
+    <div style="margin-bottom:10px"><label style="font-size:10px;color:#6B4040;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:4px">Forcer un appareil spécifique</label><div style="display:flex;gap:6px"><select id="cfg-appkey-sel" style="flex:1;font-size:12px"><option value="">Détection automatique</option><option value="KERA-EMILIE-PC">PC</option><option value="KERA-EMILIE-PHONE">Téléphone</option><option value="KERA-EMILIE-TABLETTE">Tablette</option></select><button class="btn btn-sm" onclick="changerAppKey()">Appliquer</button></div></div>
     <div class="btn-row"><button class="btn btn-sm btn-p" onclick="recharger()">🔄 Recharger depuis Notion</button></div>
   </div>
   <div class="card"><div class="card-title">Compte</div>
@@ -305,7 +306,20 @@ input:focus,select:focus{border-color:#8B3A2A;box-shadow:0 0 0 2px rgba(139,58,4
 // ============================================================
 
 var PROXY_URL    = 'https://kera-proxy.emiliewinckel.workers.dev';
-var APP_KEY      = 'KERA-EMILIE-PC';
+// Détection automatique de l'appareil
+function detectAppKey() {
+  // 1. Clé stockée manuellement (priorité)
+  var stored = localStorage.getItem('kore_app_key');
+  if (stored) return stored;
+  // 2. Détection automatique selon l'appareil
+  var ua = navigator.userAgent.toLowerCase();
+  var isMobile = /android|iphone|ipod/.test(ua);
+  var isTablet = /ipad|tablet/.test(ua) || (isMobile && window.screen.width >= 768);
+  if (isTablet) return 'KERA-EMILIE-TABLETTE';
+  if (isMobile) return 'KERA-EMILIE-PHONE';
+  return 'KERA-EMILIE-PC';
+}
+var APP_KEY = detectAppKey();
 var NOTION_VER   = '2022-06-28';
 var DB_OBJETS    = 'KORE Objets';
 var DB_BAINS     = 'KORE Bains';
@@ -696,6 +710,7 @@ function showPage(id) {
   document.querySelectorAll('.nav button').forEach(function(b, i) { b.classList.toggle('active', i === ix[id]); });
   if (id === 'saisie' || id === 'rapport') fillS();
   if (id === 'accueil') ref();
+  if (id === 'config') afficherAppKey();
 }
 
 function ref() {
@@ -1186,6 +1201,31 @@ function calcC(){var v=fv('c-v'),n=fv('c-n')||0.05,ve=fv('c-ve')||5,d=fv('c-d')|
 function imprimerEtiquette(lid){var lot=lid?gL(lid):A.lots[A.lots.length-1];if(!lot)return;var tmp=document.createElement('div');tmp.style.cssText='position:absolute;left:-9999px;top:-9999px;width:200px;height:200px';document.body.appendChild(tmp);new QRCode(tmp,{text:'https://emiliewinckel.github.io/devis/kore_notion.html?lot='+lot.id,width:200,height:200,colorDark:'#8B3A2A',colorLight:'#ffffff'});setTimeout(function(){var el=tmp.querySelector('canvas')||tmp.querySelector('img');var src=el?(el.tagName==='CANVAS'?el.toDataURL('image/png'):el.src):'';document.body.removeChild(tmp);var w=window.open('','_blank','width:320,height:520');w.document.open();w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:Montserrat,Arial,sans-serif;background:#f7f4ef;display:flex;flex-direction:column;align-items:center;padding:24px 16px;gap:14px}.card{background:#fff;border:1.5px solid #8B3A2A;border-radius:12px;padding:22px;width:240px;text-align:center}.kt{font-size:20px;font-weight:700;letter-spacing:4px;color:#8B3A2A;margin-bottom:14px}.qr{width:150px;height:150px;margin:0 auto 14px}.sep{height:1px;background:#E8D5D0;margin:12px 0}.nm{font-size:12px;font-weight:600;color:#1A1210;margin-bottom:4px}.rf{font-size:10px;font-weight:600;color:#8B3A2A;margin-bottom:3px}.dt{font-size:9px;color:#9B7070}button{padding:9px 24px;background:#8B3A2A;color:#fff;border:none;border-radius:8px;font-family:Montserrat,sans-serif;font-size:12px;font-weight:600;cursor:pointer}@media print{button{display:none}}</style></head><body><div class="card"><div class="kt">KORE</div><img class="qr" src="'+src+'" alt="QR"><div class="sep"></div><div class="nm">'+lot.int+'</div><div class="rf">'+lot.ref+'</div><div class="dt">'+(lot.dateDebut||'—')+' · '+(lot.poids||'—')+' g · '+(lot.volume||'—')+' L</div></div><button onclick="window.print()">🖨 Imprimer</button></body></html>');w.document.close();},300);}
 function swTip(id){var e=gid(id);if(e)e.classList.toggle('show');setTimeout(function(){if(e)e.classList.remove('show');},6000);}
 function addCal(){var id=gid('s-sel')?gid('s-sel').value:'',lot=gL(id),freq=lot?parseInt(lot.freq||7):7,next=new Date(Date.now()+freq*864e5),pad=function(n){return n<10?'0'+n:n;},ymd=function(d){return d.getFullYear()+''+pad(d.getMonth()+1)+''+pad(d.getDate());};window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text='+encodeURIComponent('KORE — Mesure'+(lot?' : '+lot.ref:''))+'&dates='+ymd(next)+'/'+ymd(new Date(next.getTime()+864e5)),'_blank');}
+function changerAppKey() {
+  var sel = document.getElementById('cfg-appkey-sel');
+  if (!sel) return;
+  if (sel.value) {
+    localStorage.setItem('kore_app_key', sel.value);
+    APP_KEY = sel.value;
+  } else {
+    localStorage.removeItem('kore_app_key');
+    APP_KEY = detectAppKey();
+  }
+  var disp = document.getElementById('cfg-appkey-display');
+  if (disp) disp.textContent = APP_KEY;
+  setStatus('Clé mise à jour : ' + APP_KEY, 'ok');
+}
+
+function afficherAppKey() {
+  var disp = document.getElementById('cfg-appkey-display');
+  if (disp) disp.textContent = APP_KEY;
+  var sel = document.getElementById('cfg-appkey-sel');
+  if (sel) {
+    var stored = localStorage.getItem('kore_app_key');
+    sel.value = stored || '';
+  }
+}
+
 function recharger(){setStatus('Rechargement…','info');loadLotsFromNotion().then(function(){ref();setStatus('✅ '+A.lots.length+' lot(s) rechargé(s)','ok');}).catch(function(e){setStatus('Erreur : '+e.message,'error');});}
 
 
