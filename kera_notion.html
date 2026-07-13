@@ -965,6 +965,7 @@ function delSech(lid, i) {
 
 function affH(lot) {
   if (A.hc) { A.hc.destroy(); A.hc = null; }
+  var c0WarnMsg = ''; // déclaré ici pour être accessible dans tout affH
   var rows = gid('h-rows'), cz = gid('h-cz'), nb = gid('h-nb'), ft = gid('h-foot'), mc = gid('mob-c'), ms = gid('mob-s');
   if (!lot || !lot.mesures || !lot.mesures.length) {
     rows.innerHTML = '<div class="hist-empty">Aucun bain.</div>'; cz.style.display = 'none';
