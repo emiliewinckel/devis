@@ -197,8 +197,12 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
     <div class="row"><div><label>Type</label><select id="lot-type"><option value="objet">Objet unique</option><option value="lot">Lot de fragments</option></select></div><div><label>Numéro d'inventaire</label><input type="text" id="lot-ref" placeholder="ex : M.P.2004.17.42"></div></div>
     <div class="row solo"><div><label>Désignation</label><input type="text" id="lot-int" placeholder="ex : Cône funéraire, terre cuite, Égypte"></div></div>
     <div class="row"><div><label>Opération / Collection</label><input type="text" id="lot-op" placeholder="Musée de Picardie — Lot 4"></div><div><label>Responsable</label><input type="text" id="lot-resp" placeholder="Nom restauratrice"></div></div>
-    <div class="row trio"><div><label>Date début</label><input type="date" id="lot-dd"></div><div><label>Poids sec (g)</label><input type="number" id="lot-poids" placeholder="ex : 145" step="0.1" oninput="updKadjInfo()"></div><div><label>Volume bain (L)</label><input type="number" id="lot-vol" placeholder="ex : 2" step="0.1" oninput="updKadjInfo()"></div></div>
-    <div id="ratio-info" style="font-size:10px;color:#4A5F72;margin-bottom:8px"></div>
+    <div class="row trio"><div><label>Date début</label><input type="date" id="lot-dd"></div><div><label>Poids sec (g)</label><input type="number" id="lot-poids" placeholder="ex : 145" step="0.1" oninput="updKadjInfo();suggererVolume()"></div><div><label>Volume bain (L)</label><input type="number" id="lot-vol" placeholder="ex : 2" step="0.1" oninput="updKadjInfo()"></div></div>
+    <div id="ratio-info" style="font-size:10px;color:#4A5F72;margin-bottom:4px"></div>
+    <div id="vol-suggestion" style="display:none;background:#eef4e8;border:1px solid #c0dd97;border-radius:6px;padding:7px 10px;font-size:11px;color:#27500a;margin-bottom:8px">
+      <span id="vol-suggestion-txt"></span>
+      <button class="btn btn-sm" style="margin-left:8px;padding:2px 8px;font-size:11px;background:#4a7c2f;color:#fff;border-color:#4a7c2f" onclick="appliquerVolumeSuggere()">Appliquer</button>
+    </div>
     <div class="row"><div><label>Type d'eau bain 1</label><select id="lot-eau1"><option value="robinet">Eau du robinet (bain 1 — éviter choc osmotique)</option><option value="demi">Eau déminéralisée dès le départ</option></select></div><div><label>Consolidation préalable</label><select id="lot-consol"><option value="non">Non</option><option value="b72">Paraloid B-72</option><option value="teos">Silicate d'éthyle (TEOS)</option><option value="cyclododecane">Cyclododécane</option><option value="autre">Autre</option></select></div></div>
     <div class="row"><div><label>Niveau de fragilité</label><select id="lot-fragilite"><option value="standard">Standard</option><option value="fragile">Fragile — engobe ou polychromie</option><option value="trescuite">Très fragile — terres cuites basse temp.</option><option value="argile-crue">Argile crue (tablette cunéiforme)</option></select></div><div><label>Fréquence relevés</label><select id="lot-freq"><option value="1">Quotidien (J1–J5)</option><option value="3">Tous les 3 jours</option><option value="7">Hebdomadaire</option></select></div></div>
   </div>
@@ -995,7 +999,19 @@ function affH(lot) {
   var ac = '', acl = 'a-info';
   if (lastK != null) {
     if (lastK <= A.cfg.kadj && consNeg >= A.cfg.cons) { ac = '✅ Critères d\'arrêt atteints — K<sub>adj</sub> plateau + ' + consNeg + ' bains anioniques négatifs consécutifs.'; acl = 'a-ok'; }
-    else if (lastK <= A.cfg.kadj) { ac = 'K<sub>adj</sub> plateau. Vérifier anions (' + consNeg + '/' + A.cfg.cons + ' bains négatifs consécutifs requis).'; acl = 'a-warn'; }
+    else if (lastK <= A.cfg.kadj) {
+      // Plateau ne peut être affirmé qu'avec au moins 2 bains sous le seuil (Liégey 2012)
+      var nbSousSeuil = lot.mesures.filter(function(m) {
+        var k = computeKadj(m, lot); return k != null && k <= A.cfg.kadj;
+      }).length;
+      if (nbSousSeuil < 2) {
+        ac = 'K<sub>adj</sub> = ' + lastK.toFixed(2) + ' (sous le seuil de ' + A.cfg.kadj + '). Premier bain sous le seuil — poursuivre pour confirmer la stabilité.';
+        acl = 'a-info';
+      } else {
+        ac = 'K<sub>adj</sub> plateau (' + nbSousSeuil + ' bains sous le seuil). Vérifier anions (' + consNeg + '/' + A.cfg.cons + ' bains négatifs consécutifs requis).';
+        acl = 'a-warn';
+      }
+    }
     else if (lastK > A.cfg.kadj * 5) { ac = 'Dessalement actif (K<sub>adj</sub> = ' + lastK.toFixed(2) + '). Extraction forte — relevé hebdomadaire recommandé.'; acl = 'a-alert'; }
     else if (lastK > A.cfg.kadj * 2) { ac = 'Dessalement en cours (K<sub>adj</sub> = ' + lastK.toFixed(2) + '). Décroissance à surveiller — continuer.'; acl = 'a-info'; }
     else { ac = 'K<sub>adj</sub> = ' + lastK.toFixed(2) + ' — proche du plateau. Vérifier la stabilité sur 2–3 bains avant de valider (Liégey 2012).'; acl = 'a-warn'; }
@@ -1557,6 +1573,37 @@ function addCal() {
 
 function swTip(id) { var e = gid(id); if (e) e.classList.toggle('show'); setTimeout(function() { if (e) e.classList.remove('show'); }, 6000); }
 function resetD() { if (!confirm('Supprimer TOUTES les données KERA dans Notion ?')) return; /* à implémenter si besoin */ alert('Pour supprimer les données, archivez les objets un par un ou directement dans Notion.'); }
+function suggererVolume() {
+  var poids = parseFloat((document.getElementById('lot-poids') || {}).value || 0);
+  var box = document.getElementById('vol-suggestion');
+  var txt = document.getElementById('vol-suggestion-txt');
+  if (!box || !txt) return;
+  if (!poids || poids <= 0) { box.style.display = 'none'; return; }
+
+  // Ratio recommandé : 10:1 minimum, 15:1 pour objets très poreux ou chargés
+  // (Unruh 2001 ; Liégey 2012 ; Montana 2018)
+  var volMin  = Math.ceil(poids / 100 * 10) / 10;  // ratio 10:1 en L
+  var volReco = Math.ceil(poids / 100 * 15) / 10;  // ratio 15:1 en L (recommandé)
+
+  // Arrondir au demi-litre supérieur pour être pratique
+  volMin  = Math.ceil(volMin  * 2) / 2;
+  volReco = Math.ceil(volReco * 2) / 2;
+
+  window._volSuggere = volReco;
+
+  txt.innerHTML = '📐 Pour <b>' + poids + ' g</b> : volume minimum <b>' + volMin + ' L</b> (ratio 10:1) — recommandé <b>' + volReco + ' L</b> (ratio 15:1, Unruh 2001)';
+  box.style.display = 'block';
+}
+
+function appliquerVolumeSuggere() {
+  var el = document.getElementById('lot-vol');
+  if (el && window._volSuggere) {
+    el.value = window._volSuggere;
+    updKadjInfo();
+    document.getElementById('vol-suggestion').style.display = 'none';
+  }
+}
+
 function updKadjInfo() {
   var p = fv('lot-poids'), v = fv('lot-vol');
   var box = gid('ratio-info');
