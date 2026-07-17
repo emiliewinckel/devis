@@ -188,7 +188,7 @@ input:focus,select:focus{border-color:#8B3A2A;box-shadow:0 0 0 2px rgba(139,58,4
       <div>
         <div id="form-bain">
           <div class="card"><div class="card-title">Paramètres</div>
-            <div class="row trio"><div><label>Date</label><input type="date" id="b-date"></div><div><label>J+</label><input type="number" id="b-jp" placeholder="0" min="0"></div><div><label>Cycle</label><input type="number" id="b-cy" value="1" min="1"></div></div>
+            <div class="row trio"><div><label>Date</label><input type="date" id="b-date" onchange="recalcJplus()"></div><div><label>J+</label><input type="number" id="b-jp" placeholder="0" min="0"></div><div><label>Cycle</label><input type="number" id="b-cy" value="1" min="1"></div></div>
             <div class="row trio"><div><label>Volume (L)</label><input type="number" id="b-vol" step="0.5"></div><div><label>Temp. (°C)</label><input type="number" id="b-tmp" step="0.5"></div><div><label>pH</label><input type="number" id="b-ph" step="0.1"></div></div>
           </div>
           <div class="card"><div class="card-title">Conductivité <span class="tip-btn" onclick="swTip('tc')">i</span></div>
@@ -737,7 +737,7 @@ function ref() {
       '<div class="lot-sub">' + lot.ref + (lot.operation ? ' — ' + lot.operation : '') + '</div></div>' +
       '<div class="lot-right"><span class="badge ' + sb + '">' + st + '</span>' +
       '<div style="font-size:10px;color:#6B6966;min-width:80px;text-align:right">[Cl⁻] ' + lCl + '</div>' +
-      '<button class="x-btn" onclick="delLot(\'' + lot.id + '\')">✕</button></div></div>';
+      '<button class="x-btn" onclick="event.stopPropagation();delLot(\'' + lot.id + '\')">✕</button></div></div>';
   }).join('');
 }
 
@@ -757,9 +757,26 @@ function chargerLot(){
   fz.style.display='block';ctx.style.display='block';
   ctx.innerHTML='<b>Solution :</b> '+lot.solution+' &nbsp;|&nbsp; <b>Seuil :</b> &lt; '+seuil(lot)+' mg/L'+(lot.poids?' &nbsp;|&nbsp; <b>Poids :</b> '+lot.poids+' g':'')+' &nbsp;|&nbsp; <b>Vol. :</b> '+(lot.volume||'—')+' L &nbsp;|&nbsp; <b>Bains :</b> '+(lot.mesures?lot.mesures.length:0)+' / <b>Rinçages :</b> '+(lot.rincages?lot.rincages.length:0);
   gid('b-vol').value=lot.volume||'';
-  if(lot.mesures&&lot.mesures.length){var l=lot.mesures[lot.mesures.length-1];if(l.cycle)gid('b-cy').value=l.cycle;if(l.nagno3)gid('b-n').value=l.nagno3;if(l.vech)gid('b-ve').value=l.vech;}
+  // Renseigner N AgNO3 et V éch depuis le dernier bain
+  if(lot.mesures&&lot.mesures.length){var l=lot.mesures[lot.mesures.length-1];if(l.cycle)gid('b-cy').value=parseInt(l.cycle)+1;if(l.nagno3)gid('b-n').value=l.nagno3;if(l.vech)gid('b-ve').value=l.vech;}
+  // Remplir la date du jour si vide et calculer J+
+  var dateEl=gid('b-date');
+  if(dateEl&&!dateEl.value) dateEl.value=new Date().toISOString().split('T')[0];
+  recalcJplus();
   affH(lot);
 }
+function recalcJplus() {
+  // Recalcule J+ automatiquement quand la date change
+  var id = gid('s-sel') ? gid('s-sel').value : '';
+  var lot = gL(id);
+  if (!lot) return;
+  var dv = gid('b-date').value;
+  if (lot.dateDebut && dv) {
+    var t0 = new Date(lot.dateDebut), t1 = new Date(dv);
+    gid('b-jp').value = Math.max(0, Math.round((t1 - t0) / 86400000));
+  }
+}
+
 function autoFillBain(lot) {
   if (!lot) return;
   var lastCy = 0;
@@ -839,7 +856,7 @@ function affH(lot){
     return '<div class="hist-row"><div><div class="hist-date">'+m.date+' J+'+m.jplus+'</div>'+ds+'</div><div style="display:flex;align-items:center;gap:3px"><span class="hist-cl" style="color:'+cc+'">'+(m.cl!=null?m.cl.toFixed(1)+' mg/L':'-')+'</span>'+(tr?'<span style="'+tc+'">'+tr+'</span>':'')+'</div></div>';
   }).join('');
   rows.innerHTML=rh;if(ms&&dCl!=null)ms.textContent='— '+dCl.toFixed(0)+' mg/L';
-  if(mCl.length>=2){cz.style.display='block';var ctx=gid('h-chart').getContext('2d');A.hc=new Chart(ctx,{type:'line',data:{labels:mCl.map(function(m){return m.date?m.date.slice(5):'J+'+m.jplus;}),datasets:[{data:mCl.map(function(m){return parseFloat(m.cl.toFixed(1));}),borderColor:'#8B3A2A',backgroundColor:'rgba(139,58,42,0.08)',borderWidth:1.5,pointRadius:2,tension:0.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:9},maxTicksLimit:4,callback:function(v){return v.toFixed(0);}}}}}});}else cz.style.display='none';
+  if(mCl.length>=1){cz.style.display='block';var ctx=gid('h-chart').getContext('2d');A.hc=new Chart(ctx,{type:'line',data:{labels:mCl.map(function(m){return m.date?m.date.slice(5):'J+'+m.jplus;}),datasets:[{data:mCl.map(function(m){return parseFloat(m.cl.toFixed(1));}),borderColor:'#8B3A2A',backgroundColor:'rgba(139,58,42,0.08)',borderWidth:1.5,pointRadius:2,tension:0.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,animation:false,plugins:{legend:{display:false}},scales:{x:{display:false},y:{display:true,grid:{color:'rgba(0,0,0,0.04)'},ticks:{font:{size:9},maxTicksLimit:4,callback:function(v){return v.toFixed(0);}}}}}});}else cz.style.display='none';
   var ac='',acl='a-info';if(dCl!=null){
     var lastDC = mms.length ? mms[mms.length-1].deltaC : null;
     var dcPlateau = lastDC!=null && Math.abs(lastDC)<=A.cfg.dc;
