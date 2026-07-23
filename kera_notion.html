@@ -1653,7 +1653,49 @@ document.addEventListener('input', function(e) {
   if (['r-cond', 'r-hr'].indexOf(e.target.id) >= 0) evalSech();
 });
 
+// ============================================================
+// PRÉREMPLISSAGE DEPUIS URL (connexion Notion → KERA)
+// ============================================================
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name) || '';
+}
+
+function appliquerPrefillKERA() {
+  if (!getParam('prefill')) return;
+  var map = {
+    'lot-ref':  getParam('ref'),
+    'lot-int':  getParam('int'),
+    'lot-op':   getParam('op'),
+    'lot-resp': getParam('resp'),
+    'lot-dd':   getParam('dd'),
+    'lot-poids':getParam('poids'),
+    'lot-vol':  getParam('vol'),
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && map[id]) el.value = map[id];
+  });
+  var eau = getParam('eau');
+  if (eau) { var e = document.getElementById('lot-eau1'); if(e) e.value = eau; }
+  var notionId = getParam('notionId');
+  if (notionId) {
+    var lot = A.lots.find(function(l) { return l.notionPageId === notionId; });
+    if (lot) { ouvrirLot(lot.id); return; }
+    setTimeout(function() {
+      var lot2 = A.lots.find(function(l) { return l.notionPageId === notionId; });
+      if (lot2) ouvrirLot(lot2.id);
+    }, 3000);
+  } else {
+    showPage('nouveau');
+    setTimeout(function() { if(typeof suggererVolume === 'function') suggererVolume(); }, 200);
+  }
+}
+
+
 init();
+
+// Préremplissage après chargement Notion
+setTimeout(function() { appliquerPrefillKERA(); }, 2500);
 
 </script>
 </body>
