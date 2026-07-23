@@ -1298,16 +1298,73 @@ function drawCharts(lot){
 }
 
 // Paramètre ?lot= dans l'URL
+
+// ============================================================
+// PRÉREMPLISSAGE DEPUIS URL (connexion Notion → KORE)
+// ============================================================
+function getParam(name) {
+  return new URLSearchParams(window.location.search).get(name) || '';
+}
+
+function appliquerPrefillKORE() {
+  var p = getParam('prefill');
+  if (!p) return;
+  
+  // Remplir les champs du formulaire
+  var map = {
+    'lot-ref':  getParam('ref'),
+    'lot-int':  getParam('int'),
+    'lot-op':   getParam('op'),
+    'lot-resp': getParam('resp'),
+    'lot-dd':   getParam('dd'),
+    'lot-poids':getParam('poids'),
+    'lot-vol':  getParam('vol'),
+  };
+  Object.keys(map).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el && map[id]) el.value = map[id];
+  });
+  
+  // Champs select
+  var sol = getParam('sol');
+  if (sol) { var e = document.getElementById('lot-sol'); if(e) e.value = sol; }
+  var enjeu = getParam('enjeu');
+  if (enjeu) { var e2 = document.getElementById('lot-enjeu'); if(e2) e2.value = enjeu; }
+  
+  // Si notionId fourni : chercher la fiche existante et l'ouvrir directement
+  var notionId = getParam('notionId');
+  if (notionId) {
+    // Chercher dans les lots chargés
+    var lot = A.lots.find(function(l) { return l.notionPageId === notionId; });
+    if (lot) {
+      ouvrirLot(lot.id);
+      return;
+    }
+    // Sinon attendre le chargement et réessayer
+    setTimeout(function() {
+      var lot2 = A.lots.find(function(l) { return l.notionPageId === notionId; });
+      if (lot2) ouvrirLot(lot2.id);
+    }, 3000);
+  } else {
+    // Aller directement sur la page "Nouveau lot" avec le formulaire prérempli
+    showPage('nouveau');
+    // Suggestion volume si poids renseigné
+    setTimeout(function() { if(typeof suggererVolume === 'function') suggererVolume(); }, 100);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', function() {
   init();
-  // Ouvrir directement un lot si ?lot= dans l'URL (depuis QR code)
   setTimeout(function() {
+    // Préremplissage depuis URL Notion
+    appliquerPrefillKORE();
+    // QR code : ouvrir directement un lot
     var lotParam = new URLSearchParams(window.location.search).get('lot');
-    if (lotParam) {
+    if (lotParam && !getParam('prefill')) {
       var lotCible = A.lots.find(function(l) { return l.id === lotParam; });
       if (lotCible) ouvrirLot(lotCible.id);
     }
-  }, 2500); // laisser le temps de charger Notion
+  }, 2500);
 });
 
 </script>
