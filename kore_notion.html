@@ -373,7 +373,9 @@ table.bt td.num{text-align:right;white-space:nowrap}
     <div class="row"><div><label>Seuil de fin — courant (mg/L)</label><input type="number" id="cfg-sc" step="0.5" min="0" onchange="saveCfg()"></div><div><label>Seuil de fin — fort enjeu (mg/L)</label><input type="number" id="cfg-sf" step="0.5" min="0" onchange="saveCfg()"></div></div>
     <div class="row"><div><label>N° de bain minimum pour valider</label><input type="number" id="cfg-nbmin" min="1" step="1" onchange="saveCfg()"></div><div><label>Titrages consécutifs sous le seuil</label><input type="number" id="cfg-nconf" min="1" step="1" onchange="saveCfg()"></div></div>
     <div class="row"><div><label>Durée minimale dans le bain avant validation (j)</label><input type="number" id="cfg-jmin" min="0" step="1" onchange="saveCfg()"></div><div><label>Écart minimal entre deux titrages comparés (j)</label><input type="number" id="cfg-jecart" min="1" step="1" onchange="saveCfg()"></div></div>
-    <div class="row"><div><label>Plateau : hausse maximale de [Cl⁻] (%)</label><input type="number" id="cfg-dc" min="0" step="1" onchange="saveCfg()"></div><div><label>Âge du bain signalé (j)</label><input type="number" id="cfg-jmax" min="1" step="1" onchange="saveCfg()"></div></div>
+    <div class="row"><div><label>Plateau : hausse maximale de [Cl⁻] (%)</label><input type="number" id="cfg-dc" min="0" step="1" onchange="saveCfg()"></div><div></div></div>
+    <div class="sub-title">Renouvellement anticipé (sans attendre le plateau)</div>
+    <div class="row trio"><div><label>[Cl⁻] maximale (mg/L)</label><input type="number" id="cfg-clFort" min="1" step="10" onchange="saveCfg()"></div><div><label>Soude consommée max (%)</label><input type="number" id="cfg-ohMax" min="1" step="1" onchange="saveCfg()"></div><div><label>Âge maximal d'un bain (j)</label><input type="number" id="cfg-jmax" min="1" step="1" onchange="saveCfg()"></div></div>
     <div class="cfg-note">Ces valeurs sont des choix d'atelier : elles figurent dans chaque rapport. Voir la page Protocole pour leur signification.</div>
   </div>
   <div class="card"><div class="card-title">Titrage (valeurs par défaut)</div>
@@ -403,7 +405,7 @@ table.bt td.num{text-align:right;white-space:nowrap}
 // Données : Notion (bases « KORE Objets » et « KORE Bains ») via proxy Cloudflare
 // Déploiement : GitHub Pages, fichier kore_notion.html (ne pas confondre avec kera_notion.html)
 // ============================================================
-var APP_VERSION = '2026-09-30-a';   // ← incrémenter à chaque déploiement
+var APP_VERSION = '2026-09-30-b';   // ← incrémenter à chaque déploiement
 
 var PROXY_URL  = 'https://kera-proxy.emiliewinckel.workers.dev';
 var NOTION_VER = '2022-06-28';
@@ -435,7 +437,9 @@ var CFG_DEFAUT = {
   jmin: 14,    // durée minimale dans le bain avant qu'un titrage bas compte (j)
   jecart: 7,   // écart minimal entre deux titrages comparés (j)
   dc: 10,      // plateau : hausse maximale de [Cl⁻] entre deux titrages d'un même bain (%)
-  jmax: 60,    // âge de bain signalé (oxydation du sulfite) (j)
+  jmax: 35,    // âge maximal d'un bain avant renouvellement (oxydation du sulfite, carbonatation) (j)
+  clFort: 500, // [Cl⁻] au-delà de laquelle le bain est renouvelé sans attendre le plateau (mg/L)
+  ohMax: 20,   // part maximale de la soude consommée par la libération des chlorures (%)
   nag: 0.05,   // normalité AgNO₃ par défaut
   vech: 10,    // volume d'échantillon par défaut (mL)
   blanc: 0,    // blanc de Mohr (mL)
@@ -446,8 +450,7 @@ var CFG_DEFAUT = {
   eauMax: 20,  // eau neuve : conductivité maximale attendue (µS/cm)
   phMax: 8     // rinçage : pH maximal en fin de rinçage
 };
-var CFG_VERSION = 3;
-var CL_FORT = 500;      // mg/L — extraction forte (information)
+var CFG_VERSION = 4;
 var LECTURE_BURETTE = 0.05; // mL — incertitude de lecture + virage retenue pour le titrage
 
 var A = {
@@ -516,19 +519,24 @@ function chargerCfg() {
       A.cfg.cr = CFG_DEFAUT.cr;
       A.migrInfo = 'Nouveaux critères ajoutés (durée minimale dans le bain, rinçage en écart à l\'eau neuve). Vérifiez les valeurs ci-dessous.';
     }
+    if (v < 4) {
+      // v3 : jmax (60 j) n'était qu'un avertissement ; il déclenche désormais le renouvellement
+      if (Number(stock.jmax) === 60 || stock.jmax == null) A.cfg.jmax = CFG_DEFAUT.jmax;
+      A.migrInfo = (A.migrInfo ? A.migrInfo + ' ' : '') + 'Renouvellement anticipé des bains ajouté (charge en chlorures, soude consommée, âge du bain). Vérifiez les valeurs ci-dessous.';
+    }
   }
   A.cfg.cfgv = CFG_VERSION;
   ecrireCfg();
 }
 function ecrireCfg() { try { localStorage.setItem('kore_cfg', JSON.stringify(A.cfg)); } catch (e) {} }
-var CFG_ENTIERS = {nbmin: 1, nconf: 1, jmin: 1, jecart: 1, jmax: 1, freq: 1, c0tol: 1};
+var CFG_ENTIERS = {nbmin: 1, nconf: 1, jmin: 1, jecart: 1, jmax: 1, freq: 1, c0tol: 1, clFort: 1};
 function saveCfg() {
   Object.keys(CFG_DEFAUT).forEach(function(k) {
     var v = fv('cfg-' + k);
     if (isNaN(v) || v < 0) v = CFG_DEFAUT[k];
     if (CFG_ENTIERS[k]) v = Math.round(v);
     if ((k === 'nbmin' || k === 'nconf' || k === 'jecart' || k === 'freq' || k === 'jmax') && v < 1) v = 1;
-    if ((k === 'sc' || k === 'sf' || k === 'nag' || k === 'vech') && v <= 0) v = CFG_DEFAUT[k];
+    if ((k === 'sc' || k === 'sf' || k === 'nag' || k === 'vech' || k === 'clFort' || k === 'ohMax') && v <= 0) v = CFG_DEFAUT[k];
     A.cfg[k] = v;
   });
   A.cfg.cfgv = CFG_VERSION;
@@ -848,6 +856,24 @@ function refC0(solution, exclure) {
 //  • [Cl⁻] ≤ seuil : ne compte que dans un bain renouvelé (n° ≥ nbmin), après jmin jours
 //    d'immersion, et sur nconf titrages consécutifs espacés d'au moins jecart jours.
 // ============================================================
+// Concentration de NaOH lue dans l'intitulé de la solution (« NaOH 0.5 M + … ») ; null si absente
+function naohMolaire(lot) {
+  var mt = /NaOH\s*([\d]+(?:[.,]\d+)?)\s*M\b/i.exec(lot && lot.solution || '');
+  var v = mt ? parseFloat(mt[1].replace(',', '.')) : NaN;
+  return v > 0 ? v : null;
+}
+// Raisons de renouveler un bain encore actif (au-dessus du seuil) sans attendre le plateau.
+// La libération d'un chlorure (akaganéite, FeCl₂) consomme environ un OH⁻ : estimation de la soude consommée.
+function raisonsRenouvellement(lot, m, jb) {
+  var C = A.cfg, r = [], naoh = naohMolaire(lot);
+  if (m.cl > C.clFort) r.push({code: 'charge', txt: 'bain très chargé (' + fNum(m.cl, 0) + ' mg/L > ' + fNum(C.clFort, 0) + ' mg/L)'});
+  if (naoh) {
+    var part = (m.cl / 35450) / naoh * 100;
+    if (part > C.ohMax) r.push({code: 'soude', txt: 'environ ' + fNum(part, 0) + ' % de la soude consommée (' + fNum(m.cl / 35.45, 0) + ' mmol/L de Cl⁻ libérés pour NaOH ' + fNum(naoh, 2) + ' M, à raison d\'environ un OH⁻ par Cl⁻)'});
+  }
+  if (jb != null && jb > C.jmax) r.push({code: 'age', txt: 'bain en place depuis ' + jb + ' j (> ' + C.jmax + ' j : sulfite oxydé, soude carbonatée)'});
+  return r;
+}
 // Titrages consécutifs du même bain sous le seuil, faits après jmin jours d'immersion, jusqu'à m inclus
 function serieConfirmation(lot, m, liste) {
   var s = seuil(lot), d0 = debutBain(lot, cyN(m), liste), av = titragesAvant(liste, m), serie = [m];
@@ -886,9 +912,10 @@ function evalMesure(lot, m, liste) {
       return res({statut: 'Plateau — changer le bain', cls: 'b-alert', acl: 'a-alert', code: 'changer',
         msg: 'La [Cl⁻] ne monte plus dans le bain ' + cy + ' (' + fPct(dCl) + ' en ' + dj + ' j) et reste au-dessus du seuil de fin (' + c + ' > ' + fNum(s, 1) + ' mg/L). Renouveler la solution.' +
           (u > C.dc ? ' Incertitude de lecture ≈ ±' + fNum(u, 0) + ' % : plateau à confirmer si le changement peut attendre.' : '')});
-    if (m.cl > CL_FORT)
-      return res({statut: 'Extraction forte', cls: 'b-warn', acl: 'a-warn', code: 'titrer',
-        msg: '[Cl⁻] élevée (' + c + ') : l\'extraction est importante. Poursuivre et retitrer ; le bain sera changé quand la [Cl⁻] ne montera plus.'});
+    var rr = raisonsRenouvellement(lot, m, jb);
+    if (rr.length)
+      return res({statut: 'Renouveler le bain', cls: 'b-alert', acl: 'a-alert', code: 'changer', raisons: rr,
+        msg: 'L\'extraction se poursuit (' + c + ' > seuil de fin ' + fNum(s, 1) + ' mg/L), mais l\'état de la solution justifie de la renouveler sans attendre le plateau : ' + rr.map(function(x) { return x.txt; }).join(' ; ') + '. Si le changement a lieu dans les 3 jours, ce titrage sert de titrage final du bain ' + cy + '.'});
     return res({statut: 'Extraction active', cls: 'b-warn', acl: 'a-warn', code: 'titrer',
       msg: (prev ? 'La [Cl⁻] continue de monter (' + fPct(dCl) + ' en ' + dj + ' j). ' : 'Premier titrage de ce bain. ') + c + ' > seuil de fin ' + fNum(s, 1) + ' mg/L : poursuivre et retitrer.'});
   }
@@ -957,15 +984,25 @@ function evalLot(lot) {
       else o = {statut: 'Rinçages en cours', cls: 'b-warn', acl: 'a-warn', code: 'rincer', due: today,
         msg: pre + 'Rinçage n° ' + (dr.num || rs.length) + ' non conforme : ' + er.pb.join(' ; ') + '. Poursuivre les rinçages.'};
     } else if (!dern) {
-      var d0 = debutBain(lot, cy);
-      o = {statut: 'Bain ' + cy + ' à titrer', cls: 'b-neu', acl: 'a-info', code: 'titrer', due: addJours(d0, freqLot(lot)),
-        msg: 'Bain ' + cy + ' en place depuis le ' + fDate(d0) + (d0 ? ' (' + joursEntre(d0, today) + ' j)' : '') + ', pas encore titré.'};
+      var d0 = debutBain(lot, cy), age0 = joursEntre(d0, today);
+      if (age0 != null && age0 > A.cfg.jmax)
+        o = {statut: 'Renouveler le bain', cls: 'b-alert', acl: 'a-alert', code: 'changer', due: today,
+          msg: 'Le bain ' + cy + ' est en place depuis ' + age0 + ' j (> ' + A.cfg.jmax + ' j) sans avoir été titré. Faire le titrage final puis renouveler la solution.'};
+      else o = {statut: 'Bain ' + cy + ' à titrer', cls: 'b-neu', acl: 'a-info', code: 'titrer', due: addJours(d0, freqLot(lot)),
+        msg: 'Bain ' + cy + ' en place depuis le ' + fDate(d0) + (d0 ? ' (' + age0 + ' j)' : '') + ', pas encore titré.'};
     } else {
       o = {statut: evB.statut, cls: evB.cls, acl: evB.acl, code: evB.code, msg: evB.msg, due: evB.due};
       if (!o.due) o.due = (o.code === 'titrer') ? addJours(dern.date, freqLot(lot)) : today;
       var age = joursEntre(debutBain(lot, cy), today);
-      if (o.code === 'titrer' && age != null && age > A.cfg.jmax)
-        o.msg += ' Le bain a ' + age + ' j : le sulfite s\'oxyde avec le temps, un renouvellement peut se justifier même sans plateau net.';
+      // Bain devenu trop ancien depuis le dernier titrage (extraction encore active)
+      if (o.code === 'titrer' && dern.cl > seuil(lot) && age != null && age > A.cfg.jmax) {
+        o.statut = 'Renouveler le bain'; o.cls = 'b-alert'; o.acl = 'a-alert'; o.code = 'changer'; o.due = today;
+        o.msg = 'Le bain ' + cy + ' est en place depuis ' + age + ' j (> ' + A.cfg.jmax + ' j : sulfite oxydé, soude carbonatée) et l\'extraction n\'était pas terminée au dernier titrage (' + fNum(dern.cl, 1) + ' mg/L le ' + fDate(dern.date) + '). Faire le titrage final puis renouveler la solution.';
+      } else if (o.code === 'titrer' && dern.cl > seuil(lot)) {
+        // la date prévue de titrage ne dépasse pas l'âge maximal du bain
+        var lim = addJours(debutBain(lot, cy), A.cfg.jmax);
+        if (lim && o.due > lim) o.due = lim;
+      }
     }
   }
   o.label = LIB_ACTION[o.code] + (o.code === 'titrer' || o.code === 'changer' ? ' ' + cycleCourant(lot) : '');
@@ -1613,7 +1650,7 @@ function rapportHTML(lot, impr) {
   h += '<h3>Méthode et critères appliqués</h3><div class="muted" style="line-height:1.6">' +
     'Dosage des chlorures du bain par argentométrie (méthode de Mohr) après neutralisation et oxydation du sulfite : [Cl⁻] (mg/L) = (V<sub>AgNO₃</sub> − blanc) × N × 35 450 / V<sub>éch</sub>. Incertitude indiquée : lecture de ±' + fNum(LECTURE_BURETTE, 2) + ' mL, soit ±0,05 × N × 35 450 / V<sub>éch</sub> mg/L ; une valeur dont l\'intervalle englobe le seuil n\'est pas retenue pour conclure. ' +
     'Chlorure extrait = [Cl⁻] × volume du bain ; le bilan retient le dernier titrage de chaque bain.<br>' +
-    'Changement de bain : [Cl⁻] qui n\'augmente plus de plus de ' + fNum(C.dc, 0) + ' % entre deux titrages espacés d\'au moins ' + C.jecart + ' j, tant qu\'elle reste au-dessus du seuil de fin. ' +
+    'Changement de bain : [Cl⁻] qui n\'augmente plus de plus de ' + fNum(C.dc, 0) + ' % entre deux titrages espacés d\'au moins ' + C.jecart + ' j, tant qu\'elle reste au-dessus du seuil de fin ; ou, sans attendre ce plateau, [Cl⁻] > ' + fNum(C.clFort, 0) + ' mg/L, soude consommée estimée > ' + fNum(C.ohMax, 0) + ' % (un OH⁻ par Cl⁻ libéré) ou bain en place depuis plus de ' + C.jmax + ' j. ' +
     'Fin de déchloruration : [Cl⁻] ≤ ' + fNum(s, 1) + ' mg/L dans un bain renouvelé (n° ≥ ' + C.nbmin + ') sur ' + C.nconf + ' titrage(s) consécutif(s), tous faits après au moins ' + C.jmin + ' j d\'immersion et espacés d\'au moins ' + C.jecart + ' j. ' +
     'Rinçages en eau déminéralisée : conductivité en fin de rinçage ≤ ' + fNum(C.crAbs, 0) + ' µS/cm, hausse pendant le rinçage ≤ ' + fNum(C.cr, 0) + ' µS/cm par rapport à l\'eau neuve, test AgNO₃ négatif' + ', pH ≤ ' + fNum(C.phMax, 1) + ' s\'il est mesuré. ' +
     'La conductivité des bains alcalins (C₀) sert au contrôle de la préparation, pas au suivi de l\'extraction. Seuils et délais : choix de l\'atelier (KORE ' + APP_VERSION + ').<br>' +
@@ -1700,7 +1737,8 @@ function renderProtocole() {
     '<li>Incertitude : une lecture de ±' + fNum(LECTURE_BURETTE, 2) + ' mL donne ±' + fNum(LECTURE_BURETTE * C.nag * 35450 / C.vech, 1) + ' mg/L avec les paramètres par défaut (N = ' + fNum(C.nag, 3) + ', ' + fNum(C.vech, 0) + ' mL). Suffisant en début de traitement ; <b>près du seuil de fin</b>, titrer avec ' + conseilPrecision(C.sc) + '. KORE signale « Précision insuffisante » quand l\'incertitude englobe le seuil.</li></ol>' +
     '<p class="muted">Ce rappel ne remplace pas le mode opératoire écrit de l\'atelier (concentrations des réactifs, sécurité : chromate de potassium toxique, AgNO₃ corrosif et tachant).</p>' +
     '<h3>Lecture des statuts</h3><table><thead><tr><th>Statut</th><th>Signification</th><th>Action</th></tr></thead><tbody>' +
-    [['Extraction active / forte', 'La [Cl⁻] monte encore dans le bain', 'Retitrer à la date prévue'],
+    [['Extraction active', 'La [Cl⁻] monte encore dans un bain en bon état', 'Retitrer à la date prévue'],
+     ['Renouveler le bain', 'Extraction en cours, mais bain très chargé (> ' + fNum(C.clFort, 0) + ' mg/L), soude consommée (> ' + fNum(C.ohMax, 0) + ' %) ou bain de plus de ' + C.jmax + ' j', 'Titrage final puis changement de bain, sans attendre le plateau'],
      ['Plateau — changer le bain', 'La [Cl⁻] ne monte plus (≤ +' + fNum(C.dc, 0) + ' % en ≥ ' + C.jecart + ' j) mais reste au-dessus du seuil', 'Titrage final puis changement de bain'],
      ['Sous seuil — renouveler le bain', '[Cl⁻] basse dans un bain n° < ' + C.nbmin, 'Changer le bain et vérifier que l\'extraction ne reprend pas'],
      ['Sous seuil — trop tôt', 'Bain en place depuis moins de ' + C.jmin + ' j', 'Retitrer après ' + C.jmin + ' j d\'immersion'],
@@ -1715,6 +1753,7 @@ function renderProtocole() {
     [['Seuil de fin', fNum(C.sc, 1) + ' mg/L (courant) · ' + fNum(C.sf, 1) + ' mg/L (fort enjeu)'],
      ['Validation', 'bain n° ≥ ' + C.nbmin + ' ; ' + C.nconf + ' titrage(s) consécutif(s) sous le seuil, tous après ≥ ' + C.jmin + ' j d\'immersion, espacés de ≥ ' + C.jecart + ' j'],
      ['Plateau', 'hausse ≤ ' + fNum(C.dc, 0) + ' % entre deux titrages espacés de ≥ ' + C.jecart + ' j'],
+     ['Renouvellement anticipé', '[Cl⁻] > ' + fNum(C.clFort, 0) + ' mg/L, ou soude consommée > ' + fNum(C.ohMax, 0) + ' % (estimée d\'après la concentration de NaOH indiquée dans la solution du lot), ou bain de plus de ' + C.jmax + ' j'],
      ['Rinçage conforme', 'fin ≤ ' + fNum(C.crAbs, 0) + ' µS/cm, hausse ≤ ' + fNum(C.cr, 0) + ' µS/cm, AgNO₃ négatif, pH ≤ ' + fNum(C.phMax, 1) + ' si mesuré'],
      ['Eau de rinçage', 'conductivité attendue ≤ ' + fNum(C.eauMax, 0) + ' µS/cm (eau osmosée + déionisée)']]
       .map(function(r) { return '<tr><td style="width:30%"><b>' + r[0] + '</b></td><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table>' +
