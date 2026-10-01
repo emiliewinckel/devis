@@ -376,6 +376,8 @@ table.bt td.num{text-align:right;white-space:nowrap}
     <div class="row"><div><label>Plateau : hausse maximale de [Cl⁻] (%)</label><input type="number" id="cfg-dc" min="0" step="1" onchange="saveCfg()"></div><div></div></div>
     <div class="sub-title">Renouvellement anticipé (sans attendre le plateau)</div>
     <div class="row trio"><div><label>[Cl⁻] maximale (mg/L)</label><input type="number" id="cfg-clFort" min="1" step="10" onchange="saveCfg()"></div><div><label>Soude consommée max (%)</label><input type="number" id="cfg-ohMax" min="1" step="1" onchange="saveCfg()"></div><div><label>Âge maximal d'un bain (j)</label><input type="number" id="cfg-jmax" min="1" step="1" onchange="saveCfg()"></div></div>
+    <div class="sub-title">Volume de solution</div>
+    <div class="row"><div><label>Rapport solution / objet minimal (mL/g)</label><input type="number" id="cfg-ratioMin" min="0.5" step="0.5" onchange="saveCfg()"></div><div><label>Rapport solution / objet maximal (mL/g)</label><input type="number" id="cfg-ratioMax" min="1" step="1" onchange="saveCfg()"></div></div>
     <div class="cfg-note">Ces valeurs sont des choix d'atelier : elles figurent dans chaque rapport. Voir la page Protocole pour leur signification.</div>
   </div>
   <div class="card"><div class="card-title">Titrage (valeurs par défaut)</div>
@@ -405,7 +407,7 @@ table.bt td.num{text-align:right;white-space:nowrap}
 // Données : Notion (bases « KORE Objets » et « KORE Bains ») via proxy Cloudflare
 // Déploiement : GitHub Pages, fichier kore_notion.html (ne pas confondre avec kera_notion.html)
 // ============================================================
-var APP_VERSION = '2026-09-30-b';   // ← incrémenter à chaque déploiement
+var APP_VERSION = '2026-10-01-a';   // ← incrémenter à chaque déploiement
 
 var PROXY_URL  = 'https://kera-proxy.emiliewinckel.workers.dev';
 var NOTION_VER = '2022-06-28';
@@ -440,6 +442,8 @@ var CFG_DEFAUT = {
   jmax: 35,    // âge maximal d'un bain avant renouvellement (oxydation du sulfite, carbonatation) (j)
   clFort: 500, // [Cl⁻] au-delà de laquelle le bain est renouvelé sans attendre le plateau (mg/L)
   ohMax: 20,   // part maximale de la soude consommée par la libération des chlorures (%)
+  ratioMin: 4, // rapport solution / objet minimal (mL/g) : en dessous, le bain se charge trop vite
+  ratioMax: 20,// rapport solution / objet maximal (mL/g) : au-dessus, chlorures trop dilués pour être bien dosés
   nag: 0.05,   // normalité AgNO₃ par défaut
   vech: 10,    // volume d'échantillon par défaut (mL)
   blanc: 0,    // blanc de Mohr (mL)
@@ -536,7 +540,8 @@ function saveCfg() {
     if (isNaN(v) || v < 0) v = CFG_DEFAUT[k];
     if (CFG_ENTIERS[k]) v = Math.round(v);
     if ((k === 'nbmin' || k === 'nconf' || k === 'jecart' || k === 'freq' || k === 'jmax') && v < 1) v = 1;
-    if ((k === 'sc' || k === 'sf' || k === 'nag' || k === 'vech' || k === 'clFort' || k === 'ohMax') && v <= 0) v = CFG_DEFAUT[k];
+    if ((k === 'sc' || k === 'sf' || k === 'nag' || k === 'vech' || k === 'clFort' || k === 'ohMax' || k === 'ratioMin' || k === 'ratioMax') && v <= 0) v = CFG_DEFAUT[k];
+    if (k === 'ratioMax' && v < A.cfg.ratioMin) v = Math.max(A.cfg.ratioMin, CFG_DEFAUT.ratioMax);
     A.cfg[k] = v;
   });
   A.cfg.cfgv = CFG_VERSION;
@@ -856,6 +861,18 @@ function refC0(solution, exclure) {
 //  • [Cl⁻] ≤ seuil : ne compte que dans un bain renouvelé (n° ≥ nbmin), après jmin jours
 //    d'immersion, et sur nconf titrages consécutifs espacés d'au moins jecart jours.
 // ============================================================
+// Rapport solution / objet (mL/g) et son appréciation
+function evalRatio(vol, poids) {
+  if (!(vol > 0) || !(poids > 0)) return null;
+  var r = vol * 1000 / poids, C = A.cfg, o = {r: r, vMin: poids * C.ratioMin / 1000, vMax: poids * C.ratioMax / 1000};
+  if (r < C.ratioMin) { o.ok = false; o.cls = 'a-warn'; o.txt = 'Rapport ' + fNum(r, 1) + ' mL/g, sous le minimum de ' + fNum(C.ratioMin, 1) + ' mL/g : le bain se chargera très vite en chlorures et consommera rapidement la soude. Volume minimal : ' + fNum(o.vMin, 1) + ' L.'; }
+  else if (r > C.ratioMax) { o.ok = false; o.cls = 'a-warn'; o.txt = 'Rapport ' + fNum(r, 1) + ' mL/g, au-dessus de ' + fNum(C.ratioMax, 0) + ' mL/g : les chlorures seront très dilués et difficiles à doser près du seuil de fin. Volume maximal conseillé : ' + fNum(o.vMax, 1) + ' L.'; }
+  else { o.ok = true; o.cls = 'a-ok'; o.txt = 'Rapport ' + fNum(r, 1) + ' mL/g ✓ (plage ' + fNum(C.ratioMin, 1) + '–' + fNum(C.ratioMax, 0) + ' mL/g).' + (r < 8 ? ' Rapport bas : prévoir des changements de bain plus fréquents, et de préférence une solution NaOH 0,5 M.' : ''); }
+  return o;
+}
+// Sources de la plage de rapport solution / objet par défaut (4–20 mL/g)
+var REF_RATIO = 'Watkinson 1982 ; Rimmer, Watkinson &amp; Wang 2012 ; Lemoine 2019';
+function sourceRatio() { return (A.cfg.ratioMin === CFG_DEFAUT.ratioMin && A.cfg.ratioMax === CFG_DEFAUT.ratioMax) ? ' (' + REF_RATIO + ')' : ' (choix de l\'atelier)'; }
 // Concentration de NaOH lue dans l'intitulé de la solution (« NaOH 0.5 M + … ») ; null si absente
 function naohMolaire(lot) {
   var mt = /NaOH\s*([\d]+(?:[.,]\d+)?)\s*M\b/i.exec(lot && lot.solution || '');
@@ -1269,6 +1286,8 @@ function majNouveauBain() {
       if (cl != null) msgs.push('<div class="res"><div class="big">' + fNum(cl, 1) + ' mg/L</div><div class="line">Titrage final du bain ' + cy + (vb ? ' : ' + fMg(cl * vb) + ' de chlorure extrait' : '') + '</div></div>');
     }
   }
+  var er_ = evalRatio(nv('nb-vol'), lot.poids);
+  if (er_ && !er_.ok) msgs.push('<div class="alert ' + er_.cls + '">' + esc(er_.txt) + '</div>');
   var c0 = nv('nb-c0');
   if (c0 != null) {
     var ref0 = refC0(lot.solution);
@@ -1622,7 +1641,7 @@ function rapportHTML(lot, impr) {
   var h = '';
   h += '<h3>Identification</h3><table class="bt"><tbody>' +
     [['Référence', lot.ref], ['Intitulé', lot.int], ['Type', lot.type === 'lot' ? 'Lot d\'objets' : 'Objet unique'], ['Opération', lot.operation], ['Responsable', lot.responsable],
-     ['Solution', lot.solution], ['Poids', lot.poids ? fNum(lot.poids, 0) + ' g' : '—'], ['Enjeu de conservation', (lot.enjeu === 'fort' ? 'Fort enjeu / exposition' : 'Courant') + ' — seuil de fin ' + fNum(s, 1) + ' mg/L'],
+     ['Solution', lot.solution], ['Poids', lot.poids ? fNum(lot.poids, 0) + ' g' : '—'], ['Rapport solution / objet', (function() { var vb = bains(lot).map(function(b) { return b.volume; }).filter(function(x) { return x > 0; }); var v = vb.length ? vb[vb.length - 1] : lot.volume; var e = evalRatio(v, lot.poids); return e ? fNum(e.r, 1) + ' mL/g' + (e.ok ? '' : ' (hors plage ' + fNum(A.cfg.ratioMin, 1) + '–' + fNum(A.cfg.ratioMax, 0) + ' mL/g)') : '—'; })()], ['Enjeu de conservation', (lot.enjeu === 'fort' ? 'Fort enjeu / exposition' : 'Courant') + ' — seuil de fin ' + fNum(s, 1) + ' mg/L'],
      ['Début du traitement', fDate(d0)], ['Statut', ev.statut + (lot.statutLot && /^termin/i.test(lot.statutLot) ? '' : '')]]
       .map(function(r) { return '<tr><td style="width:38%;color:#6B6966">' + r[0] + '</td><td><b>' + esc(r[1] || '—') + '</b></td></tr>'; }).join('') + '</tbody></table>';
   h += '<h3>Synthèse</h3><div class="metrics" style="grid-template-columns:repeat(4,1fr)">' +
@@ -1652,9 +1671,10 @@ function rapportHTML(lot, impr) {
     'Chlorure extrait = [Cl⁻] × volume du bain ; le bilan retient le dernier titrage de chaque bain.<br>' +
     'Changement de bain : [Cl⁻] qui n\'augmente plus de plus de ' + fNum(C.dc, 0) + ' % entre deux titrages espacés d\'au moins ' + C.jecart + ' j, tant qu\'elle reste au-dessus du seuil de fin ; ou, sans attendre ce plateau, [Cl⁻] > ' + fNum(C.clFort, 0) + ' mg/L, soude consommée estimée > ' + fNum(C.ohMax, 0) + ' % (un OH⁻ par Cl⁻ libéré) ou bain en place depuis plus de ' + C.jmax + ' j. ' +
     'Fin de déchloruration : [Cl⁻] ≤ ' + fNum(s, 1) + ' mg/L dans un bain renouvelé (n° ≥ ' + C.nbmin + ') sur ' + C.nconf + ' titrage(s) consécutif(s), tous faits après au moins ' + C.jmin + ' j d\'immersion et espacés d\'au moins ' + C.jecart + ' j. ' +
+    'Volume de solution : ' + fNum(C.ratioMin, 1) + ' à ' + fNum(C.ratioMax, 0) + ' mL par gramme d\'objet' + sourceRatio() + ' ; en dessous, le bain se charge et consomme la soude trop vite ; au-dessus, les chlorures sont trop dilués pour être dosés avec précision. ' +
     'Rinçages en eau déminéralisée : conductivité en fin de rinçage ≤ ' + fNum(C.crAbs, 0) + ' µS/cm, hausse pendant le rinçage ≤ ' + fNum(C.cr, 0) + ' µS/cm par rapport à l\'eau neuve, test AgNO₃ négatif' + ', pH ≤ ' + fNum(C.phMax, 1) + ' s\'il est mesuré. ' +
     'La conductivité des bains alcalins (C₀) sert au contrôle de la préparation, pas au suivi de l\'extraction. Seuils et délais : choix de l\'atelier (KORE ' + APP_VERSION + ').<br>' +
-    'Références sur la méthode : North &amp; Pearson 1975 ; Gilberg &amp; Seeley 1982 ; Watkinson 2010 ; Rimmer, Watkinson &amp; Wang 2012.</div>';
+    'Références sur la méthode : North &amp; Pearson 1975 ; Watkinson 1982 ; Gilberg &amp; Seeley 1982 ; Watkinson 2010 ; Rimmer, Watkinson &amp; Wang 2012 ; Lemoine 2019.</div>';
   return h;
 }
 function loadRap() {
@@ -1721,7 +1741,7 @@ function renderProtocole() {
   el.innerHTML =
     '<h3>Principe</h3><p>Le suivi repose sur le <b>dosage des chlorures</b> passés dans le bain (argentométrie, méthode de Mohr). La conductivité d\'un bain NaOH/Na₂SO₃ est dominée par les réactifs (plusieurs dizaines de mS/cm) : 100 mg/L de chlorure n\'y pèsent que quelques dixièmes de mS/cm, moins que l\'effet de la température ou de la carbonatation. Elle sert donc seulement à contrôler la préparation d\'un bain neuf (C₀). Dans les rinçages en eau déminéralisée, en revanche, la conductivité est le bon indicateur.</p>' +
     '<h3>Déroulé pas à pas</h3><ol>' +
-    '<li><b>Créer le lot</b> (« + Lot ») : référence, poids, volume de solution (au moins ~10 mL par gramme d\'objet), enjeu. Imprimer l\'étiquette QR et la fixer au contenant.</li>' +
+    '<li><b>Créer le lot</b> (« + Lot ») : référence, poids, volume de solution compris entre ' + fNum(C.ratioMin, 1) + ' et ' + fNum(C.ratioMax, 0) + ' mL par gramme d\'objet (en dessous, le bain se charge et s\'épuise vite ; au-dessus, les chlorures sont trop dilués pour être bien dosés), enjeu. Imprimer l\'étiquette QR et la fixer au contenant.</li>' +
     '<li><b>Démarrer le bain 1</b> : date, volume, conductivité C₀ du bain neuf. Garder le contenant fermé (évaporation, entrée d\'O₂ et de CO₂ qui oxydent le sulfite et carbonatent la soude) ; ne pas compléter un bain en cours : un ajout dilue les chlorures et fausse le suivi.</li>' +
     '<li><b>Titrer</b> un échantillon du bain à la fréquence du lot (' + C.freq + ' j par défaut). Saisir seulement le volume d\'AgNO₃ versé : KORE calcule la [Cl⁻], la quantité extraite et indique l\'étape suivante.</li>' +
     '<li><b>Changer le bain</b> quand KORE l\'indique (la [Cl⁻] ne monte plus). Faire un titrage final juste avant de vider : sinon le chlorure de ce bain est perdu pour le bilan.</li>' +
@@ -1755,6 +1775,7 @@ function renderProtocole() {
      ['Plateau', 'hausse ≤ ' + fNum(C.dc, 0) + ' % entre deux titrages espacés de ≥ ' + C.jecart + ' j'],
      ['Renouvellement anticipé', '[Cl⁻] > ' + fNum(C.clFort, 0) + ' mg/L, ou soude consommée > ' + fNum(C.ohMax, 0) + ' % (estimée d\'après la concentration de NaOH indiquée dans la solution du lot), ou bain de plus de ' + C.jmax + ' j'],
      ['Rinçage conforme', 'fin ≤ ' + fNum(C.crAbs, 0) + ' µS/cm, hausse ≤ ' + fNum(C.cr, 0) + ' µS/cm, AgNO₃ négatif, pH ≤ ' + fNum(C.phMax, 1) + ' si mesuré'],
+     ['Volume de solution', fNum(C.ratioMin, 1) + ' à ' + fNum(C.ratioMax, 0) + ' mL par gramme d\'objet' + sourceRatio()],
      ['Eau de rinçage', 'conductivité attendue ≤ ' + fNum(C.eauMax, 0) + ' µS/cm (eau osmosée + déionisée)']]
       .map(function(r) { return '<tr><td style="width:30%"><b>' + r[0] + '</b></td><td>' + r[1] + '</td></tr>'; }).join('') + '</tbody></table>' +
     '<p class="muted" style="margin-top:6px">Ces seuils et délais sont des choix de l\'atelier (Configuration), rappelés dans chaque rapport.</p>';
@@ -1773,9 +1794,8 @@ function calcC() {
 function updVolInfo() {
   var p = fv('lot-poids'), v = fv('lot-vol'), box = gid('vol-info'); if (!box) return;
   if (!(p > 0)) { box.innerHTML = ''; return; }
-  var vMin = p * 10 / 1000;
-  if (!(v > 0)) box.innerHTML = '<div class="alert a-info" style="margin:0">Volume indicatif : au moins <b>' + fNum(vMin, 1) + ' L</b> (≈ 10 mL de solution par gramme), objet entièrement immergé.</div>';
-  else { var r = v * 1000 / p; box.innerHTML = r < 10 ? '<div class="alert a-warn" style="margin:0">Rapport ' + fNum(r, 1) + ' mL/g, inférieur à ~10 mL/g : la [Cl⁻] montera vite et les bains devront être changés plus souvent. Volume indicatif : ' + fNum(vMin, 1) + ' L.</div>' : '<div class="alert a-ok" style="margin:0">Rapport ' + fNum(r, 1) + ' mL/g ✓</div>'; }
+  if (!(v > 0)) { box.innerHTML = '<div class="alert a-info" style="margin:0">Volume de solution : entre <b>' + fNum(p * A.cfg.ratioMin / 1000, 1) + ' et ' + fNum(p * A.cfg.ratioMax / 1000, 1) + ' L</b> (' + fNum(A.cfg.ratioMin, 1) + ' à ' + fNum(A.cfg.ratioMax, 0) + ' mL par gramme), l\'objet devant rester entièrement immergé.</div>'; return; }
+  var e = evalRatio(v, p); box.innerHTML = '<div class="alert ' + e.cls + '" style="margin:0">' + esc(e.txt) + '</div>';
 }
 function editerLot(id) {
   var lot = gL(id); if (!lot) { alert('Lot introuvable.'); return; }
