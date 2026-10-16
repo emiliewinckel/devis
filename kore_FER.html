@@ -383,6 +383,8 @@ table.bt td.num{text-align:right;white-space:nowrap}
   <div class="card"><div class="card-title">Titrage (valeurs par défaut)</div>
     <div class="row trio"><div><label>N AgNO₃ (mol/L)</label><input type="number" id="cfg-nag" step="0.001" min="0" onchange="saveCfg()"></div><div><label>V échantillon (mL)</label><input type="number" id="cfg-vech" step="0.5" min="0" onchange="saveCfg()"></div><div><label>Blanc de Mohr (mL)</label><input type="number" id="cfg-blanc" step="0.01" min="0" onchange="saveCfg()"></div></div>
     <div class="row"><div><label>Tolérance C₀ bain neuf (%)</label><input type="number" id="cfg-c0tol" min="1" step="1" onchange="saveCfg()"></div><div><label>Fréquence de titrage par défaut (j)</label><input type="number" id="cfg-freq" min="1" step="1" onchange="saveCfg()"></div></div>
+    <div class="row"><div><label>Intervalle adapté à la phase</label><select id="cfg-adapt" onchange="saveCfg()"><option value="1">Oui — resserrer/espacer selon la vitesse d'extraction</option><option value="0">Non — fréquence fixe</option></select></div><div><label>Part du bain prélevable au total (%)</label><input type="number" id="cfg-prelMax" min="1" max="50" step="1" onchange="saveCfg()"></div></div>
+    <div class="alert a-info" style="margin:6px 0 0;font-size:11px">Avec l'intervalle adapté, la date du prochain titrage est calculée pour que la hausse de [Cl⁻] dépasse l'incertitude du titrage : jamais moins que l'écart minimal entre titrages comparés, jamais plus du double de la fréquence de base, et toujours dans la limite de l'âge maximal du bain.</div>
     <div class="cfg-note">Le blanc est déduit des nouveaux titrages et enregistré avec chacun d'eux ; les titrages déjà saisis ne sont pas recalculés.</div>
   </div>
   <div class="card"><div class="card-title">Rinçages</div>
@@ -407,7 +409,7 @@ table.bt td.num{text-align:right;white-space:nowrap}
 // Données : Notion (bases « KORE Objets » et « KORE Bains ») via proxy Cloudflare
 // Déploiement : GitHub Pages, fichier kore_notion.html (ne pas confondre avec kera_notion.html)
 // ============================================================
-var APP_VERSION = '2026-10-01-a';   // ← incrémenter à chaque déploiement
+var APP_VERSION = '2026-10-16-c';   // ← incrémenter à chaque déploiement
 
 var PROXY_URL  = 'https://kera-proxy.emiliewinckel.workers.dev';
 var NOTION_VER = '2022-06-28';
@@ -449,6 +451,8 @@ var CFG_DEFAUT = {
   blanc: 0,    // blanc de Mohr (mL)
   c0tol: 15,   // tolérance sur C₀ par rapport aux bains de même recette (%)
   freq: 14,    // fréquence de titrage par défaut (j)
+  adapt: 1,    // 1 = intervalle de titrage adapté à la phase (vitesse d'extraction vs incertitude)
+  prelMax: 15, // part maximale du bain qu'on accepte de prélever au total pour les titrages (%)
   cr: 20,      // rinçage : hausse maximale de conductivité pendant un rinçage (µS/cm)
   crAbs: 50,   // rinçage : conductivité maximale en fin de rinçage (µS/cm)
   eauMax: 20,  // eau neuve : conductivité maximale attendue (µS/cm)
@@ -533,7 +537,7 @@ function chargerCfg() {
   ecrireCfg();
 }
 function ecrireCfg() { try { localStorage.setItem('kore_cfg', JSON.stringify(A.cfg)); } catch (e) {} }
-var CFG_ENTIERS = {nbmin: 1, nconf: 1, jmin: 1, jecart: 1, jmax: 1, freq: 1, c0tol: 1, clFort: 1};
+var CFG_ENTIERS = {nbmin: 1, nconf: 1, jmin: 1, jecart: 1, jmax: 1, freq: 1, c0tol: 1, clFort: 1, adapt: 1, prelMax: 1};
 function saveCfg() {
   Object.keys(CFG_DEFAUT).forEach(function(k) {
     var v = fv('cfg-' + k);
@@ -542,6 +546,7 @@ function saveCfg() {
     if ((k === 'nbmin' || k === 'nconf' || k === 'jecart' || k === 'freq' || k === 'jmax') && v < 1) v = 1;
     if ((k === 'sc' || k === 'sf' || k === 'nag' || k === 'vech' || k === 'clFort' || k === 'ohMax' || k === 'ratioMin' || k === 'ratioMax') && v <= 0) v = CFG_DEFAUT[k];
     if (k === 'ratioMax' && v < A.cfg.ratioMin) v = Math.max(A.cfg.ratioMin, CFG_DEFAUT.ratioMax);
+    if (k === 'adapt') v = v ? 1 : 0;
     A.cfg[k] = v;
   });
   A.cfg.cfgv = CFG_VERSION;
@@ -565,6 +570,43 @@ function resetCfg() {
 }
 function seuil(lot) { return lot && lot.enjeu === 'fort' ? A.cfg.sf : A.cfg.sc; }
 function freqLot(lot) { var f = parseInt(lot && lot.freq); return f > 0 ? f : A.cfg.freq; }
+
+// ------------------------------------------------------------
+// INTERVALLE DE TITRAGE ADAPTATIF
+// La fréquence fixe (freqLot) ne tient pas compte de la phase du traitement :
+// un bain qui se charge vite et un bain proche du plateau ne demandent pas le
+// même rythme. On calcule le délai au bout duquel la hausse attendue de [Cl-]
+// dépassera l'incertitude du titrage — en dessous, le titrage ne peut rien
+// conclure ; bien au-delà, on gaspille la durée de vie du bain (jmax).
+// Renvoie {j: jours, raison: texte, mode: 'base'|'adapte'|'plancher'|'plafond'}.
+// ------------------------------------------------------------
+function intervalleTitrage(lot, liste) {
+  var C = A.cfg, base = freqLot(lot);
+  if (!C.adapt) return {j: base, raison: 'fréquence fixe du lot (' + base + ' j)', mode: 'base'};
+  liste = liste || lot.mesures || [];
+  var cy = cycleCourant(lot);
+  var titr = liste.filter(function(m) { return estTitrage(m) && cyN(m) === cy; });
+  var dern = titr[titr.length - 1], prev = titr[titr.length - 2];
+  if (!dern || !prev) return {j: base, raison: 'moins de deux titrages dans ce bain — fréquence de base (' + base + ' j)', mode: 'base'};
+
+  var dj = joursEntre(prev.date, dern.date);
+  var vit = (dj > 0) ? (dern.cl - prev.cl) / dj : null;   // mg/L par jour
+  var da = Math.max(incAbs(dern) || 0, incAbs(prev) || 0); // incertitude absolue
+  if (!(vit > 0) || !(da > 0)) return {j: base, raison: 'vitesse d\'extraction non exploitable — fréquence de base (' + base + ' j)', mode: 'base'};
+
+  // Délai pour que la hausse dépasse 2x l'incertitude (lecture significative)
+  var j = Math.ceil(2 * da / vit);
+  var plancher = C.jecart, plafond = base * 2;
+  var mode = 'adapte';
+  if (j < plancher) { j = plancher; mode = 'plancher'; }
+  if (j > plafond)  { j = plafond;  mode = 'plafond'; }
+
+  var r = 'extraction à ' + fNum(vit, 2) + ' mg/L par jour, incertitude ±' + fNum(da, 1) + ' mg/L : '
+        + 'il faut environ ' + j + ' j pour une hausse lisible';
+  if (mode === 'plancher') r += ' (ramené à l\'écart minimal de ' + plancher + ' j)';
+  if (mode === 'plafond')  r += ' (plafonné à ' + plafond + ' j)';
+  return {j: j, raison: r, mode: mode, vit: vit, da: da};
+}
 
 // ============================================================
 // NOTION — API
@@ -773,7 +815,26 @@ function volBain(lot, cy) {
   var d = (lot.mesures || []).filter(function(x) { return cyN(x) === cy && parseFloat(x.volume) > 0; });
   return d.length ? d[0].volume : null;
 }
-function masseM(lot, m) { var v = volM(lot, m); return (m && m.cl != null && v) ? m.cl * v : null; }
+// Masse de chlorure extraite par le bain, à la date de ce titrage.
+// Chaque titrage retire définitivement un échantillon : le chlorure qu'il
+// emporte est compté à la concentration du moment, et le volume restant
+// diminue d'autant. Sans cette correction, le bilan est calculé sur le volume
+// initial et surestime l'extraction.
+function masseM(lot, m, liste) {
+  if (!m || m.cl == null) return null;
+  var v = volM(lot, m); if (!(v > 0)) return null;
+  liste = liste || lot.mesures || [];
+  var retire = 0, massePrel = 0;
+  titragesAvant(liste, m).forEach(function(x) {
+    var ve = x.vech > 0 ? Number(x.vech) : 0;
+    retire += ve; massePrel += (x.cl || 0) * ve / 1000;
+  });
+  var veM = m.vech > 0 ? Number(m.vech) : 0;
+  retire += veM; massePrel += m.cl * veM / 1000;
+  var vrest = v - retire / 1000;
+  if (vrest < 0) vrest = 0;
+  return m.cl * vrest + massePrel;
+}
 function clDepuisTitrage(v, n, ve, blanc) {
   if (v == null || isNaN(v) || v < 0 || !(n > 0) || !(ve > 0)) return null;
   return Math.max(0, v - (blanc || 0)) * n * 35450 / ve;
@@ -787,9 +848,67 @@ function incRel(m) {
 // Incertitude absolue sur [Cl⁻] (mg/L) : ±0,05 mL × N × 35 450 / V éch — ne dépend que de N et de V éch
 function incAbs(m) { return (m && m.nagno3 > 0 && m.vech > 0) ? LECTURE_BURETTE * m.nagno3 * 35450 / m.vech : null; }
 // Conseil de paramètres pour titrer près du seuil (incertitude ≤ 10 % du seuil)
-function conseilPrecision(s) {
-  var ve = Math.ceil(LECTURE_BURETTE * 0.01 * 35450 / (0.1 * s) / 5) * 5;
-  return 'AgNO₃ 0,01 mol/L et ' + ve + ' mL d\'échantillon (±' + fNum(LECTURE_BURETTE * 0.01 * 35450 / ve, 1) + ' mg/L)';
+// Deux normalités seulement, volontairement : 0,05 mol/L pour la phase active
+// et 0,01 mol/L (simple dilution au 1/5 de la précédente) pour l'approche du
+// seuil. Un atelier qui forme des stagiaires a tout à gagner à ne manipuler
+// que deux solutions : moins de flacons, moins d'erreurs d'étiquetage.
+var NORMALITES = [0.05, 0.01];
+
+// Incertitude absolue (mg/L) pour un couple normalité / volume d'échantillon.
+function incPour(n, ve) { return (n > 0 && ve > 0) ? LECTURE_BURETTE * n * 35450 / ve : null; }
+
+// Choisit le couple (normalité, volume d'échantillon) qui atteint une incertitude
+// <= 10 % du seuil SANS dépasser le volume d'échantillon disponible.
+// On abaisse la normalité en priorité : l'incertitude dépend du rapport N / V_éch,
+// donc diluer l'AgNO3 remplace un gros prélèvement et ne coûte rien au bain.
+// veMax : volume d'échantillon maximal admissible (mL), null = pas de contrainte.
+function choixTitrage(s, veMax) {
+  var cible = 0.1 * s, plafond = veMax > 0 ? veMax : 1e9, best = null;
+  for (var i = 0; i < NORMALITES.length; i++) {
+    var n = NORMALITES[i];
+    var ve = Math.ceil(LECTURE_BURETTE * n * 35450 / cible / 5) * 5;  // arrondi à 5 mL
+    if (ve <= plafond) return {n: n, ve: ve, inc: incPour(n, ve), ok: true};
+    best = {n: n, ve: plafond, inc: incPour(n, plafond), ok: false};
+  }
+  return best;
+}
+
+// Phrase de conseil. volDispo = volume de bain réellement disponible (mL), facultatif.
+function conseilPrecision(s, volDispo) {
+  // Plafond par défaut quand le volume du bain est inconnu : on ne propose jamais
+  // un prélèvement démesuré, on dilue l'AgNO₃ à la place.
+  var defaut = Math.max(20, A.cfg.vech || 0);
+  // Avec un bain généreux on peut prélever davantage ; sur un petit objet le
+  // budget de prélèvement commande, et c'est la dilution qui prend le relais.
+  var veMax = volDispo > 0 ? Math.max(5, Math.min(50, Math.floor(volDispo * (A.cfg.prelMax / 100) / 5) * 5)) : defaut;
+  var c = choixTitrage(s, veMax);
+  var txt = 'AgNO₃ ' + fNum(c.n, 3) + ' mol/L et ' + c.ve + ' mL d\'échantillon (±' + fNum(c.inc, 2) + ' mg/L)';
+  if (!c.ok) txt += ' — meilleur compromis possible sans trop prélever ; l\'incertitude reste élevée devant le seuil';
+  return txt;
+}
+
+// ------------------------------------------------------------
+// BUDGET DE PRÉLÈVEMENT
+// Chaque titrage retire définitivement un échantillon du bain. Sur un petit
+// objet, le cumul fait baisser le rapport solution/objet sans que rien ne le
+// signale, et le bilan de Cl- est calculé sur le volume initial du bain.
+// ------------------------------------------------------------
+function bilanPrelevements(lot, cy, enPlus) {
+  var volL = volBain(lot, cy);
+  var retire = 0;
+  (lot.mesures || []).forEach(function(m) {
+    if (cyN(m) === cy && estTitrage(m) && m.vech > 0) retire += Number(m.vech);
+  });
+  if (enPlus > 0) retire += Number(enPlus);
+  if (!(volL > 0)) return {vol: null, retire: retire, part: null, reste: null};
+  var vol = volL * 1000;
+  return {vol: vol, retire: retire, part: retire / vol * 100, reste: vol - retire};
+}
+
+// Rapport solution/objet effectif après déduction des prélèvements.
+function ratioApresPrelevements(lot, cy, enPlus) {
+  var b = bilanPrelevements(lot, cy, enPlus), p = parseFloat(lot.poids);
+  return (b.reste != null && p > 0) ? b.reste / p : null;
 }
 function debutBain(lot, cy, liste) {
   liste = liste || lot.mesures || [];
@@ -824,7 +943,7 @@ function bains(lot) {
     var suivant = liste[i + 1] != null ? debutBain(lot, liste[i + 1]) : null;
     var fin = suivant || (i === liste.length - 1 && lot.rincages && lot.rincages.length ? lot.rincages[0].date : null);
     var c0rec = null; for (var k = 0; k < recs.length; k++) if (recs[k].c0 != null) { c0rec = recs[k]; break; }
-    var masse = dern ? masseM(lot, dern) : null;
+    var masse = dern ? masseM(lot, dern, ms) : null;
     if (masse != null) cumul += masse;
     var jours = dern ? joursEntre(deb, dern.date) : null;
     out.push({n: cy, debut: deb, fin: fin, enCours: !fin, volume: volM(lot, recs[0]), c0: c0rec ? c0rec.c0 : null,
@@ -923,7 +1042,7 @@ function evalMesure(lot, m, liste) {
   var da = incAbs(m);
   if (da != null && Math.abs(m.cl - s) <= da)
     return res({statut: 'Précision insuffisante', cls: 'b-warn', acl: 'a-warn', code: 'titrer', due: m.date,
-      msg: c + ' ± ' + fNum(da, 1) + ' mg/L : l\'incertitude du titrage (N = ' + fNum(m.nagno3, 3) + ' mol/L, ' + fNum(m.vech, 0) + ' mL d\'échantillon) englobe le seuil de fin (' + fNum(s, 1) + ' mg/L), la valeur ne permet pas de conclure. Retitrer ce bain avec ' + conseilPrecision(s) + '.'});
+      msg: c + ' ± ' + fNum(da, 1) + ' mg/L : l\'incertitude du titrage (N = ' + fNum(m.nagno3, 3) + ' mol/L, ' + fNum(m.vech, 0) + ' mL d\'échantillon) englobe le seuil de fin (' + fNum(s, 1) + ' mg/L), la valeur ne permet pas de conclure. Retitrer ce bain avec ' + conseilPrecision(s, bilanPrelevements(lot, cy).reste) + '.'});
   if (m.cl > s) {
     if (dCl != null && dj != null && dj >= C.jecart && dCl <= C.dc)
       return res({statut: 'Plateau — changer le bain', cls: 'b-alert', acl: 'a-alert', code: 'changer',
@@ -1009,7 +1128,13 @@ function evalLot(lot) {
         msg: 'Bain ' + cy + ' en place depuis le ' + fDate(d0) + (d0 ? ' (' + age0 + ' j)' : '') + ', pas encore titré.'};
     } else {
       o = {statut: evB.statut, cls: evB.cls, acl: evB.acl, code: evB.code, msg: evB.msg, due: evB.due};
-      if (!o.due) o.due = (o.code === 'titrer') ? addJours(dern.date, freqLot(lot)) : today;
+      if (!o.due) {
+        if (o.code === 'titrer') {
+          var itv = intervalleTitrage(lot, ms);
+          o.due = addJours(dern.date, itv.j);
+          o.itv = itv;
+        } else o.due = today;
+      }
       var age = joursEntre(debutBain(lot, cy), today);
       // Bain devenu trop ancien depuis le dernier titrage (extraction encore active)
       if (o.code === 'titrer' && dern.cl > seuil(lot) && age != null && age > A.cfg.jmax) {
@@ -1152,7 +1277,9 @@ function majSuivi(garderOnglet) {
   var quand = ev.code === 'aucune' || !ev.due ? '' : ev.retard > 0 ? '<span class="late">En retard de ' + ev.retard + ' j (prévu le ' + fDate(ev.due) + ')</span>' : ev.due <= aujourdhui() ? 'Aujourd\'hui' : 'Prévu le ' + fDate(ev.due) + ' <button class="btn btn-sm" onclick="addCal()" title="Ajouter à Google Agenda">📅</button>';
   et.innerHTML = '<div class="et-head"><span class="badge ' + ev.cls + '" style="font-size:11px;padding:3px 10px">' + esc(ev.statut) + '</span><span class="muted">' + txtBilan(lot) + '</span></div>' +
     '<div class="alert ' + ev.acl + '" style="margin:0">' + esc(ev.msg) + '</div>' +
-    '<div class="et-next"><div><div class="lbl">Prochaine étape</div><div class="txt">' + esc(ev.label || '—') + '</div><div class="muted">' + quand + '</div></div>' + bouton + '</div>';
+    '<div class="et-next"><div><div class="lbl">Prochaine étape</div><div class="txt">' + esc(ev.label || '—') + '</div><div class="muted">' + quand +
+      (ev.itv && ev.itv.mode !== 'base' ? '<br><span style="font-size:10px">Intervalle ' + ev.itv.j + ' j — ' + esc(ev.itv.raison) + '</span>' : '') +
+      '</div></div>' + bouton + '</div>';
   ['titr', 'bain', 'rinc', 'hist'].forEach(function(t) { gid('tab-' + t).classList.toggle('reco', t === ev.tab && ev.code !== 'aucune'); });
   var cy = cycleCourant(lot);
   gid('tab-bain').textContent = cy ? 'Changer de bain' : 'Démarrer le bain 1';
@@ -1228,13 +1355,26 @@ function majTitrage() {
   var err = controleTitrage(lot, m);
   if (m.cl == null) { box.innerHTML = '<div class="alert a-alert">' + esc(err.join(' ')) + '</div>'; return; }
   var liste = lot.mesures.concat([m]); trierRecs(liste);
-  var ev = evalMesure(lot, m, liste), u = incRel(m), masse = masseM(lot, m);
+  var ev = evalMesure(lot, m, liste), u = incRel(m), masse = masseM(lot, m, liste);
   var b = bilanCl(lot), prevBain = bains(lot).filter(function(x) { return x.n === cyN(m); })[0];
   var cumul = (b.total || 0) - (prevBain && prevBain.masse != null ? prevBain.masse : 0) + (masse || 0);
   var h = '<div class="res"><div class="big">' + fNum(m.cl, 1) + ' mg/L' + (incAbs(m) != null ? ' <span style="font-size:12px;font-weight:500">± ' + fNum(incAbs(m), 1) + ' mg/L' + (u != null ? ' (' + fNum(u * 100, 0) + ' %)' : '') + '</span>' : '') + '</div>' +
     '<div class="line">(' + fNum(m.vagno3, 2) + (m.blanc ? ' − ' + fNum(m.blanc, 2) : '') + ') × ' + fNum(m.nagno3, 3) + ' × 35 450 / ' + fNum(m.vech, 1) + '</div>' +
     (masse != null ? '<div class="line">Chlorure dans ce bain : <b>' + fMg(masse) + '</b> · cumul du lot : <b>' + fMg(cumul) + '</b>' + (lot.poids > 0 ? ' (' + fNum(cumul / lot.poids, 2) + ' mg/g)' : '') + '</div>' : '') + '</div>';
-  if (incAbs(m) != null && incAbs(m) > 0.1 * seuil(lot) && m.cl < 5 * seuil(lot) && ev.statut !== 'Précision insuffisante') h += '<div class="alert a-info small">La [Cl⁻] approche du seuil de fin : avec ces paramètres l\'incertitude (±' + fNum(incAbs(m), 1) + ' mg/L) devient grande devant le seuil. Pour les prochains titrages, utiliser ' + conseilPrecision(seuil(lot)) + '.</div>';
+  var volDisp = bilanPrelevements(lot, cyN(m)).reste;
+  if (incAbs(m) != null && incAbs(m) > 0.1 * seuil(lot) && m.cl < 5 * seuil(lot) && ev.statut !== 'Précision insuffisante') h += '<div class="alert a-info small">La [Cl⁻] approche du seuil de fin : avec ces paramètres l\'incertitude (±' + fNum(incAbs(m), 1) + ' mg/L) devient grande devant le seuil. Pour les prochains titrages, utiliser ' + conseilPrecision(seuil(lot), volDisp) + '.</div>';
+  // Budget de prélèvement : ce titrage inclus
+  var bp = bilanPrelevements(lot, cyN(m), m.vech);
+  if (bp.part != null) {
+    var rap = ratioApresPrelevements(lot, cyN(m), m.vech);
+    var detail = fNum(bp.retire, 0) + ' mL prélevés sur ' + fNum(bp.vol, 0) + ' mL (' + fNum(bp.part, 0) + ' %), reste ' + fNum(bp.reste, 0) + ' mL'
+      + (rap != null ? ' — rapport solution/objet ' + fNum(rap, 1) + ' mL/g' : '');
+    if (bp.part > A.cfg.prelMax || (rap != null && rap < A.cfg.ratioMin))
+      h += '<div class="alert a-warn small"><b>Prélèvements cumulés élevés</b> — ' + detail + '. '
+        + (rap != null && rap < A.cfg.ratioMin ? 'Le rapport passe sous le minimum de ' + fNum(A.cfg.ratioMin, 0) + ' mL/g : le bain se chargera trop vite et l\'objet risque de ne plus être couvert. ' : '')
+        + 'Pour les titrages suivants, diluer l\'AgNO₃ plutôt qu\'augmenter le volume prélevé (' + conseilPrecision(seuil(lot), bp.reste) + '), ou renouveler le bain.</div>';
+    else h += '<div class="alert a-info small">Prélèvements du bain ' + cyN(m) + ' : ' + detail + '.</div>';
+  }
   if (err.length) h += '<div class="alert a-alert">' + esc(err.join(' ')) + '</div>';
   else h += '<div class="alert ' + ev.acl + '"><b>' + esc(ev.statut) + '</b> — ' + esc(ev.msg) + '</div>';
   box.innerHTML = h;
