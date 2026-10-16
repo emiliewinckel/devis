@@ -363,7 +363,9 @@ table.bt td.num{text-align:right;white-space:nowrap}
   </div>
   <div class="card"><div class="card-title">Connexion Notion</div>
     <div style="font-size:11px;color:#6B4040;line-height:1.6;margin-bottom:10px">Clé active : <code id="cfg-appkey-display" style="background:#F5E8E5;padding:1px 5px;border-radius:3px">détection…</code> — le jeton Notion est conservé dans le proxy Cloudflare.</div>
-    <div style="margin-bottom:10px"><label>Forcer un appareil</label><div style="display:flex;gap:6px"><select id="cfg-appkey-sel" style="flex:1"><option value="">Détection automatique</option><option value="KERA-EMILIE-PC">PC</option><option value="KERA-EMILIE-PHONE">Téléphone</option><option value="KERA-EMILIE-TABLETTE">Tablette</option></select><button class="btn btn-sm" onclick="changerAppKey()">Appliquer</button></div></div>
+    <div style="margin-bottom:10px"><label>Clé d'accès de cet appareil</label><div style="display:flex;gap:6px"><input type="password" id="cfg-appkey-sel" autocomplete="off" placeholder="Clé non modifiée" style="flex:1"><button class="btn btn-sm" onclick="changerAppKey()">Appliquer</button></div>
+      <div class="cfg-note">La clé n'est stockée que dans ce navigateur. Elle n'apparaît pas dans le code de l'application : la page étant publique, toute clé qui y figurerait serait lisible par n'importe qui.</div>
+      <div class="btn-row" style="margin-top:6px"><button class="btn btn-sm" onclick="oublierAppKey()">Oublier la clé sur cet appareil</button></div></div>
     <div id="cfg-schema" class="cfg-note"></div>
     <div class="btn-row"><button class="btn btn-sm btn-p" onclick="recharger()">🔄 Recharger depuis Notion</button></div>
   </div>
@@ -402,6 +404,19 @@ table.bt td.num{text-align:right;white-space:nowrap}
 <!-- Fenêtre de modification d'un relevé -->
 <div class="modal-bg" id="modal"><div class="modal"><div id="modal-body"></div></div></div>
 
+<div id="keygate" style="display:none;position:fixed;inset:0;background:rgba(26,18,16,.92);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:12px;max-width:420px;width:100%;padding:22px">
+    <div style="font-size:16px;font-weight:800;margin-bottom:8px">KORE — accès au laboratoire</div>
+    <div id="keygate-msg" style="font-size:12px;line-height:1.6;color:#4A423E;margin-bottom:12px"></div>
+    <input type="password" id="keygate-input" autocomplete="off" placeholder="Clé d'accès de cet appareil"
+           onkeydown="if(event.key==='Enter')validerAppKey()"
+           style="width:100%;padding:9px;border:1px solid #D8D2CC;border-radius:7px;font-size:14px;margin-bottom:6px">
+    <div id="keygate-err" style="font-size:11px;color:#791F1F;min-height:14px;margin-bottom:8px"></div>
+    <button class="btn btn-p" style="width:100%" onclick="validerAppKey()">Ouvrir le suivi</button>
+    <div style="font-size:10px;color:#8A7A75;margin-top:10px;line-height:1.5">La clé reste sur cet appareil et n'est pas enregistrée dans l'application. En cas d'appareil perdu ou de départ d'un collaborateur, faites révoquer sa clé dans le proxy.</div>
+  </div>
+</div>
+
 </div>
 <script>
 // ============================================================
@@ -409,7 +424,7 @@ table.bt td.num{text-align:right;white-space:nowrap}
 // Données : Notion (bases « KORE Objets » et « KORE Bains ») via proxy Cloudflare
 // Déploiement : GitHub Pages, fichier kore_notion.html (ne pas confondre avec kera_notion.html)
 // ============================================================
-var APP_VERSION = '2026-10-16-c';   // ← incrémenter à chaque déploiement
+var APP_VERSION = '2026-10-16-e';   // ← incrémenter à chaque déploiement
 
 var PROXY_URL  = 'https://kera-proxy.emiliewinckel.workers.dev';
 var NOTION_VER = '2022-06-28';
@@ -417,18 +432,50 @@ var DB_OBJETS  = 'KORE Objets';
 var DB_BAINS   = 'KORE Bains';
 var APP_URL    = 'https://emiliewinckel.github.io/devis/kore_notion.html';
 
+// La clé d'accès au proxy n'est JAMAIS écrite dans cette page : la page est
+// publique (GitHub Pages), donc tout ce qui s'y trouve est lisible par
+// n'importe qui. Chaque appareil saisit sa clé une fois, elle reste dans le
+// navigateur (localStorage) et ne quitte jamais l'appareil.
 function detectAppKey() {
-  var stored = null;
-  try { stored = localStorage.getItem('kore_app_key'); } catch (e) {}
-  if (stored) return stored;
-  var ua = navigator.userAgent.toLowerCase();
-  var isMobile = /android|iphone|ipod/.test(ua);
-  var isTablet = /ipad|tablet/.test(ua) || (isMobile && window.screen.width >= 768);
-  if (isTablet) return 'KERA-EMILIE-TABLETTE';
-  if (isMobile) return 'KERA-EMILIE-PHONE';
-  return 'KERA-EMILIE-PC';
+  try { return localStorage.getItem('kore_app_key') || ''; } catch (e) { return ''; }
 }
 var APP_KEY = detectAppKey();
+
+function enregistrerAppKey(k) {
+  k = String(k || '').trim();
+  try { if (k) localStorage.setItem('kore_app_key', k); else localStorage.removeItem('kore_app_key'); } catch (e) {}
+  APP_KEY = detectAppKey();
+  return APP_KEY;
+}
+
+// Écran de saisie de la clé, affiché tant qu'aucune clé n'est enregistrée
+// ou quand le proxy refuse la clé fournie.
+function demanderAppKey(motif) {
+  var g = gid('keygate'); if (!g) return;
+  gid('keygate-msg').innerHTML = motif ||
+    'Saisissez la clé d\'accès de cet appareil pour ouvrir le suivi. Elle vous est communiquée par le responsable du laboratoire et n\'est enregistrée que sur cet appareil.';
+  g.style.display = 'flex';
+  var i = gid('keygate-input'); if (i) { i.value = ''; setTimeout(function () { i.focus(); }, 50); }
+}
+
+function validerAppKey() {
+  var k = sval('keygate-input');
+  if (!k) { gid('keygate-err').textContent = 'Saisissez une clé.'; return; }
+  enregistrerAppKey(k);
+  gid('keygate-err').textContent = '';
+  gid('keygate').style.display = 'none';
+  afficherAppKey();
+  setStatus('Connexion à Notion…', 'info');
+  notionSetup().then(loadLotsFromNotion).then(function () {
+    setStatus('', ''); remplirSelects(); ref(); appliquerParametresURL();
+  }).catch(function (e) {
+    if (cleRefusee(e)) { enregistrerAppKey(''); demanderAppKey('<b>Clé refusée par le serveur.</b> Vérifiez la clé auprès du responsable du laboratoire, ou ressaisissez-la.'); }
+    else erreur('Notion inaccessible', e);
+  });
+}
+
+// Le proxy renvoie 401/403 quand la clé n'est pas dans la liste autorisée.
+function cleRefusee(e) { return /401|403|unauthoris|unauthoriz|forbidden|clé|key/i.test(String(e && e.message || '')); }
 
 // ------------------------------------------------------------
 // Critères par défaut (choix d'atelier, modifiables en Configuration)
@@ -584,27 +631,43 @@ function intervalleTitrage(lot, liste) {
   var C = A.cfg, base = freqLot(lot);
   if (!C.adapt) return {j: base, raison: 'fréquence fixe du lot (' + base + ' j)', mode: 'base'};
   liste = liste || lot.mesures || [];
-  var cy = cycleCourant(lot);
+  var cy = cycleCourant(lot), s = seuil(lot);
   var titr = liste.filter(function(m) { return estTitrage(m) && cyN(m) === cy; });
   var dern = titr[titr.length - 1], prev = titr[titr.length - 2];
-  if (!dern || !prev) return {j: base, raison: 'moins de deux titrages dans ce bain — fréquence de base (' + base + ' j)', mode: 'base'};
+  if (!dern) return {j: base, raison: 'aucun titrage dans ce bain — fréquence de base (' + base + ' j)', mode: 'base'};
 
-  var dj = joursEntre(prev.date, dern.date);
-  var vit = (dj > 0) ? (dern.cl - prev.cl) / dj : null;   // mg/L par jour
-  var da = Math.max(incAbs(dern) || 0, incAbs(prev) || 0); // incertitude absolue
-  if (!(vit > 0) || !(da > 0)) return {j: base, raison: 'vitesse d\'extraction non exploitable — fréquence de base (' + base + ' j)', mode: 'base'};
+  var d0 = debutBain(lot, cy, liste), age = joursEntre(d0, dern.date);
+  var da = incAbs(dern) || 0;
+  var dj = prev ? joursEntre(prev.date, dern.date) : null;
+  var vit = (prev && dj > 0) ? (dern.cl - prev.cl) / dj : null;   // mg/L par jour
 
-  // Délai pour que la hausse dépasse 2x l'incertitude (lecture significative)
-  var j = Math.ceil(2 * da / vit);
-  var plancher = C.jecart, plafond = base * 2;
-  var mode = 'adapte';
-  if (j < plancher) { j = plancher; mode = 'plancher'; }
-  if (j > plafond)  { j = plafond;  mode = 'plafond'; }
+  // ---- Zone de décision : la valeur approche le seuil de fin -------------
+  // Ici chaque titrage peut valider ou non l'arrêt : on titre au rythme
+  // nécessaire pour construire la série de confirmation.
+  if (dern.cl <= s + 3 * da || dern.cl <= 3 * s) {
+    return {j: Math.max(C.jecart, Math.min(base, C.jecart)), mode: 'decision', vit: vit, da: da,
+      raison: 'la valeur approche le seuil de fin : chaque titrage peut désormais valider l\'arrêt'};
+  }
 
-  var r = 'extraction à ' + fNum(vit, 2) + ' mg/L par jour, incertitude ±' + fNum(da, 1) + ' mg/L : '
-        + 'il faut environ ' + j + ' j pour une hausse lisible';
-  if (mode === 'plancher') r += ' (ramené à l\'écart minimal de ' + plancher + ' j)';
-  if (mode === 'plafond')  r += ' (plafonné à ' + plafond + ' j)';
+  // ---- Loin du seuil : le prochain titrage sert au changement de bain ----
+  // Tant que la [Cl⁻] est très au-dessus du seuil, un titrage intermédiaire ne
+  // change aucune décision : le bain sera renouvelé sur plateau, sur saturation
+  // ou à son âge maximal. On programme donc le titrage au moment du changement,
+  // où il sert de titrage final du bain.
+  var jAge = (age != null) ? C.jmax - age : null;              // jours restants avant l'âge maximal
+  var jSat = (vit > 0 && C.clFort > dern.cl) ? Math.floor((C.clFort - dern.cl) / vit) : null;
+  var cand = [], pourquoi = '';
+  if (jAge != null) cand.push({j: jAge, q: 'âge maximal du bain (' + C.jmax + ' j)'});
+  if (jSat != null) cand.push({j: jSat, q: 'saturation prévue vers ' + fNum(C.clFort, 0) + ' mg/L'});
+  if (!cand.length) return {j: base, raison: 'fréquence de base (' + base + ' j)', mode: 'base'};
+  cand.sort(function(a, b) { return a.j - b.j; });
+  var j = cand[0].j; pourquoi = cand[0].q;
+
+  var mode = 'espace';
+  if (j < C.jecart) { j = C.jecart; mode = 'plancher'; }
+  var r = fNum(dern.cl, 0) + ' mg/L, très au-dessus du seuil de fin (' + fNum(s, 1) + ' mg/L) : '
+        + 'un titrage intermédiaire ne changerait aucune décision. Prochain titrage au changement de bain — ' + pourquoi;
+  if (mode === 'plancher') r += ' (ramené à l\'écart minimal de ' + C.jecart + ' j)';
   return {j: j, raison: r, mode: mode, vit: vit, da: da};
 }
 
@@ -1362,7 +1425,18 @@ function majTitrage() {
     '<div class="line">(' + fNum(m.vagno3, 2) + (m.blanc ? ' − ' + fNum(m.blanc, 2) : '') + ') × ' + fNum(m.nagno3, 3) + ' × 35 450 / ' + fNum(m.vech, 1) + '</div>' +
     (masse != null ? '<div class="line">Chlorure dans ce bain : <b>' + fMg(masse) + '</b> · cumul du lot : <b>' + fMg(cumul) + '</b>' + (lot.poids > 0 ? ' (' + fNum(cumul / lot.poids, 2) + ' mg/g)' : '') + '</div>' : '') + '</div>';
   var volDisp = bilanPrelevements(lot, cyN(m)).reste;
-  if (incAbs(m) != null && incAbs(m) > 0.1 * seuil(lot) && m.cl < 5 * seuil(lot) && ev.statut !== 'Précision insuffisante') h += '<div class="alert a-info small">La [Cl⁻] approche du seuil de fin : avec ces paramètres l\'incertitude (±' + fNum(incAbs(m), 1) + ' mg/L) devient grande devant le seuil. Pour les prochains titrages, utiliser ' + conseilPrecision(seuil(lot), volDisp) + '.</div>';
+  // Passage à l'AgNO₃ dilué — signalé le plus tard possible, en gardant un
+  // titrage de marge : tant que la valeur reste loin du seuil, l'AgNO₃ courant
+  // suffit et il n'y a aucune raison de sortir un deuxième flacon.
+  var da_ = incAbs(m), zoneBascule = 3 * seuil(lot);
+  if (da_ != null && da_ > 0.1 * seuil(lot) && m.cl < zoneBascule && ev.statut !== 'Précision insuffisante') {
+    var cBas = choixTitrage(seuil(lot), volDisp > 0 ? Math.max(5, Math.min(50, Math.floor(volDisp * (A.cfg.prelMax / 100) / 5) * 5)) : Math.max(20, A.cfg.vech || 0));
+    h += '<div class="alert a-warn small"><b>Passer à l\'AgNO₃ dilué au prochain titrage de ce lot</b><br>'
+      + fNum(m.cl, 1) + ' mg/L : la valeur entre dans la zone où l\'incertitude actuelle (±' + fNum(da_, 1) + ' mg/L) ne permettra bientôt plus de conclure face au seuil de ' + fNum(seuil(lot), 1) + ' mg/L.<br>'
+      + '→ <b>AgNO₃ ' + fNum(cBas.n, 3) + ' mol/L</b> (dilution au 1/5 de l\'AgNO₃ ' + fNum(NORMALITES[0], 2) + ' mol/L) et <b>' + cBas.ve + ' mL</b> d\'échantillon, soit ±' + fNum(cBas.inc, 2) + ' mg/L.'
+      + (!(A.cfg.blanc > 0) ? '<br>Déterminer aussi le blanc une fois sur l\'eau déminéralisée (Configuration) : il devient significatif à cette dilution.' : '')
+      + '</div>';
+  }
   // Budget de prélèvement : ce titrage inclus
   var bp = bilanPrelevements(lot, cyN(m), m.vech);
   if (bp.part != null) {
@@ -2026,12 +2100,21 @@ function addCal() {
 }
 function changerAppKey() {
   var sel = gid('cfg-appkey-sel'); if (!sel) return;
-  try { if (sel.value) localStorage.setItem('kore_app_key', sel.value); else localStorage.removeItem('kore_app_key'); } catch (e) {}
-  APP_KEY = detectAppKey(); afficherAppKey(); setStatus('Clé appareil : ' + APP_KEY + '. Rechargement…', 'ok'); recharger();
+  var k = String(sel.value || '').trim();
+  if (!k) { setStatus('Saisissez une clé pour la remplacer.', 'warn'); return; }
+  enregistrerAppKey(k); sel.value = ''; afficherAppKey();
+  setStatus('Clé enregistrée. Rechargement…', 'ok'); recharger();
 }
+function oublierAppKey() {
+  enregistrerAppKey(''); afficherAppKey();
+  A.lots = []; A.dbObjetsId = null; A.dbBainsId = null;
+  remplirSelects(); ref();
+  demanderAppKey('Clé effacée de cet appareil. Saisissez-en une pour rouvrir le suivi.');
+}
+// N'affiche jamais la clé en clair : seulement un indice de présence.
 function afficherAppKey() {
-  var d = gid('cfg-appkey-display'); if (d) d.textContent = APP_KEY;
-  var sel = gid('cfg-appkey-sel'); if (sel) { var s = null; try { s = localStorage.getItem('kore_app_key'); } catch (e) {} sel.value = s || ''; }
+  var d = gid('cfg-appkey-display');
+  if (d) d.textContent = APP_KEY ? '•••••• (' + APP_KEY.slice(-4) + ')' : 'aucune clé sur cet appareil';
 }
 function recharger() {
   var tok = setStatus('Rechargement depuis Notion…', 'info');
@@ -2063,10 +2146,16 @@ function init() {
   var td = aujourdhui();
   document.querySelectorAll('input[type=date]').forEach(function(e) { if (!e.value) e.value = td; });
   gid('modal').addEventListener('click', function(e) { if (e.target === gid('modal')) fermerModal(); });
+  afficherAppKey();
+  // Aucune requête vers le proxy tant qu'aucune clé n'est enregistrée
+  if (!APP_KEY) { demanderAppKey(); ref(); return; }
   setStatus('Connexion à Notion…', 'info');
   notionSetup().then(loadLotsFromNotion).then(function() {
     setStatus('', ''); remplirSelects(); ref(); appliquerParametresURL();
-  }).catch(function(e) { erreur('Notion inaccessible', e); ref(); });
+  }).catch(function(e) {
+    if (cleRefusee(e)) { enregistrerAppKey(''); demanderAppKey('<b>Clé refusée par le serveur.</b> Vérifiez la clé auprès du responsable du laboratoire, ou ressaisissez-la.'); ref(); return; }
+    erreur('Notion inaccessible', e); ref();
+  });
 }
 document.addEventListener('DOMContentLoaded', init);
 
