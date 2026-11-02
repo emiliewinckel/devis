@@ -916,6 +916,16 @@ function findDataBlock(pageId){
     return nfetch("/blocks/"+tg.id+"/children?page_size=100").then(function(c){ var cb=(c.results||[]).filter(function(b){ return b.type==="code"; })[0]; return {toggle:tg,code:cb||null}; });
   });
 }
+function majStatutRapport(pageId){
+  // Statut « Rapport de traitement » du dossier, lu par ARGOS Lab : passe à « rédigé » à l'enregistrement
+  // (sauf s'il est déjà « en relecture » ou « envoyé », qu'on ne fait pas reculer)
+  return nfetch("/pages/"+pageId).then(function(pg){
+    var p=pg.properties&&pg.properties["Rapport de traitement"], cur=p&&p.select?p.select.name:"";
+    if(cur==="en relecture"||cur==="envoyé"||cur==="rédigé") return;
+    var d=new Date(), iso=d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");
+    return nfetch("/pages/"+pageId,"PATCH",{properties:{"Rapport de traitement":{select:{name:"rédigé"}},"Date rapport":{date:{start:iso}}}});
+  }).catch(function(){});
+}
 function saveNotion(){
   if(!S.key) return; if(!S.dossier.notionId){ toast("Dossier local : utilisez « Exporter (.json) » dans le menu ⋯, ou ouvrez le dossier depuis Notion",1); return; }
   var json=DATA_MARK+"\n"+JSON.stringify({dossier:S.dossier,fiches:S.fiches,t:new Date().toISOString()});
@@ -927,7 +937,7 @@ function saveNotion(){
     var codeB={object:"block",type:"code",code:{rich_text:rt,language:"json"}};
     if(r.toggle) return nfetch("/blocks/"+r.toggle.id+"/children","PATCH",{children:[codeB]});
     return nfetch("/blocks/"+S.dossier.notionId+"/children","PATCH",{children:[{object:"block",type:"toggle",toggle:{rich_text:[{type:"text",text:{content:TOGGLE_TITLE}}],children:[codeB]}}]});
-  }).then(function(){ S.notionDirty=false; saveLocal(); toast("Fiches enregistrées dans la page Notion du dossier"); })
+  }).then(function(){ S.notionDirty=false; saveLocal(); toast("Fiches enregistrées dans la page Notion du dossier"); return majStatutRapport(S.dossier.notionId); })
     .catch(function(e){ toast("Notion : "+e.message,1); })
     .then(function(){ btn.disabled=false; btn.innerHTML='☁<span class="hm"> Enregistrer dans Notion</span>'; });
 }
