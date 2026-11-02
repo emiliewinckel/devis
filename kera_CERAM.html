@@ -1624,22 +1624,83 @@ function calcC() {
   gid('c-al').innerHTML = '<div class="alert ' + cl + '" style="margin:6px 0 0">' + msg + '</div>';
 }
 
+// ============================================================
+// ÉTIQUETTES : planche A4 prédécoupée 4 × 4 (52,5 × 74,25 mm), commune à KORE, KERA et ARGOS Lab
+// o = { titre, couleur, filet, cartes:[{tete, qr, nm, rf, dt}] }  →  { html, ouvrir(fenêtre) }
+// La fenêtre ouverte permet de choisir la case de départ (planche déjà entamée).
+// ============================================================
+function planche16(o) {
+  var C = o.couleur || '#2E3192', L = o.filet || '#E9EAF6';
+  var e = function(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); };
+  var cartes = (o.cartes || []).map(function(c) {
+    // Chaque ligne du sous-texte (séparées par <br>) devient un bloc ajusté séparément à la largeur du cadre
+    var dt = String(c.dt || '').split(/<br\s*\/?>/i).map(function(l) { return '<div>' + l + '</div>'; }).join('');
+    return '<div class="card">' + c.tete + '<div class="zq">' + (c.qr ? '<img class="qr" src="' + c.qr + '" alt="QR">' : '') + '</div>' +
+      '<div class="pied"><div class="sep"></div><div class="nm">' + e(c.nm) + '</div><div class="rf">' + e(c.rf) + '</div><div class="dt">' + dt + '</div></div></div>';
+  });
+  var css = '@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
+    'body{font-family:Montserrat,Arial,sans-serif;background:#ECE9E4;color:#2C2C2A}' +
+    '.bar{position:sticky;top:0;z-index:2;background:#fff;padding:10px 16px;display:flex;gap:18px;align-items:center;flex-wrap:wrap;box-shadow:0 2px 8px rgba(0,0,0,.12);font-size:12px}' +
+    '.bar b{color:' + C + '}.pick{display:grid;grid-template-columns:repeat(4,20px);gap:3px}' +
+    '.pick button{width:20px;height:27px;border:1px solid #ccc;background:#fff;border-radius:3px;font-size:9px;cursor:pointer;color:#666}' +
+    '.pick button.u{background:#e3e3e3;color:#aaa}.pick button.s{background:' + C + ';border-color:' + C + ';color:#fff}' +
+    '.go{padding:9px 22px;background:' + C + ';color:#fff;border:none;border-radius:8px;font:600 12px Montserrat,Arial,sans-serif;cursor:pointer}' +
+    '.page{width:210mm;height:297mm;margin:14px auto;background:#fff;display:grid;grid-template-columns:repeat(4,52.5mm);grid-template-rows:repeat(4,74.25mm);box-shadow:0 2px 10px rgba(0,0,0,.15);overflow:hidden}' +
+    '.cell{padding:2.5mm;display:flex;outline:1px dashed #ddd;outline-offset:-.5px}.cell.used{background:repeating-linear-gradient(135deg,#f3f3f3 0 4px,#fff 4px 8px)}' +
+    '.card{flex:1;min-width:0;border:1px solid ' + C + ';border-radius:3mm;padding:2.6mm 2.2mm 2mm;display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden}' +
+    '.zq{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}.pied{width:100%;flex:none}' +
+    '.kt{font-size:16px;font-weight:700;letter-spacing:3.5px;color:' + C + ';line-height:1;margin-top:1mm}' +
+    '.kh{display:flex;flex-direction:column;align-items:center;gap:1mm}.kh svg{width:12.5mm;height:12.5mm;display:block}' +
+    '.kh b{font-size:7px;font-weight:700;letter-spacing:1.8px;color:' + C + ';line-height:1}.kh b span{color:#A8DDF0}' +
+    '.qr{width:27mm;height:27mm;display:block;flex:none}.sep{height:1px;background:' + L + ';width:100%;margin:0 0 1.6mm}' +
+    '.nm{font-size:8.5px;font-weight:600;line-height:1.25;margin-bottom:.8mm;max-height:7.4mm;overflow:hidden}' +
+    '.rf{font-size:8px;font-weight:700;color:' + C + ';margin-bottom:.6mm;white-space:nowrap;overflow:hidden}.dt{color:#777;line-height:1.3}.dt div{font-size:6.8px;white-space:nowrap;overflow:hidden}' +
+    '@media print{body{background:#fff}.bar{display:none}.page{margin:0;box-shadow:none;break-after:page}.cell{outline:none}.cell.used{background:none}}';
+  var doc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + e(o.titre || 'Étiquettes') + '</title>' +
+    '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body>' +
+    '<div class="bar"><span>Case de départ<br><small>(planche entamée)</small></span><div class="pick" id="pick"></div><span id="info"></span>' +
+    '<button class="go" id="go">🖨 Imprimer</button><small>Imprimer à 100 % (taille réelle), sans marges.</small></div><div id="pages"></div></body></html>';
+  // La mise en page est pilotée depuis la fenêtre de l'app (pas de script dans la fenêtre d'impression)
+  function monter(w, D) {
+    var d = w.document, n = cartes.length, P = Math.max(1, Math.ceil((D + n) / 16)), h = '';
+    for (var p = 0; p < P; p++) { h += '<div class="page">';
+      for (var c = 0; c < 16; c++) { var i = p * 16 + c, k = i - D;
+        h += i < D ? '<div class="cell used"></div>' : (k < n ? '<div class="cell">' + cartes[k] + '</div>' : '<div class="cell"></div>'); }
+      h += '</div>'; }
+    d.getElementById('pages').innerHTML = h;
+    var q = ''; for (var j = 0; j < 16; j++) q += '<button class="' + (j < D ? 'u' : j === D ? 's' : '') + '" data-c="' + j + '">' + (j + 1) + '</button>';
+    d.getElementById('pick').innerHTML = q;
+    Array.prototype.forEach.call(d.querySelectorAll('#pick button'), function(b) { b.onclick = function() { monter(w, +b.getAttribute('data-c')); }; });
+    d.getElementById('info').innerHTML = '<b>' + n + '</b> étiquette' + (n > 1 ? 's' : '') + ' · ' + P + ' planche' + (P > 1 ? 's' : '') + ' · départ case <b>' + (D + 1) + '</b>';
+    d.getElementById('go').onclick = function() { w.focus(); w.print(); };
+    // Réduit la police des textes qui débordent du cadre (police d'origine si ça tient)
+    var ajuster = function() {
+      Array.prototype.forEach.call(d.querySelectorAll('.nm,.rf,.dt div'), function(t) {
+        t.style.fontSize = ''; var f = parseFloat(w.getComputedStyle(t).fontSize), min = 4.5;
+        while (f > min && (t.scrollWidth > t.clientWidth + .5 || t.scrollHeight > t.clientHeight + .5)) { f -= .25; t.style.fontSize = f + 'px'; }
+      });
+    };
+    ajuster(); if (d.fonts && d.fonts.ready) d.fonts.ready.then(ajuster);
+  }
+  return { html: doc, ouvrir: function(w) { w.document.open(); w.document.write(doc); w.document.close(); monter(w, 0); } };
+}
+
 function imprimerEtiquette(lid) {
   var lot = lid ? gL(lid) : A.lots[A.lots.length - 1]; if (!lot) return;
+  var w = window.open('', '_blank', 'width=900,height=800'); if (!w) { alert('Fenêtre bloquée : autoriser les fenêtres surgissantes.'); return; }
+  w.document.write('<p style="font-family:sans-serif;padding:20px">Préparation de l\'étiquette…</p>');
   var tmp = document.createElement('div');
-  tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:200px;height:200px';
+  tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:240px;height:240px';
   document.body.appendChild(tmp);
-  new QRCode(tmp, {text: 'https://emiliewinckel.github.io/devis/kera_notion.html?lot=' + lot.id, width: 200, height: 200, colorDark: '#125c8a', colorLight: '#ffffff'});
+  new QRCode(tmp, {text: 'https://emiliewinckel.github.io/devis/kera_notion.html?lot=' + lot.id, width: 240, height: 240, colorDark: '#125c8a', colorLight: '#ffffff'});
   setTimeout(function() {
     var el = tmp.querySelector('canvas') || tmp.querySelector('img');
     var src = el ? (el.tagName === 'CANVAS' ? el.toDataURL('image/png') : el.src) : '';
     document.body.removeChild(tmp);
-    var nm = (lot.int || '').replace(/[<>&]/g, function(c) { return {'<': '&lt;', '>': '&gt;', '&': '&amp;'}[c]; });
-    var rf = (lot.ref || '').replace(/[<>&]/g, function(c) { return {'<': '&lt;', '>': '&gt;', '&': '&amp;'}[c]; });
-    var dt = (lot.dateDebut || '—') + ' · ' + (lot.poids || '—') + ' g · ' + (lot.volume || '—') + ' L';
-    var H = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KERA — Etiquette</title><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>*{box-sizing:border-box;margin:0;padding:0} html{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}body{font-family:Montserrat,Arial,sans-serif;background:#f7f4ef;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding:24px 16px;gap:14px}.card{background:#fff;border:1.5px solid #125c8a;border-radius:12px;padding:22px 22px 18px;width:240px;text-align:center;box-shadow:0 2px 10px rgba(18,92,138,0.12)}.ktitle{font-size:20px;font-weight:700;letter-spacing:4px;color:#125c8a;margin-bottom:14px}.qr{width:150px;height:150px;margin:0 auto 14px;display:block}.sep{height:1px;background:#d8e4ee;margin:12px 0}.nm{font-size:12px;font-weight:600;color:#1A2A3A;margin-bottom:4px;line-height:1.4}.rf{font-size:10px;font-weight:600;color:#125c8a;margin-bottom:3px}.dt{font-size:9px;color:#8A9FAD}button{padding:9px 24px;background:#125c8a;color:#fff;border:none;border-radius:8px;font-family:Montserrat,Arial,sans-serif;font-size:12px;font-weight:600;cursor:pointer}@media print{button{display:none}body{padding:0;background:#fff}.card{box-shadow:none;border:1px solid #125c8a}}</style></head><body><div class="card"><div class="ktitle">KERA</div><img class="qr" src="' + src + '" alt="QR code"><div class="sep"></div><div class="nm">' + nm + '</div><div class="rf">' + rf + '</div><div class="dt">' + dt + '</div></div><button onclick="window.print()">🖨 Imprimer</button></body></html>';
-    var w = window.open('', '_blank', 'width=320,height=520');
-    w.document.open(); w.document.write(H); w.document.close();
+    var x = function(v) { return String(v == null ? '' : v).replace(/[<>&]/g, function(c) { return {'<': '&lt;', '>': '&gt;', '&': '&amp;'}[c]; }); };
+    planche16({titre: 'KERA — Étiquette', couleur: '#125c8a', filet: '#d8e4ee', cartes: [{
+      tete: '<div class="kt">KERA</div>', qr: src, nm: lot.int, rf: lot.ref,
+      dt: x(lot.dateDebut || '—') + ' · ' + x(lot.poids || '—') + ' g · ' + x(lot.volume || '—') + ' L'}]}).ouvrir(w);
   }, 300);
 }
 
