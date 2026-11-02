@@ -198,7 +198,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .dc-m{font-size:12px;color:var(--txt2)}.dc-m b{color:var(--txt)}
 .dc-tags{display:flex;flex-wrap:wrap;gap:5px}
 .pill{font-size:10.5px;font-weight:700;border-radius:20px;padding:3px 9px;background:var(--bg);color:var(--txt2)}
-.pill.r-à-rédiger{background:var(--amber-l);color:var(--amber)}.pill.r-en-relecture{background:var(--navy-l);color:var(--navy)}.pill.r-envoyé{background:var(--green-l);color:var(--green)}
+.pill.r-à-rédiger{background:var(--amber-l);color:var(--amber)}.pill.r-en-relecture{background:var(--navy-l);color:var(--navy)}.pill.r-envoyé{background:var(--green-l);color:var(--green)}.pill.r-rédigé{background:var(--sky-l);color:var(--navy)}
 .links{display:flex;flex-wrap:wrap;gap:8px}
 .lk{display:flex;align-items:center;gap:8px;text-decoration:none;color:var(--txt);background:var(--card);border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-weight:700;font-size:13px}
 .lk svg{flex:none}.lk.main{flex:1 1 100%;color:var(--navy)}.lk.main svg:first-child{width:26px;height:26px;color:var(--navy)}
@@ -348,7 +348,7 @@ function parseStep(s){
 }
 function mapDossier(pg){const P=pg.properties;return {id:pg.id,num:pv(P['N° labo']),commune:pv(P['Commune']),site:pv(P['Site']),
   ro:pv(P['RO']),nb:pv(P['Nombre objets']),av:Number(pv(P['Avancement objets'])||0),fin:Number(pv(P['Objets terminés'])||0),
-  rapport:pv(P['Rapport de traitement']),retour:pv(P['Date de retour']),arrivee:pv(P["Date d'arrivée au labo"]),
+  rapport:pv(P['Rapport de traitement']),dateRapport:pv(P['Date rapport']),retour:pv(P['Date de retour']),arrivee:pv(P["Date d'arrivée au labo"]),
   types:pv(P["Type d'intervention"])||[],nObj:(pv(P['Objets'])||[]).length,op:pv(P['Type Opération']),etat:pv(P['Etat'])}}
 function mapObjet(pg){const P=pg.properties,o={id:pg.id,nom:pv(P['Nom']),idObj:pv(P['ID objet']),inv:pv(P['N° inventaire']),
   d:pv(P['Description']),m:(pv(P['Matériau'])||[]).join(', '),nr:pv(P['NR']),t:pv(P["Description de l'intervention"]),
@@ -483,7 +483,7 @@ function home(){
 
 function links(d){
   const t=(d.types||[]).join(' ').toLowerCase();
-  const a=[`<a class="lk main" href="${URLS.rapport}?dossier=${hex(d.id)}" target="_blank" rel="noopener">${ICON.doc}<span><b>Rapport de traitement</b><small>${esc(d.rapport||'à rédiger')}</small></span>${ICON.ext}</a>`];
+  const a=[`<a class="lk main" href="${URLS.rapport}?dossier=${hex(d.id)}" target="_blank" rel="noopener">${ICON.doc}<span><b>Rapport de traitement</b><small>${d.rapport?esc(d.rapport)+(d.dateRapport?' · '+fr(d.dateRapport):''):'pas encore commencé'}</small></span>${ICON.ext}</a>`];
   if(/déchlo|stabil|fer/.test(t))a.push(`<a class="lk kore" href="${koreUrl(d,[])}" target="_blank" rel="noopener"><span class="dot"></span>KORE${ICON.ext}</a>`);
   if(/dessal|céram/.test(t))a.push(`<a class="lk kera" href="${URLS.kera}" target="_blank" rel="noopener"><span class="dot"></span>KERA${ICON.ext}</a>`);
   if(S.objs.length&&S.d&&S.d.id===d.id)a.push(`<button class="lk lab" data-a="labels"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>Étiquettes QR</button>`);
