@@ -252,6 +252,9 @@ body.compact .brand .ico{display:block;height:38px;width:38px}
 .sec h2{margin:0;font-size:15px;font-weight:800;color:var(--navy);letter-spacing:.3px}
 .sec .count{font-size:15px;font-weight:800;color:var(--navy);background:var(--sky-l);border-radius:20px;padding:1px 10px;font-variant-numeric:tabular-nums}
 .dcard.todo{border-left-color:var(--navy-l)}
+
+.creer{display:flex;flex-direction:column;gap:10px}
+.creer .hint b{color:var(--navy)}
 </style>
 
 <header class="topbar"><div class="topbar-in">
@@ -388,7 +391,15 @@ const Notion={
     sorts:[{property:'Date début',direction:'descending'}]});
     return (j.results||[]).map(pg=>({id:pg.id,int:pv(pg.properties['Intitulé']),ref:pv(pg.properties['Référence']),statut:pv(pg.properties['Statut'])}))
       .filter(l=>!/termin/i.test(l.statut))},
-  setRetour(d,date){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Date de retour':{date:date?{start:date}:null}}})}
+  setRetour(d,date){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Date de retour':{date:date?{start:date}:null}}})},
+  async creerObjet(d,x){const P={'Nom':{title:[{text:{content:x.id+(x.inv?' · '+x.inv:'')}}]},'ID objet':{rich_text:[{text:{content:x.id}}]},
+      'Dossier':{relation:[{id:d.id}]}};
+    if(x.inv)P['N° inventaire']={rich_text:[{text:{content:x.inv}}]};
+    if(x.des)P['Description']={rich_text:[{text:{content:x.des.slice(0,1900)}}]};
+    if(x.mat.length)P['Matériau']={multi_select:x.mat.map(name=>({name}))};
+    if(x.nr!=null)P['NR']={number:x.nr};
+    if(x.trait)P["Description de l'intervention"]={rich_text:[{text:{content:x.trait}}]};
+    return mapObjet(await nfetch('/pages','POST',{parent:{database_id:DB.objets},properties:P}))}
 };
 
 /* ---------- mode démo (sans clé) : dossier de Witry, rien n'est envoyé ---------- */
@@ -423,6 +434,8 @@ const Demo={
   async setKore(o,kid){this._sync(o);dsave()},
   async koreLots(){return DEMO.kore},
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
+  async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,t:x.trait||'',na:[],kore:[],koreStat:'',steps:{}};
+    STEPS.forEach(st=>o.steps[st.k]='');DEMO.objets.push(o);const dd=DEMO.dossiers.find(y=>y.id===d.id);if(dd)dd.nObj=(dd.nObj||0)+1;dsave();return JSON.parse(JSON.stringify(o))},
   _sync(o){const i=DEMO.objets.findIndex(x=>x.id===o.id);DEMO.objets[i]=JSON.parse(JSON.stringify(o))},
   async koreFin(o){o.kore=[];o.steps.st='✓ '+fr(iso());this._sync(o);(DEMO.journal[o.id]=DEMO.journal[o.id]||[]).unshift({id:'k'+Date.now(),etape:'Stabilisation',statut:'terminé',date:iso(),op:'KORE',proto:['Déchloruration (KORE)'],note:'Fin du bain dans KORE'});dsave()}
 };
@@ -481,7 +494,7 @@ function dossierV(){
   const d=S.d,objs=S.objs;
   if(!objs.length)return `<button class="back" data-a="home">‹ Dossiers</button>${topInfo()}
     <section class="card dossier"><div class="label">Dossier</div><h1>${esc(d.commune)}${d.site?' · '+esc(d.site):''}</h1><div class="meta">${esc(d.num)}${d.ro?' · RO '+esc(d.ro):''}</div></section>
-    ${links(d)}<p class="empty card">Les fiches objets de ce dossier n'ont pas encore été créées dans Notion.</p>`;
+    ${links(d)}${creerV(d,true)}`;
   const tot=objs.reduce((a,o)=>a+progress(o),0)/objs.length,fin=objs.filter(o=>!next(o)).length;
   const counts={};objs.forEach(o=>{const n=next(o);const k=n?n.k:'fin';counts[k]=(counts[k]||0)+1});
   const list=objs.filter(o=>view.filter==='all'||(next(o)?next(o).k:'fin')===view.filter);
@@ -509,7 +522,8 @@ function dossierV(){
     <span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
     <span class="d"><b>${esc(o.d||o.nom)}</b><span>${short(o)?short(o)+' · ':''}${esc(o.m)}${o.t?' · '+esc(o.t):''}</span>
       <span class="dots">${STEPS.map(s=>{const x=st(o,s.k);return `<i class="${x==='run'?'run':n&&n.k===s.k?'next':x}"></i>`}).join('')}</span></span>
-    <span class="next ${n?(r?'run':''):'ok'}">${n?(r?(parseStep(o.steps[n.k]).kore?'KORE':'en cours'):n.n):'Terminé'}</span></button>`}).join('')}</div>`;
+    <span class="next ${n?(r?'run':''):'ok'}">${n?(r?(parseStep(o.steps[n.k]).kore?'KORE':'en cours'):n.n):'Terminé'}</span></button>`}).join('')}</div>
+  <p class="foot"><button class="link" data-a="addobj">+ Ajouter des objets à ce dossier</button></p>`;
 }
 
 function stepLine(o,k){
@@ -730,6 +744,7 @@ document.addEventListener('click',async e=>{
   if(d.lp){view.lotProto.has(d.lp)?view.lotProto.delete(d.lp):view.lotProto.add(d.lp);render();return}
   if(d.ls){view.lotSt=d.ls;view.sel=new Set();render();return}
   if(d.t){view.sel.has(d.t)?view.sel.delete(d.t):view.sel.add(d.t);render();return}
+  if(d.cm){view.cMode=d.cm;rerenderCreer();return}
   if(d.pick){closeSheet();openObj(d.pick);return}
   if(d.klink){closeSheet();const p=LS.get('argoslab:korepending',null);
     let objs=S.objs.filter(o=>view.sel.has(o.id)&&isFer(o));
@@ -759,6 +774,8 @@ document.addEventListener('click',async e=>{
         <div class="kb">${lots.length?lots.slice(0,10).map(l=>`<button data-klink="${l.id}">${esc(l.ref||l.int)}<small>${esc(l.int)}</small></button>`).join(''):'<span class="empty">Aucun bain en cours dans KORE.</span>'}</div>
         <button class="link" data-a="close" style="align-self:center">Fermer</button>`);break}
     case 'kplater':closeSheet();break;
+    case 'creer':creerFiches();break;
+    case 'addobj':{const l=sheet(creerV(S.d,false)+'<button class="link" data-a="close" style="align-self:center">Fermer</button>');l.classList.add('csheet');break}
     case 'labels':printLabels(view.v==='lot'&&view.sel.size?S.objs.filter(o=>view.sel.has(o.id)):S.objs);break;
     case 'undo':doUndo();break;
     case 'obs':{const t=$('#obs').value.trim();if(!t)return;const o=cur();
@@ -852,6 +869,43 @@ async function printLabels(objs){
   planche16({titre:'ARGOS Lab — étiquettes '+d.num,couleur:'#2E3192',filet:'#E9EAF6',cartes}).ouvrir(w);
 }
 
+
+/* ---------- création des fiches objets ---------- */
+// ID objet = partie numérique du N° labo + _001 à n (« 2026_10659_Gatteville-le-Phare » → « 2026_10659 »)
+const baseId=num=>{const m=String(num||'').match(/^[0-9][0-9_.\-]*/);return m?m[0].replace(/[_.\-]+$/,''):String(num||'').trim()};
+const MATS=['Fer','Alliages cuivreux','Argent','Plomb','Or','Verre','Céramique','Os','Tabletterie','Bois','Cuir','Textile','Lapidaire','Glyptique','Mosaïque','Enduit peint','Composite','Autre'];
+function matNorm(t){return String(t||'').split(/[,+\/]| et /).map(x=>x.trim()).filter(Boolean).map(x=>{const l=x.toLowerCase();
+  if(/cuivr|bronze|laiton|cu\b/.test(l))return 'Alliages cuivreux';if(/^fe\b|fer\b/.test(l))return 'Fer';if(/plomb|^pb$/.test(l))return 'Plomb';
+  if(/c[ée]ram|terre cuite/.test(l))return 'Céramique';if(/verre/.test(l))return 'Verre';if(/^os$/.test(l))return 'Os';
+  return MATS.find(m=>m.toLowerCase()===l)||x.charAt(0).toUpperCase()+x.slice(1)}).filter((v,i,a)=>a.indexOf(v)===i)}
+// Liste collée : une ligne par objet, colonnes séparées par tabulation (Excel) ou « ; » : N° inventaire ; désignation ; matériau ; NR
+function parseListe(t){return String(t||'').split(/\r?\n/).map(l=>l.trim()).filter(Boolean).map(l=>{
+  const c=(l.includes('\t')?l.split('\t'):l.split(';')).map(x=>x.trim());
+  const nr=c[3]&&!isNaN(parseFloat(c[3].replace(',','.')))?parseFloat(c[3].replace(',','.')):null;
+  return {inv:c[0]||'',des:c[1]||'',mat:matNorm(c[2]),nr,_h:/d[ée]signation|mat[ée]riau|inventaire|^n°\s*inv/i.test(l)}}).filter((x,i)=>!(i===0&&x._h))}
+function creerV(d,vide){const b=baseId(d.num),n=view.cMode==='liste'?parseListe(view.cListe).length:(parseInt(view.cNb)||0),deb=nextNum();
+  return `<section class="card creer"><div class="label">${vide?'Créer les fiches objets':'Ajouter des objets'}</div>
+    ${vide?'<p class="hint">Ce dossier n’a pas encore de fiches objets dans Notion. Créez-les ici, elles seront numérotées automatiquement.</p>':''}
+    <div class="seg two"><button data-cm="nb" aria-pressed="${view.cMode!=='liste'}">Par nombre</button><button data-cm="liste" aria-pressed="${view.cMode==='liste'}">Coller une liste</button></div>
+    ${view.cMode==='liste'?`<textarea id="cliste" class="ta" rows="7" placeholder="Une ligne par objet : N° inventaire ; désignation ; matériau ; NR&#10;Ex. : OI 12 ; fibule ; alliage cuivreux ; 1&#10;Un copier-coller depuis Excel (colonnes dans cet ordre) fonctionne aussi.">${esc(view.cListe||'')}</textarea>`
+      :`<label class="fl">Nombre d'objets<input id="cnb" class="ti" type="number" min="1" max="500" inputmode="numeric" value="${esc(view.cNb||'')}"></label>
+      <label class="fl">Matériau (facultatif, commun à tous)<select id="cmat" class="ti"><option value="">—</option>${MATS.map(m=>`<option ${view.cMat===m?'selected':''}>${m}</option>`).join('')}</select></label>`}
+    <p class="hint">${n?`<b>${n}</b> fiche${n>1?'s':''} : <b>${esc(b)}_${String(deb).padStart(3,'0')}</b>${n>1?` à <b>${esc(b)}_${String(deb+n-1).padStart(3,'0')}</b>`:''}`:'Indiquez le nombre d’objets ou collez la liste.'}</p>
+    <button class="big primary" data-a="creer" ${n&&!busy?'':'disabled'}>${ICON.check}${busy||`Créer ${n||''} fiche${n>1?'s':''} dans Notion`}</button></section>`}
+function nextNum(){let m=0;S.objs.forEach(o=>{const x=String(o.idObj||'').match(/_(\d{3,})$/);if(x)m=Math.max(m,+x[1])});return m+1}
+async function creerFiches(){
+  const d=S.d,b=baseId(d.num);let items;
+  if(view.cMode==='liste')items=parseListe(view.cListe);
+  else{const n=parseInt(view.cNb)||0;items=Array.from({length:n},()=>({inv:'',des:'',mat:view.cMat?[view.cMat]:[],nr:null}))}
+  if(!items.length)return;if(items.length>300)return toast('300 objets maximum à la fois',0,1);
+  let k=nextNum(),ok=0;
+  try{for(const x of items){busy=`Création ${ok+1} / ${items.length}…`;document.querySelector('.csheet')?rerenderCreer():render();
+      x.id=b+'_'+String(k++).padStart(3,'0');S.objs.push(await API().creerObjet(d,x));ok++;if(S.mode!=='demo')await sleep(340)}
+    busy=false;d.nObj=S.objs.length;view.cListe='';view.cNb='';closeSheet();
+    toast(`${ok} fiche${ok>1?'s':''} objet créée${ok>1?'s':''} dans Notion`);render()}
+  catch(e){busy=false;render();fail(e);if(ok)toast(`${ok} fiche${ok>1?'s':''} créée${ok>1?'s':''} avant l’erreur`,0,1)}
+}
+
 /* ---------- passage en bain KORE ---------- */
 const isFer=o=>/\bfer\b/i.test(o.m||'');
 // Fiche KORE pré-remplie : référence, intitulé, responsable, type d'opération, date, poids total des objets choisis
@@ -934,6 +988,14 @@ function showLogin(){
         err.textContent=x.status===401||x.status===403?'Clé refusée par le serveur.':'Connexion impossible : '+(x.message||x)}});
   });
 }
+
+function rerenderCreer(){const sh=document.querySelector('.sheet.csheet .sheet-in');
+  if(sh){sh.innerHTML=creerV(S.d,false)+'<button class="link" data-a="close" style="align-self:center">Fermer</button>'}else render();
+  const t=document.getElementById(view.cFocus||'');if(t){t.focus();if(t.setSelectionRange&&t.type!=='number'){const n=t.value.length;t.setSelectionRange(n,n)}}}
+document.addEventListener('input',e=>{const t=e.target;if(!t.closest('.creer'))return;
+  if(t.id==='cliste')view.cListe=t.value;if(t.id==='cnb')view.cNb=t.value;view.cFocus=t.id;
+  clearTimeout(window._ct);window._ct=setTimeout(()=>{const p=t.selectionStart;rerenderCreer();const n=document.getElementById(t.id);if(n&&p!=null&&n.setSelectionRange&&n.type!=='number')n.setSelectionRange(p,p)},350)});
+document.addEventListener('change',e=>{if(e.target.id==='cmat'){view.cMat=e.target.value}});
 
 /* ---------- démarrage ---------- */
 (async function init(){
