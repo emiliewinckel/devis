@@ -255,6 +255,7 @@ body.compact .brand .ico{display:block;height:38px;width:38px}
 
 .creer{display:flex;flex-direction:column;gap:10px}
 .creer .hint b{color:var(--navy)}
+.seg.three{grid-template-columns:repeat(3,1fr)!important}
 </style>
 
 <header class="topbar"><div class="topbar-in">
@@ -565,16 +566,16 @@ function objetV(){
 
 function lotV(){
   if(!view.step){const f=STEPS.find(s=>S.objs.some(o=>['todo','run'].includes(st(o,s.k))));view.step=f?f.k:'pa'}
-  const k=view.step,P=protosLot(k);P.length||(view.lotSt='terminé');
+  const k=view.step,P=protosLot(k);if(!P.length&&view.lotSt==='en cours')view.lotSt='terminé';
   const cand=lotCand();
   return `<button class="back" data-a="dossier">‹ ${esc(S.d.num)} · ${esc(S.d.commune)}</button>${topInfo()}
   <section class="card" style="display:flex;flex-direction:column;gap:12px">
     <div class="label">1. Étape</div>
     <div class="seg">${STEPS.map(s=>`<button data-step="${s.k}" aria-pressed="${k===s.k}">${s.n}<em>${S.objs.filter(o=>['todo','run'].includes(st(o,s.k))).length}</em></button>`).join('')}</div>
-    ${P.length?`<div class="label">Protocole · plusieurs choix possibles</div>
-    <div class="chips cwrap">${P.map(p=>`<button class="chip" data-lp="${esc(p)}" aria-pressed="${view.lotProto.has(p)}">${esc(p)}</button>`).join('')}</div>
     <div class="label">Statut</div>
-    <div class="seg two"><button data-ls="en cours" aria-pressed="${view.lotSt==='en cours'}">Commencé</button><button data-ls="terminé" aria-pressed="${view.lotSt==='terminé'}">Terminé</button></div>`:''}
+    <div class="seg ${P.length?'three':'two'}">${P.length?`<button data-ls="en cours" aria-pressed="${view.lotSt==='en cours'}">Commencé</button>`:''}<button data-ls="terminé" aria-pressed="${view.lotSt==='terminé'}">Terminé</button><button data-ls="na" aria-pressed="${view.lotSt==='na'}">Non applicable</button></div>
+    ${P.length&&view.lotSt!=='na'?`<div class="label">Protocole · plusieurs choix possibles</div>
+    <div class="chips cwrap">${P.map(p=>`<button class="chip" data-lp="${esc(p)}" aria-pressed="${view.lotProto.has(p)}">${esc(p)}</button>`).join('')}</div>`:''}
     ${k==='st'&&S.objs.some(isFer)?(()=>{const sf=S.objs.filter(o=>view.sel.has(o.id)&&isFer(o)),m=sf.reduce((a,o)=>a+(Number(o.masse)||0),0);
       return `<div class="kbox"><div><b>Déchloruration dans KORE</b><span>Cochez les objets en fer ci-dessous${sf.length?` · <strong>${sf.length}</strong> sélectionné${sf.length>1?'s':''}${m?' · '+Math.round(m)+' g au total':''}`:''}</span></div>
       <div class="kb"><button data-a="korenew" ${sf.length?'':'disabled'}>Mettre en bain KORE ${ICON.ext}</button><button data-a="korepick" ${sf.length?'':'disabled'}>Relier à un bain existant</button></div></div>`})():''}
@@ -594,8 +595,8 @@ function render(){
   // Logo complet sur la liste des dossiers, œil seul sur les pages suivantes
   document.body.classList.toggle('compact',view.v!=='home');
   $('#app').innerHTML=view.v==='home'?home():view.v==='dossier'?dossierV():view.v==='obj'?objetV():lotV();
-  const n=view.sel.size,k=view.step,verb=view.lotSt==='en cours'?'Commencer':'Valider';
-  $('#dock').innerHTML=view.v==='lot'?`<div class="dock"><button class="big primary" data-a="apply" ${n&&!busy?'':'disabled'}>${ICON.check}${busy?busy:n?`${verb} « ${sn(k)} » pour ${n} objet${n>1?'s':''}`:'Sélectionnez des objets'}</button></div>`:'';
+  const n=view.sel.size,k=view.step,verb=view.lotSt==='en cours'?'Commencer':view.lotSt==='na'?'Non applicable :':'Valider';
+  $('#dock').innerHTML=view.v==='lot'?`<div class="dock"><button class="big primary" data-a="apply" ${n&&!busy?'':'disabled'}>${ICON.check}${busy?busy:n?(view.lotSt==='na'?`« ${sn(k)} » non applicable pour ${n} objet${n>1?'s':''}`:`${verb} « ${sn(k)} » pour ${n} objet${n>1?'s':''}`):'Sélectionnez des objets'}</button></div>`:'';
   $('#opname').textContent=op();
   const q=$('#q');if(q)q.oninput=e=>{view.q=e.target.value;const p=e.target.selectionStart;render();const n=$('#q');n.focus();n.setSelectionRange(p,p)};
 }
@@ -652,7 +653,8 @@ async function doUndo(){if(!undo)return;const u=undo;undo=null;
   try{for(const id of (u.ids||[]))await API().archive(id);
     if(u.na)await API().setNA(u.na.o,u.na.prev);
     if(u.kore)await API().setKore(u.kore.o,u.kore.prev||null);
-    if(u.multiKore)for(const m of u.multiKore){await API().setKore(m.o,m.prev);m.o.kore=m.prev?[m.prev]:[]}}catch(e){return fail(e)}
+    if(u.multiKore)for(const m of u.multiKore){await API().setKore(m.o,m.prev);m.o.kore=m.prev?[m.prev]:[]}
+    if(u.naMulti)for(const m of u.naMulti){await API().setNA(m.o,m.na);if(S.mode!=='demo')await sleep(340)}}catch(e){return fail(e)}
   if(u.restore)u.restore();
   (u.prev||[]).forEach(p=>{p.o.steps[u.k]=p.s});
   if(view.v==='obj'&&cur())S.journal=await API().journal(cur().id).catch(()=>S.journal);
@@ -763,7 +765,7 @@ document.addEventListener('click',async e=>{
     case 'demo':closeSheet();S.mode='demo';LS.set('argoslab:mode','demo');await loadHome();if(!LS.get('argoslab:op',''))opSheet();break;
     case 'lot':view={...view,v:'lot',step:null,sel:new Set(),lotProto:new Set(),lotSt:'terminé'};render();scrollTo(0,0);break;
     case 'all':{const c=lotCand();view.sel=view.sel.size===c.length?new Set():new Set(c.map(o=>o.id));render();break}
-    case 'apply':{const objs=S.objs.filter(o=>view.sel.has(o.id)),s=protosLot(view.step).length?view.lotSt:'terminé';view.sel=new Set();await record(objs,view.step,s,[...view.lotProto]);break}
+    case 'apply':{const objs=S.objs.filter(o=>view.sel.has(o.id)),s=view.lotSt==='na'?'na':protosLot(view.step).length?view.lotSt:'terminé';view.sel=new Set();if(s==='na')await naLot(objs,view.step);else await record(objs,view.step,s,[...view.lotProto]);break}
     case 'retour':{const dd=S.d;try{await API().setRetour(dd,iso());dd.retour=iso();toast('Date de retour enregistrée');render()}catch(err){fail(err)}break}
     case 'korefin':{const o=cur();await Demo.koreFin(o);S.journal=await Demo.journal(o.id);toast('Bain terminé dans KORE : stabilisation validée');render();break}
     case 'korenew':{const objs=S.objs.filter(o=>view.sel.has(o.id)&&isFer(o));if(!objs.length)return;
@@ -869,6 +871,18 @@ async function printLabels(objs){
   planche16({titre:'ARGOS Lab — étiquettes '+d.num,couleur:'#2E3192',filet:'#E9EAF6',cartes}).ouvrir(w);
 }
 
+
+
+// « Non applicable » pour plusieurs objets d'un coup (même effet que le bouton n/a d'un objet)
+async function naLot(objs,k){
+  const n=sn(k),prev=objs.map(o=>({o,na:[...o.na],s:o.steps[k]}));let done=0;
+  objs.forEach(o=>{if(!o.na.includes(n))o.na=[...o.na,n];o.steps[k]='n/a'});render();
+  try{for(const o of objs){if(objs.length>1){busy=`Enregistrement ${done+1} / ${objs.length}…`;render()}
+      await API().setNA(o,o.na);done++;if(objs.length>1&&S.mode!=='demo')await sleep(340)}
+    busy=false;undo={k,prev:prev.map(p=>({o:p.o,s:p.s})),restore:()=>prev.forEach(p=>p.o.na=p.na),naMulti:prev.map(p=>({o:p.o,na:p.na}))};
+    toast(`« ${n} » non applicable pour ${objs.length} objet${objs.length>1?'s':''}`,true);render()}
+  catch(e){busy=false;prev.slice(done).forEach(p=>{p.o.na=p.na;p.o.steps[k]=p.s});render();fail(e)}
+}
 
 /* ---------- création des fiches objets ---------- */
 // ID objet = partie numérique du N° labo + _001 à n (« 2026_10659_Gatteville-le-Phare » → « 2026_10659 »)
