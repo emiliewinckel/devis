@@ -70,6 +70,22 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 .lot-name{font-size:13px;font-weight:600;margin-bottom:2px}
 .lot-sub{font-size:10px;color:#4A5F72}
 .lot-right{display:flex;align-items:center;gap:7px;flex-shrink:0}
+/* PLANNING (même bandeau que KORE) */
+.resume{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.resume .metric-val{font-size:20px}
+.resume .metric{background:#fff;border:0.5px solid #D8E4EE}
+.lot-item.planning{align-items:flex-start;gap:10px}
+.lot-item.planning .lot-right{flex-direction:column;align-items:flex-end;gap:4px}
+.lot-next{font-size:11px;margin-top:6px;color:#2C2C2A}
+.lot-next b{color:#0A3D5C}
+.late{color:#A32D2D;font-weight:600}
+.lot-meta{font-size:10px;color:#4A5F72;text-align:right;line-height:1.5}
+.muted{font-size:11px;color:#4A5F72;line-height:1.5}
+/* OBJETS ARGOS LAB DU LOT */
+.argos-box{margin-top:10px;border-top:0.5px solid #D8E4EE;padding-top:8px}
+.argos-box .t{font-size:10px;font-weight:700;letter-spacing:.5px;color:#2E3192;text-transform:uppercase;margin-bottom:5px}
+.argos-box a{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#2C2C2A;text-decoration:none;padding:5px 8px;border-radius:6px;background:#EAF6FB;margin-bottom:3px}
+.argos-box a:hover{background:#d6eef8}.argos-box a span{color:#4A5F72}
 /* SAISIE */
 .saisie-layout{display:grid;grid-template-columns:1fr 275px;gap:12px;align-items:start}
 .saisie-side{position:sticky;top:64px}
@@ -186,7 +202,9 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
   <div class="auth-bar"><div><div class="auth-name" id="auth-name">Non connecté</div><div class="auth-email" id="auth-email">Connectez-vous pour synchroniser</div></div><div style="display:flex;gap:6px"><button class="btn btn-p btn-sm" onclick="handleAuth()">Connexion</button><button class="btn btn-sm btn-d" id="btn-lo" style="display:none" onclick="logout()">Déconnexion</button></div></div>
   <div class="sh"><h2>Objets en cours</h2><button class="btn btn-p btn-sm" onclick="showPage('nouveau')">+ Nouvel objet</button></div>
   <div id="notion-status" class="alert a-info" style="display:none;margin-bottom:9px"></div>
+  <div id="accueil-resume"></div>
   <div id="lots-list" class="lot-list"></div>
+  <div id="lots-termines" style="margin-top:12px"></div>
 </div>
 
 <!-- NOUVEAU OBJET -->
@@ -216,7 +234,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 <!-- SAISIE -->
 <div class="page" id="page-saisie">
   <div class="sh"><h2>Saisir un bain</h2><button class="btn btn-sm" onclick="showPage('accueil')">← Retour</button></div>
-  <div class="card" style="margin-bottom:9px"><div class="card-title">Objet concerné</div><select id="s-sel" onchange="chargerLot()"><option value="">— Sélectionner —</option></select><div id="lot-ctx" style="display:none;margin-top:8px;font-size:11px;line-height:1.7"></div><div id="lot-ctx-btns" style="display:none;margin-top:8px"><button class="btn btn-sm" onclick="imprimerEtiquette(gid('s-sel').value)">🖨 Réimprimer l'étiquette</button></div></div>
+  <div class="card" style="margin-bottom:9px"><div class="card-title">Objet concerné</div><select id="s-sel" onchange="chargerLot()"><option value="">— Sélectionner —</option></select><div id="lot-ctx" style="display:none;margin-top:8px;font-size:11px;line-height:1.7"></div><div id="lot-ctx-btns" style="display:none;margin-top:8px"></div><div id="lot-argos"></div></div>
   <div id="s-zone" style="display:none">
     <div class="tabs">
       <button class="active" id="tab-bain" onclick="swTab('bain')">Bain</button>
@@ -385,6 +403,10 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 // ============================================================
 
 var NOTION_VERSION = '2022-06-28';
+// Adresse de cette page (QR codes) et d'ARGOS Lab (objets reliés aux lots)
+var APP_URL = /github\.io$/.test(location.hostname) ? location.href.replace(/[?#].*$/, '') : 'https://emiliewinckel.github.io/devis/kera_CERAM.html';
+var ARGOS_URL = APP_URL.replace(/[^\/]*$/, '') + 'argos_lab.html';
+var ARGOS_OBJETS_DB = '38fd72a9-3a1d-8077-9ef1-c2aaf4e8886e';
 var DB_OBJETS_NAME = 'KERA Objets';
 var DB_BAINS_NAME  = 'KERA Bains';
 
@@ -612,6 +634,7 @@ function pageToLot(page) {
     consol:      sel('Consolidation'),
     fragilite:   sel('Fragilité'),
     freq:        sel('Fréquence relevés'),
+    statut:      txt('Statut'),
     mesures:     [],
     sechages:    []
   };
@@ -830,29 +853,122 @@ function showPage(id) {
   if (id === 'config') renderCfgNotion();
 }
 
+// ============================================================
+// ACCUEIL : objets triés par urgence, prochaine action (même logique que KORE)
+// ============================================================
+function esc(v) { return String(v == null ? '' : v).replace(/[&<>"]/g, function(c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+function isoLocal(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate()); }
+function aujourdhui() { return isoLocal(new Date()); }
+function addJours(iso, n) { if (!iso) return ''; var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoLocal(d); }
+function joursEntre(a, b) { if (!a || !b) return null; return Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5); }
+function fDate(iso) { if (!iso) return '—'; var p = String(iso).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso; }
+// Intervalle entre relevés : « Quotidien (J1–J5) » passe à tous les 3 jours après J5
+function intervalleLot(lot) {
+  var f = parseInt(lot.freq || '3', 10) || 3, ms = lot.mesures || [], last = ms[ms.length - 1];
+  if (f === 1 && last && ((last.jplus || 0) >= 5 || joursEntre(lot.dateDebut, last.date) >= 5)) return 3;
+  return f;
+}
+function evalLot(lot) {
+  var today = aujourdhui(), ms = lot.mesures || [], ss = lot.sechages || [], o;
+  if (/termin/i.test(lot.statut || '')) return {code: 'aucune', statut: 'Dessalement terminé', cls: 'b-ok'};
+  if (ss.length) {
+    var s = ss[ss.length - 1];
+    if (s.cryst === 'oui') o = {code: 'bain', label: 'Reprendre un bain (ré-efflorescence)', statut: 'Ré-efflorescence', cls: 'b-alert', due: today};
+    else if (s.cryst === 'non' && ss.length >= 2) o = {code: 'clore', label: 'Séchage conforme : clore le dessalement', statut: 'Séchage conforme', cls: 'b-ok', due: today};
+    else o = {code: 'sechage', label: 'Contrôle de séchage n° ' + (ss.length + 1), statut: 'Séchage en cours', cls: 'b-warn', due: addJours(s.date, 3)};
+  } else if (!ms.length) {
+    o = {code: 'demarrer', label: 'Mettre en place le bain 1', statut: 'À démarrer', cls: 'b-neu', due: lot.dateDebut && lot.dateDebut > today ? lot.dateDebut : today};
+  } else {
+    var l = ms[ms.length - 1], k = computeKadj(l, lot), cons = checkConsecutiveNeg(lot);
+    if (k != null && k <= A.cfg.kadj && cons >= A.cfg.cons) o = {code: 'sortir', label: 'Sortir du bain et passer au séchage', statut: '✓ Arrêt validé', cls: 'b-ok', due: today};
+    else {
+      var st = 'En cours', cls = 'b-neu';
+      if (k != null) { if (k <= A.cfg.kadj) { st = 'Plateau atteint'; cls = 'b-ok'; } else if (k <= A.cfg.kadj * 3) { st = 'En cours'; cls = 'b-warn'; } else { st = 'Actif'; cls = 'b-alert'; } }
+      o = {code: 'releve', label: 'Relevé du bain ' + (parseInt(l.cycle, 10) || ms.length) + ' et changement d\'eau', statut: st, cls: cls, due: addJours(l.date, intervalleLot(lot))};
+    }
+  }
+  var r = o.due ? joursEntre(o.due, today) : 0; o.retard = r > 0 ? r : 0;
+  return o;
+}
 function ref() {
-  var c = gid('lots-list');
+  var c = gid('lots-list'), ct = gid('lots-termines'), rs = gid('accueil-resume');
   if (!A.lots.length) {
     c.innerHTML = '<div class="empty-s"><div style="font-size:32px;opacity:0.3;margin-bottom:9px">🏺</div><p style="font-size:12px;font-weight:500">' + (A.notionToken ? 'Aucun objet — créez-en un !' : '⚠ Configurez votre token Notion dans ⚙ Config.') + '</p></div>';
-    return;
+    if (ct) ct.innerHTML = ''; if (rs) rs.innerHTML = ''; return;
   }
-  c.innerHTML = A.lots.map(function(lot) {
-    var ka = '—'; var sb = 'b-neu'; var st = 'Aucun bain';
-    var nb = lot.mesures ? lot.mesures.length : 0;
-    if (nb) {
-      var l = lot.mesures[nb - 1];
-      var k = computeKadj(l, lot);
-      if (k != null) {
-        ka = k.toFixed(2);
-        if (k <= A.cfg.kadj) { sb = 'b-ok'; st = 'Plateau atteint'; }
-        else if (k <= A.cfg.kadj * 3) { sb = 'b-warn'; st = 'En cours'; }
-        else { sb = 'b-alert'; st = 'Actif'; }
-      }
-      var neg = anionNeg(l);
-      if (neg && k != null && k <= A.cfg.kadj) { sb = 'b-ok'; st = '✓ Arrêt validé'; }
-    }
-    return '<div class="lot-item"><div class="lot-click" onclick="ouvrirLot(\'' + lot.id + '\')"><div class="lot-name">' + lot.int + '</div><div class="lot-sub">' + lot.ref + (lot.operation ? ' — ' + lot.operation : '') + '</div></div><div class="lot-right"><span class="badge ' + sb + '">' + st + '</span><div style="font-size:10px;color:#4A5F72;min-width:60px;text-align:right">K<sub>adj</sub> ' + ka + '</div><button class="x-btn" onclick="delLot(\'' + lot.id + '\')">✕</button></div></div>';
-  }).join('');
+  var today = aujourdhui(), enCours = [], termines = [];
+  A.lots.forEach(function(l) { var ev = evalLot(l); (ev.code === 'aucune' ? termines : enCours).push({lot: l, ev: ev}); });
+  var prio = {bain: 0, sortir: 1, clore: 2, releve: 3, sechage: 4, demarrer: 5};
+  enCours.sort(function(a, b) {
+    var da = a.ev.due || '9999', db = b.ev.due || '9999', ua = da <= today ? 0 : 1, ub = db <= today ? 0 : 1;
+    return ua - ub || (ua === 0 ? prio[a.ev.code] - prio[b.ev.code] : 0) || da.localeCompare(db) || (a.lot.ref || '').localeCompare(b.lot.ref || '');
+  });
+  var aFaire = enCours.filter(function(x) { return x.ev.due && x.ev.due <= today; }).length;
+  var retard = enCours.filter(function(x) { return x.ev.retard > 0; }).length;
+  var semaine = enCours.filter(function(x) { return x.ev.due && x.ev.due > today && x.ev.due <= addJours(today, 7); }).length;
+  if (rs) rs.innerHTML = '<div class="resume">' +
+    '<div class="metric"><div class="metric-val">' + aFaire + '</div><div class="metric-lbl">à faire aujourd\'hui' + (retard ? ' (dont ' + retard + ' en retard)' : '') + '</div></div>' +
+    '<div class="metric"><div class="metric-val">' + semaine + '</div><div class="metric-lbl">dans les 7 jours</div></div>' +
+    '<div class="metric"><div class="metric-val">' + enCours.length + '</div><div class="metric-lbl">objets en cours</div></div></div>';
+  c.innerHTML = enCours.map(function(x) { return carteLot(x.lot, x.ev); }).join('') || '<div class="muted">Aucun objet en cours.</div>';
+  if (ct) ct.innerHTML = termines.length ? '<details><summary class="muted" style="cursor:pointer;font-weight:600">Objets terminés (' + termines.length + ')</summary><div class="lot-list" style="margin-top:8px">' +
+    termines.map(function(x) { return carteLot(x.lot, x.ev); }).join('') + '</div></details>' : '';
+}
+function carteLot(lot, ev) {
+  var nb = lot.mesures ? lot.mesures.length : 0, l = nb ? lot.mesures[nb - 1] : null, k = l ? computeKadj(l, lot) : null;
+  var meta = nb ? 'K<sub>adj</sub> ' + (k != null ? k.toFixed(2) : '—') + ' · ' + nb + ' bain' + (nb > 1 ? 's' : '') + '<br>dernier relevé ' + fDate(l.date) : 'aucun bain';
+  var quand = '';
+  if (ev.code !== 'aucune' && ev.due) quand = ev.retard > 0 ? ' — <span class="late">en retard de ' + ev.retard + ' j (prévu le ' + fDate(ev.due) + ')</span>' : ev.due <= aujourdhui() ? ' — <b>aujourd\'hui</b>' : ' — le ' + fDate(ev.due);
+  var id = esc(lot.id);
+  return '<div class="lot-item planning"><div class="lot-click" onclick="ouvrirLot(\'' + id + '\')"><div class="lot-name">' + esc(lot.int) + '</div><div class="lot-sub">' + esc(lot.ref) + (lot.operation ? ' — ' + esc(lot.operation) : '') + '</div>' +
+    (ev.code !== 'aucune' ? '<div class="lot-next">▶ <b>' + esc(ev.label) + '</b>' + quand + '</div>' : '') + '</div>' +
+    '<div class="lot-right"><span class="badge ' + ev.cls + '">' + esc(ev.statut) + '</span><div class="lot-meta">' + meta + '</div>' +
+    '<button class="x-btn" title="Supprimer" onclick="event.stopPropagation();delLot(\'' + id + '\')">✕</button></div></div>';
+}
+
+// Fin / reprise du dessalement : écrit « Statut » dans Notion (lu par ARGOS Lab pour valider la stabilisation)
+function majBoutonsLot(lot) {
+  var b = gid('lot-ctx-btns'); if (!b) return;
+  var fini = /termin/i.test(lot.statut || '');
+  b.innerHTML = '<button class="btn btn-sm" onclick="imprimerEtiquette(gid(\'s-sel\').value)">🖨 Réimprimer l\'étiquette</button> ' +
+    (fini ? '<button class="btn btn-sm" onclick="rouvrirDessalement()">Rouvrir le dessalement</button>'
+          : '<button class="btn btn-sm btn-p" onclick="terminerDessalement()">✓ Terminer le dessalement</button>');
+}
+function ecrireStatut(lot, txt) {
+  if (!lot.notionPageId) return Promise.reject(new Error('objet non synchronisé avec Notion'));
+  return notionFetch('/pages/' + lot.notionPageId, 'PATCH', {properties: {'Statut': {rich_text: txt ? [{text: {content: txt}}] : []}}});
+}
+function terminerDessalement() {
+  var lot = gL(gid('s-sel').value); if (!lot) return;
+  var ev = evalLot(lot);
+  if (['clore', 'sortir'].indexOf(ev.code) < 0 && !confirm('Les critères d\'arrêt ne sont pas encore tous réunis (' + ev.statut + '). Terminer quand même ?')) return;
+  var u = A.user ? (A.user.name || A.user.email) : '';
+  var txt = 'Terminé le ' + fDate(aujourdhui()) + (u ? ' (' + u + ')' : ''), ancien = lot.statut;
+  showLoading('Enregistrement…');
+  ecrireStatut(lot, txt).then(function() { lot.statut = txt; hideLoading(); chargerLot(); ref(); })
+    .catch(function(e) { lot.statut = ancien; setStatus('Erreur Notion : ' + e.message, 'error'); });
+}
+function rouvrirDessalement() {
+  var lot = gL(gid('s-sel').value); if (!lot || !confirm('Rouvrir le dessalement de cet objet ?')) return;
+  var ancien = lot.statut; showLoading('Enregistrement…');
+  ecrireStatut(lot, 'En cours').then(function() { lot.statut = 'En cours'; hideLoading(); chargerLot(); ref(); })
+    .catch(function(e) { lot.statut = ancien; setStatus('Erreur Notion : ' + e.message, 'error'); });
+}
+// Objets ARGOS Lab reliés à ce lot (relation « Lot KERA » des fiches objets)
+function argosObjets(lot) {
+  var z = gid('lot-argos'); if (!z) return; z.innerHTML = '';
+  if (!lot.notionPageId) return;
+  var pid = lot.notionPageId;
+  notionFetch('/databases/' + ARGOS_OBJETS_DB + '/query', 'POST', {page_size: 100, filter: {property: 'Lot KERA', relation: {contains: pid}},
+    sorts: [{property: 'ID objet', direction: 'ascending'}]}).then(function(j) {
+    var cur = gL(gid('s-sel').value); if (!cur || cur.notionPageId !== pid) return;
+    var r = j.results || []; if (!r.length) return;
+    var t = function(pg, n) { var x = pg.properties[n]; if (!x) return ''; return (x.title || x.rich_text || []).map(function(y) { return y.plain_text || ''; }).join(''); };
+    z.innerHTML = '<div class="argos-box"><div class="t">Objets ARGOS Lab dans ce lot · ' + r.length + '</div>' + r.map(function(pg) {
+      return '<a href="' + ARGOS_URL + '?objet=' + pg.id.replace(/-/g, '') + '" target="_blank" rel="noopener"><b>' + esc(t(pg, 'ID objet') || t(pg, 'Nom')) + '</b><span>' + esc([t(pg, 'N° inventaire'), t(pg, 'Description')].filter(Boolean).join(' · ')) + '</span></a>';
+    }).join('') + '</div>';
+  }).catch(function() {});
 }
 
 function anionNeg(m) { return m && m.cl === '-' && m.no3 === '-' && m.so4 === '-'; }
@@ -916,7 +1032,9 @@ function chargerLot() {
   if (!id) { fz.style.display = 'none'; ctx.style.display = 'none'; if (ctxb) ctxb.style.display = 'none'; return; }
   var lot = gL(id); if (!lot) return;
   fz.style.display = 'block'; ctx.style.display = 'block'; if (ctxb) ctxb.style.display = 'block';
-  ctx.innerHTML = '<b>Début :</b> ' + (lot.dateDebut || '—') + ' &nbsp;|&nbsp; <b>Poids :</b> ' + (lot.poids || '—') + ' g &nbsp;|&nbsp; <b>Vol. bain :</b> ' + (lot.volume || '—') + ' L &nbsp;|&nbsp; <b>Bains :</b> ' + (lot.mesures ? lot.mesures.length : 0);
+  majBoutonsLot(lot);
+  argosObjets(lot);
+  ctx.innerHTML = (/termin/i.test(lot.statut || '') ? '<span class="badge b-ok" style="margin-bottom:4px">' + esc(lot.statut) + '</span><br>' : '') + '<b>Début :</b> ' + (lot.dateDebut || '—') + ' &nbsp;|&nbsp; <b>Poids :</b> ' + (lot.poids || '—') + ' g &nbsp;|&nbsp; <b>Vol. bain :</b> ' + (lot.volume || '—') + ' L &nbsp;|&nbsp; <b>Bains :</b> ' + (lot.mesures ? lot.mesures.length : 0);
   gid('b-vol').value = lot.volume || '';
   autoFillBain(lot);
   affH(lot);
@@ -1150,7 +1268,7 @@ function creerLot() {
     A.lots.push(lot);
     A.lastLotId = lot.id;
     var qz = gid('qr-out'); qz.innerHTML = '';
-    new QRCode(qz, {text: 'https://emiliewinckel.github.io/devis/kera_notion.html?lot=' + lot.id, width: 130, height: 130, colorDark: '#125c8a', colorLight: '#fff'});
+    new QRCode(qz, {text: APP_URL + '?lot=' + lot.id, width: 130, height: 130, colorDark: '#125c8a', colorLight: '#fff'});
     gid('lp-name').textContent = lot.int; gid('lp-ref').textContent = lot.ref;
     gid('lp-det').textContent = (lot.dateDebut || '-') + ' — ' + lot.poids + 'g / ' + lot.volume + 'L';
     gid('lp').style.display = 'block'; gid('btn-print').style.display = 'inline-flex';
@@ -1692,7 +1810,7 @@ function imprimerEtiquette(lid) {
   var tmp = document.createElement('div');
   tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:240px;height:240px';
   document.body.appendChild(tmp);
-  new QRCode(tmp, {text: 'https://emiliewinckel.github.io/devis/kera_notion.html?lot=' + lot.id, width: 240, height: 240, colorDark: '#125c8a', colorLight: '#ffffff'});
+  new QRCode(tmp, {text: APP_URL + '?lot=' + lot.id, width: 240, height: 240, colorDark: '#125c8a', colorLight: '#ffffff'});
   setTimeout(function() {
     var el = tmp.querySelector('canvas') || tmp.querySelector('img');
     var src = el ? (el.tagName === 'CANVAS' ? el.toDataURL('image/png') : el.src) : '';
