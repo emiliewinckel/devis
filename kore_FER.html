@@ -275,13 +275,22 @@ table.bt td.num{text-align:right;white-space:nowrap}
         <div id="form-titr">
           <div class="card"><div class="card-title">Titrage du bain <span id="t-bain">—</span></div>
             <div id="t-ctx" class="muted" style="margin-bottom:9px"></div>
-            <div class="row"><div><label>Date du prélèvement</label><input type="date" id="t-date" onchange="majTitrage()"></div><div><label>Volume d'AgNO₃ versé (mL) *</label><input type="text" id="t-v" inputmode="decimal" oninput="majTitrage()"></div></div>
-            <div class="row"><div><label>Solution d'AgNO₃ utilisée *</label><select id="t-n" onchange="majTitrage()"></select></div><div><label>V échantillon (mL) *</label><input type="text" id="t-ve" inputmode="decimal" oninput="majTitrage()"></div></div>
+            <div class="row"><div><label>Date du prélèvement</label><input type="date" id="t-date" onchange="majTitrage()"></div><div><label>Méthode</label><select id="t-meth" onchange="majMethode()"><option value="mohr">Titrage de Mohr (AgNO₃)</option><option value="quantab">Bandelette Quantab</option></select></div></div>
+            <div id="blk-mohr">
+            <div class="row"><div><label>Volume d'AgNO₃ versé (mL) *</label><input type="text" id="t-v" inputmode="decimal" oninput="majTitrage()"></div><div><label>Solution d'AgNO₃ utilisée *</label><select id="t-n" onchange="majTitrage()"></select></div></div>
+            <div class="row"><div><label>V échantillon (mL) *</label><input type="text" id="t-ve" inputmode="decimal" oninput="majTitrage()"></div><div></div></div>
             <div id="t-par-alert"></div>
             <details class="adv"><summary id="t-par-sum">Paramètres du titrage</summary>
               <div class="row"><div><label>Température (°C)</label><input type="text" id="t-temp" inputmode="decimal"></div><div></div></div>
               <div class="cfg-note">Blanc de Mohr déduit : <b id="t-blanc">0</b> mL (réglable en Configuration).</div>
             </details>
+            </div>
+            <div id="blk-q" style="display:none">
+              <div class="row"><div><label>Flacon de bandelettes *</label><select id="q-lot" onchange="qDepuisLecture()"></select></div><div><label>Lecture sur l'échelle (au 0,2 près)</label><input type="text" id="q-lec" inputmode="decimal" placeholder="ex : 2,4" oninput="qDepuisLecture()"></div></div>
+              <div class="row trio"><div><label>Valeur lue (mg/L Cl⁻) *</label><input type="text" id="q-ppm" inputmode="decimal" oninput="majTitrage()"></div><div><label>V échantillon (mL) *</label><input type="text" id="q-ve" inputmode="decimal" oninput="majTitrage()"></div><div><label>V ajouté : acide, H₂O₂, eau (mL)</label><input type="text" id="q-vadd" inputmode="decimal" oninput="majTitrage()"></div></div>
+              <div class="row"><div><label>Lecture hors gamme</label><select id="q-borne" onchange="majTitrage()"><option value="">Non : lecture dans la gamme</option><option value="&lt;">Sous la gamme (sous le 1er repère)</option><option value="&gt;">Au-dessus de la gamme (colonne entièrement blanche)</option></select></div><div></div></div>
+              <div id="q-info"></div>
+            </div>
             <label>Observations</label><textarea id="t-obs" rows="2" placeholder="Couleur du bain, dépôts, état de l'objet…"></textarea>
             <div id="t-res"></div>
             <div class="btn-row"><button class="btn btn-p" onclick="enregTitrage()">💾 Enregistrer le titrage</button></div>
@@ -391,6 +400,21 @@ table.bt td.num{text-align:right;white-space:nowrap}
     <div class="alert a-info" style="margin:6px 0 0;font-size:11px">Avec l'intervalle adapté, la date du prochain titrage est calculée pour que la hausse de [Cl⁻] dépasse l'incertitude du titrage : jamais moins que l'écart minimal entre titrages comparés, jamais plus du double de la fréquence de base, et toujours dans la limite de l'âge maximal du bain.</div>
     <div class="cfg-note">Le blanc est déduit des nouveaux titrages et enregistré avec chacun d'eux ; les titrages déjà saisis ne sont pas recalculés.</div>
   </div>
+  <div class="card"><div class="card-title">Bandelettes Quantab</div>
+    <div class="row"><div><label>V échantillon par défaut (mL)</label><input type="text" id="cfg-qvech" inputmode="decimal" onchange="saveCfg()"></div><div><label>Méthode validée sur les bains de l'atelier</label><select id="cfg-qValide" onchange="saveCfg()"><option value="0">Non : en cours de validation (comparer à Mohr)</option><option value="1">Oui : validée</option></select></div></div>
+    <div class="cfg-note">Les bandelettes servent au suivi en phase active. Près du seuil de fin, ou sous leur gamme, KORE demande toujours une confirmation par Mohr. La table de conversion change à chaque flacon : la recopier une fois depuis l'étiquette.</div>
+    <div class="sub-title">Flacons enregistrés</div>
+    <div id="cfg-qlots"></div>
+    <details class="adv"><summary>+ Ajouter un flacon</summary>
+      <div class="row trio"><div><label>N° de lot du flacon *</label><input type="text" id="ql-lot"></div><div><label>Gamme</label><select id="ql-gam"><option value="bas">Basse (30–600 mg/L)</option><option value="haut">Haute (300–6000 mg/L)</option></select></div><div><label>Date de péremption</label><input type="date" id="ql-exp"></div></div>
+      <label>Table de conversion de l'étiquette : une ligne par repère, « lecture ; mg/L Cl⁻ »</label>
+      <textarea id="ql-pts" rows="6" placeholder="1,4 ; 30&#10;2,0 ; 49&#10;3,0 ; 85&#10;…"></textarea>
+      <div class="cfg-note">Facultatif : sans table, saisir directement la valeur lue sur l'étiquette à chaque mesure. La table reste enregistrée sur cet appareil.</div>
+      <div class="btn-row"><button class="btn btn-sm btn-p" onclick="ajouterQLot()">Enregistrer le flacon</button></div>
+    </details>
+    <div class="sub-title">Validation : bandelette et Mohr sur le même échantillon</div>
+    <div id="cfg-qvalid"></div>
+  </div>
   <div class="card"><div class="card-title">Rinçages</div>
     <div class="row"><div><label>Hausse max pendant un rinçage (µS/cm)</label><input type="number" id="cfg-cr" min="0" step="1" onchange="saveCfg()"></div><div><label>Conductivité max en fin de rinçage (µS/cm)</label><input type="number" id="cfg-crAbs" min="0" step="1" onchange="saveCfg()"></div></div>
     <div class="row"><div><label>Eau neuve : conductivité max (µS/cm)</label><input type="number" id="cfg-eauMax" min="0" step="1" onchange="saveCfg()"></div><div><label>pH max en fin de rinçage</label><input type="number" id="cfg-phMax" min="0" step="0.1" onchange="saveCfg()"></div></div>
@@ -426,7 +450,7 @@ table.bt td.num{text-align:right;white-space:nowrap}
 // Données : Notion (bases « KORE Objets » et « KORE Bains ») via proxy Cloudflare
 // Déploiement : GitHub Pages, fichier kore_FER.html (ne pas confondre avec KERA, céramique)
 // ============================================================
-var APP_VERSION = '2026-10-29-b';   // ← incrémenter à chaque déploiement
+var APP_VERSION = '2026-11-03-a';   // ← incrémenter à chaque déploiement
 
 var PROXY_URL  = 'https://kera-proxy.emiliewinckel.workers.dev';
 var NOTION_VER = '2022-06-28';
@@ -515,13 +539,15 @@ var CFG_DEFAUT = {
   cr: 20,      // rinçage : hausse maximale de conductivité pendant un rinçage (µS/cm)
   crAbs: 50,   // rinçage : conductivité maximale en fin de rinçage (µS/cm)
   eauMax: 20,  // eau neuve : conductivité maximale attendue (µS/cm)
-  phMax: 8     // rinçage : pH maximal en fin de rinçage
+  phMax: 8,    // rinçage : pH maximal en fin de rinçage
+  qvech: 2,    // Quantab : volume d'échantillon par défaut (mL), CCI Note 4/4
+  qValide: 0   // Quantab : 1 = méthode validée sur les bains de l'atelier (sulfite)
 };
 var CFG_VERSION = 4;
 var LECTURE_BURETTE = 0.05; // mL — incertitude de lecture + virage retenue pour le titrage
 
 var A = {
-  lots: [], cfg: {}, user: null,
+  lots: [], cfg: {}, user: null, qlots: [],
   dbObjetsId: null, dbBainsId: null,
   manquants: {objets: [], bains: []},   // propriétés Notion absentes (non écrites)
   editId: null, dernierCree: null, migrInfo: '', statusTok: 0, tab: 'titr'
@@ -596,7 +622,7 @@ function chargerCfg() {
   ecrireCfg();
 }
 function ecrireCfg() { try { localStorage.setItem('kore_cfg', JSON.stringify(A.cfg)); } catch (e) {} }
-var CFG_ENTIERS = {nbmin: 1, nconf: 1, jmin: 1, jecart: 1, jmax: 1, freq: 1, c0tol: 1, clFort: 1, adapt: 1, prelMax: 1};
+var CFG_ENTIERS = {nbmin: 1, nconf: 1, jmin: 1, jecart: 1, jmax: 1, freq: 1, c0tol: 1, clFort: 1, adapt: 1, prelMax: 1, qValide: 1};
 function saveCfg() {
   Object.keys(CFG_DEFAUT).forEach(function(k) {
     var v = fv('cfg-' + k);
@@ -605,7 +631,8 @@ function saveCfg() {
     if ((k === 'nbmin' || k === 'nconf' || k === 'jecart' || k === 'freq' || k === 'jmax') && v < 1) v = 1;
     if ((k === 'sc' || k === 'sf' || k === 'nag' || k === 'vech' || k === 'clFort' || k === 'ohMax' || k === 'ratioMin' || k === 'ratioMax') && v <= 0) v = CFG_DEFAUT[k];
     if (k === 'ratioMax' && v < A.cfg.ratioMin) v = Math.max(A.cfg.ratioMin, CFG_DEFAUT.ratioMax);
-    if (k === 'adapt') v = v ? 1 : 0;
+    if (k === 'adapt' || k === 'qValide') v = v ? 1 : 0;
+    if (k === 'qvech' && v <= 0) v = CFG_DEFAUT.qvech;
     A.cfg[k] = v;
   });
   A.cfg.cfgv = CFG_VERSION;
@@ -620,7 +647,7 @@ function lCfg() {
     e.options[0].textContent = 'Courant — seuil de fin ≤ ' + fNum(A.cfg.sc, 1) + ' mg/L';
     e.options[1].textContent = 'Fort enjeu / exposition — seuil de fin ≤ ' + fNum(A.cfg.sf, 1) + ' mg/L';
   }
-  renderProtocole();
+  renderProtocole(); rendQLots();
 }
 function resetCfg() {
   if (!confirm('Rétablir tous les critères par défaut ?')) return;
@@ -713,7 +740,9 @@ var SCHEMA_BAINS = {
   '[Cl-] mg/L': {number: {format: 'number'}}, 'Cl- extrait (mg)': {number: {format: 'number'}}, 'ΔCl- (%)': {number: {format: 'number'}},
   'Statut mesure': {select: {}}, 'Opérateur': {rich_text: {}},
   'N° rinçage': {number: {format: 'number'}}, 'Cond. avant µS/cm': {number: {format: 'number'}}, 'Cond. après µS/cm': {number: {format: 'number'}},
-  'Variation µS/cm': {number: {format: 'number'}}, 'Test AgNO3': {select: {}}, 'Observations': {rich_text: {}}
+  'Variation µS/cm': {number: {format: 'number'}}, 'Test AgNO3': {select: {}}, 'Observations': {rich_text: {}},
+  'Méthode': {select: {}}, 'Lecture Quantab': {number: {format: 'number'}}, 'Quantab lu (mg/L)': {number: {format: 'number'}},
+  'Lot Quantab': {rich_text: {}}, 'V ajouté (mL)': {number: {format: 'number'}}, 'Hors gamme': {select: {}}
 };
 
 function findOrCreateDb(name, schema) {
@@ -807,7 +836,9 @@ function loadLotsFromNotion() {
             cycle: pn(page, 'N° cycle'), volume: pn(page, 'Volume (L)'), temp: pn(page, 'Température (°C)'), ph: pn(page, 'pH'),
             c0: pn(page, 'C0 mS/cm'), cond: pn(page, 'Conductivité mS/cm'), vagno3: pn(page, 'V AgNO3 (mL)'), nagno3: pn(page, 'N AgNO3'),
             vech: pn(page, 'V échantillon (mL)'), blanc: pn(page, 'Blanc AgNO3 (mL)'), cl: pn(page, '[Cl-] mg/L'),
-            deltaCl: pn(page, 'ΔCl- (%)'), statut: ps(page, 'Statut mesure')
+            deltaCl: pn(page, 'ΔCl- (%)'), statut: ps(page, 'Statut mesure'),
+            methode: ps(page, 'Méthode') === 'Quantab' ? 'quantab' : 'mohr', qLecture: pn(page, 'Lecture Quantab'),
+            qPpm: pn(page, 'Quantab lu (mg/L)'), qLot: pt(page, 'Lot Quantab'), vadd: pn(page, 'V ajouté (mL)'), borne: ps(page, 'Hors gamme')
           }));
         }
       });
@@ -820,7 +851,7 @@ function loadLotsFromNotion() {
 function propsMesure(lot, m) {
   var debut = m.evt === 'debut';
   var nom = debut ? 'Début B.' + cyN(m) + ' — ' + (lot.ref || lot.int)
-                  : '[Cl⁻] ' + (m.cl != null ? fNum(m.cl, 1).replace(',', '.') + ' mg/L' : 'ND') + ' — B.' + cyN(m) + ' — ' + (lot.ref || lot.int);
+                  : '[Cl⁻] ' + (m.cl != null ? fCl(m).replace(',', '.') + ' mg/L' : 'ND') + (estQ(m) ? ' (Quantab)' : '') + ' — B.' + cyN(m) + ' — ' + (lot.ref || lot.int);
   var p = {
     'Nom': {title: [{text: {content: nom}}]},
     'Type entrée': {select: {name: debut ? 'debut_bain' : 'bain'}},
@@ -834,6 +865,13 @@ function propsMesure(lot, m) {
     'Observations': rt(m.obs), 'Opérateur': rt(m.operateur)
   };
   if (m.statut) p['Statut mesure'] = {select: {name: m.statut}};
+  if (!debut) {
+    p['Méthode'] = {select: {name: estQ(m) ? 'Quantab' : 'Mohr'}};
+    if (estQ(m)) {
+      p['Lecture Quantab'] = num(m.qLecture); p['Quantab lu (mg/L)'] = num(m.qPpm); p['Lot Quantab'] = rt(m.qLot); p['V ajouté (mL)'] = num(m.vadd);
+      p['Hors gamme'] = m.borne ? {select: {name: m.borne}} : {select: null};
+    }
+  }
   return filtrerProps(p, 'bains');
 }
 function propsRincage(lot, r) {
@@ -916,12 +954,13 @@ function clDepuisTitrage(v, n, ve, blanc) {
 }
 // Incertitude relative de lecture (±0,05 mL sur le volume net versé)
 function incRel(m) {
+  if (estQ(m)) return Q_INC;
   if (!m || m.vagno3 == null) return null;
   var net = m.vagno3 - (m.blanc || 0);
   return net > 0 ? LECTURE_BURETTE / net : null;
 }
 // Incertitude absolue sur [Cl⁻] (mg/L) : ±0,05 mL × N × 35 450 / V éch — ne dépend que de N et de V éch
-function incAbs(m) { return (m && m.nagno3 > 0 && m.vech > 0) ? LECTURE_BURETTE * m.nagno3 * 35450 / m.vech : null; }
+function incAbs(m) { if (estQ(m)) return m.cl != null ? Q_INC * m.cl : null; return (m && m.nagno3 > 0 && m.vech > 0) ? LECTURE_BURETTE * m.nagno3 * 35450 / m.vech : null; }
 // Conseil de paramètres pour titrer près du seuil (incertitude ≤ 10 % du seuil)
 // Deux normalités seulement, volontairement : 0,05 mol/L pour la phase active
 // et 0,01 mol/L (simple dilution au 1/5 de la précédente) pour l'approche du
@@ -1013,7 +1052,7 @@ function bains(lot) {
   liste.forEach(function(cy, i) {
     var recs = ms.filter(function(m) { return cyN(m) === cy; });
     var titr = recs.filter(estTitrage);
-    var dern = titr.length ? titr[titr.length - 1] : null;
+    var dern = dernierTitrage(titr);
     var deb = debutBain(lot, cy);
     var suivant = liste[i + 1] != null ? debutBain(lot, liste[i + 1]) : null;
     var fin = suivant || (i === liste.length - 1 && lot.rincages && lot.rincages.length ? lot.rincages[0].date : null);
@@ -1091,7 +1130,7 @@ function serieConfirmation(lot, m, liste) {
   for (var k = av.length - 1; k >= 0; k--) {
     var jb = joursEntre(d0, av[k].date);
     var da = incAbs(av[k]);
-    if (av[k].cl > s || jb == null || jb < A.cfg.jmin || (da != null && Math.abs(av[k].cl - s) <= da)) break;
+    if (estQ(av[k]) || av[k].cl > s || jb == null || jb < A.cfg.jmin || (da != null && Math.abs(av[k].cl - s) <= da)) break;
     serie.unshift(av[k]);
   }
   return serie;
@@ -1104,9 +1143,10 @@ function evalMesure(lot, m, liste) {
   var av = titragesAvant(liste, m), prev = av.length ? av[av.length - 1] : null;
   var d0 = debutBain(lot, cy, liste), jb = joursEntre(d0, m.date);
   var dj = prev ? joursEntre(prev.date, m.date) : null;
-  var dCl = prev && prev.cl > 0 ? (m.cl - prev.cl) / prev.cl * 100 : null;
+  // Une valeur hors gamme de bandelette n'est qu'une borne : pas de variation calculable
+  var dCl = prev && prev.cl > 0 && !(m.borne || prev.borne) ? (m.cl - prev.cl) / prev.cl * 100 : null;
   var u = Math.max(incRel(m) || 0, prev ? (incRel(prev) || 0) : 0) * 100;
-  var c = fNum(m.cl, 1) + ' mg/L', r = {jb: jb, dCl: dCl, dj: dj, prev: prev, u: u};
+  var c = fCl(m) + ' mg/L', r = {jb: jb, dCl: dCl, dj: dj, prev: prev, u: u};
   function res(o) { for (var k in r) o[k] = r[k]; return o; }
 
   // Baisse significative : plus de 20 % ET au-delà de deux fois l'incertitude absolue des titrages comparés
@@ -1114,6 +1154,15 @@ function evalMesure(lot, m, liste) {
   if (dCl != null && dCl < -20 && (prev.cl - m.cl) > 2 * daMax)
     return res({statut: 'Baisse — vérifier', cls: 'b-alert', acl: 'a-alert', code: 'verifier',
       msg: 'La [Cl⁻] a baissé de ' + fNum(-dCl, 0) + ' % dans le même bain (' + fNum(prev.cl, 1) + ' → ' + c + '). Dans un bain fermé elle ne peut que monter : vérifier le titrage (blanc, élimination du sulfite, volumes), la saisie (n° de bain, date) ou un éventuel complément de solution.'});
+  // Bandelette : utile en phase active, jamais pour conclure près du seuil
+  if (estQ(m)) {
+    var qmin = qMinMesure(m), zoneQ = Math.max(3 * s, qmin);
+    if (m.borne === '<' || m.cl <= zoneQ)
+      return res({statut: 'Quantab — confirmer par Mohr', cls: 'b-warn', acl: 'a-warn', code: 'titrer', due: m.date, mohr: true,
+        msg: (m.borne === '<' ? 'Bandelette sous sa gamme (< ' + fNum(m.cl, 0) + ' mg/L)' : 'Bandelette à ' + c + ' ± ' + fNum(incAbs(m), 0) + ' mg/L') +
+          ' : la valeur approche le seuil de fin (' + fNum(s, 1) + ' mg/L), que la bandelette ne permet pas de trancher. Titrer ce bain par la méthode de Mohr' +
+          (conseilPrecision ? ' (' + conseilPrecision(s, bilanPrelevements(lot, cy).reste) + ')' : '') + '.'});
+  }
   var da = incAbs(m);
   if (da != null && Math.abs(m.cl - s) <= da)
     return res({statut: 'Précision insuffisante', cls: 'b-warn', acl: 'a-warn', code: 'titrer', due: m.date,
@@ -1122,13 +1171,13 @@ function evalMesure(lot, m, liste) {
     if (dCl != null && dj != null && dj >= C.jecart && dCl <= C.dc)
       return res({statut: 'Plateau — changer le bain', cls: 'b-alert', acl: 'a-alert', code: 'changer',
         msg: 'La [Cl⁻] ne monte plus dans le bain ' + cy + ' (' + fPct(dCl) + ' en ' + dj + ' j) et reste au-dessus du seuil de fin (' + c + ' > ' + fNum(s, 1) + ' mg/L). Renouveler la solution.' +
-          (u > C.dc ? ' Incertitude de lecture ≈ ±' + fNum(u, 0) + ' % : plateau à confirmer si le changement peut attendre.' : '')});
+          (u >= C.dc ? ' Incertitude de lecture ≈ ±' + fNum(u, 0) + ' % : plateau à confirmer si le changement peut attendre.' : '')});
     var rr = raisonsRenouvellement(lot, m, jb);
     if (rr.length)
       return res({statut: 'Renouveler le bain', cls: 'b-alert', acl: 'a-alert', code: 'changer', raisons: rr,
         msg: 'L\'extraction se poursuit (' + c + ' > seuil de fin ' + fNum(s, 1) + ' mg/L), mais l\'état de la solution justifie de la renouveler sans attendre le plateau : ' + rr.map(function(x) { return x.txt; }).join(' ; ') + '. Si le changement a lieu dans les 3 jours, ce titrage sert de titrage final du bain ' + cy + '.'});
     return res({statut: 'Extraction active', cls: 'b-warn', acl: 'a-warn', code: 'titrer',
-      msg: (prev ? 'La [Cl⁻] continue de monter (' + fPct(dCl) + ' en ' + dj + ' j). ' : 'Premier titrage de ce bain. ') + c + ' > seuil de fin ' + fNum(s, 1) + ' mg/L : poursuivre et retitrer.'});
+      msg: (m.borne === '>' ? 'Bandelette au-dessus de sa gamme (≥ ' + c + ') : au prochain titrage, diluer l\'échantillon (et le noter dans « V ajouté ») ou titrer par Mohr. ' : '') + (prev ? 'La [Cl⁻] continue de monter (' + fPct(dCl) + ' en ' + dj + ' j). ' : 'Premier titrage de ce bain. ') + c + ' > seuil de fin ' + fNum(s, 1) + ' mg/L : poursuivre et retitrer.'});
   }
   if (cy < C.nbmin)
     return res({statut: 'Sous seuil — renouveler le bain', cls: 'b-warn', acl: 'a-warn', code: 'changer',
@@ -1181,7 +1230,7 @@ function evalLot(lot) {
     var maxAvant = 0, incoh = null;
     ms.forEach(function(m) { if (estTitrage(m) && cyN(m) < maxAvant && !incoh) incoh = m; if (cyN(m) > maxAvant) maxAvant = cyN(m); });
     var cy = cycleCourant(lot), dansBain = ms.filter(function(m) { return cyN(m) === cy; }), titr = dansBain.filter(estTitrage);
-    var dern = titr.length ? titr[titr.length - 1] : null;
+    var dern = dernierTitrage(titr);
     var evB = dern ? evalMesure(lot, dern, ms) : null;
     if (incoh) {
       o = {statut: 'N° de bain à vérifier', cls: 'b-alert', acl: 'a-alert', code: 'verifier', due: today,
@@ -1238,7 +1287,7 @@ function showPage(id) {
   document.querySelectorAll('.nav button').forEach(function(b) { b.classList.toggle('active', b.getAttribute('data-p') === id); });
   if (id === 'saisie' || id === 'rapport') remplirSelects();
   if (id === 'accueil') ref();
-  if (id === 'config') { afficherAppKey(); majInfoSchema(); }
+  if (id === 'config') { afficherAppKey(); majInfoSchema(); rendQLots(); }
   if (id === 'rapport') loadRap();
   window.scrollTo && window.scrollTo(0, 0);
 }
@@ -1380,7 +1429,7 @@ function txtBilan(lot) {
 }
 // Paramètres par défaut du titrage : ceux du dernier titrage du lot, sinon la configuration
 function parTitrage(lot) {
-  var t = (lot.mesures || []).filter(estTitrage), l = t[t.length - 1];
+  var t = (lot.mesures || []).filter(function(m) { return estTitrage(m) && !estQ(m); }), l = t[t.length - 1];
   return {n: l && l.nagno3 > 0 ? l.nagno3 : A.cfg.nag, ve: l && l.vech > 0 ? l.vech : A.cfg.vech};
 }
 // Remplit la liste des solutions d'AgNO₃ disponibles.
@@ -1406,6 +1455,13 @@ function preparerFormulaires(lot) {
   ['t-date', 'nb-fdate', 'nb-date', 'r-date'].forEach(function(f) { setv(f, td); });
   ['t-v', 't-temp', 't-obs', 'nb-fv', 'nb-c0', 'nb-temp', 'nb-obs', 'r-ca', 'r-cp', 'r-ph', 'r-obs'].forEach(function(f) { setv(f, ''); });
   setv('t-n', p.n); setv('t-ve', p.ve); setv('r-ag', '');
+  // Méthode proposée : celle du dernier titrage, sauf si KORE demande une confirmation par Mohr
+  ['q-lec', 'q-ppm', 'q-vadd'].forEach(function(f) { setv(f, ''); }); setv('q-borne', ''); setv('q-ve', A.cfg.qvech);
+  var tt = (lot.mesures || []).filter(estTitrage), dq = tt[tt.length - 1], evq = dq ? evalMesure(lot, dq, lot.mesures) : null;
+  setv('t-meth', dq && estQ(dq) && !(evq && evq.mohr) ? 'quantab' : 'mohr');
+  if (dq && estQ(dq) && dq.vadd > 0) setv('q-vadd', dq.vadd);
+  remplirQLots(dq && estQ(dq) ? dq.qLot : null);
+  majMethode(true);
   var cy = cycleCourant(lot);
   var tb = (lot.mesures || []).filter(function(m) { return cyN(m) === cy && estTitrage(m); }), dt_ = tb.length ? joursEntre(tb[tb.length - 1].date, td) : null;
   var cb = gid('nb-skip'); if (cb) cb.checked = dt_ != null && dt_ <= 3;
@@ -1416,10 +1472,149 @@ function preparerFormulaires(lot) {
 }
 
 // ---------------- TITRAGE ----------------
+// ============================================================
+// BANDELETTES QUANTAB (Hach, dichromate d'argent)
+// Mesure semi-quantitative (±10 % certifiés par lot) : sert au suivi en phase
+// active et au repérage du plateau. Près du seuil de fin, ou sous la gamme du
+// flacon, la décision revient toujours au titrage de Mohr.
+// L'échantillon est neutralisé (HNO₃, pH < 10) et le sulfite oxydé (H₂O₂)
+// avant la mesure : les volumes ajoutés diluent l'échantillon, d'où la correction
+// [Cl⁻] = valeur lue × (V éch + V ajouté) / V éch  (CCI Note 4/4, Selwyn 2016).
+// ============================================================
+var Q_INC = 0.10;   // incertitude relative certifiée par Hach pour chaque lot
+var Q_GAMMES = {bas: [30, 600], haut: [300, 6000]};
+function estQ(m) { return !!(m && m.methode === 'quantab'); }
+function fCl(m) { if (!m || m.cl == null) return '—'; return (m.borne === '<' ? '< ' : m.borne === '>' ? '≥ ' : '') + fNum(m.cl, estQ(m) ? 0 : 1); }
+// Dernier titrage d'une série ; si une bandelette et un Mohr ont été faits le même
+// jour (validation, confirmation), c'est le Mohr qui fait foi.
+function dernierTitrage(titr) {
+  if (!titr || !titr.length) return null;
+  var d = titr[titr.length - 1];
+  if (estQ(d)) for (var i = titr.length - 2; i >= 0 && titr[i].date === d.date; i--) if (!estQ(titr[i])) return titr[i];
+  return d;
+}
+function facteurQ(m) { var ve = Number(m && m.vech), va = Number(m && m.vadd) || 0; return ve > 0 ? (ve + va) / ve : 1; }
+
+// Flacons enregistrés sur cet appareil : {id, lot, gam, exp, pts:[[lecture, mg/L]…]}
+function chargerQLots() { try { A.qlots = JSON.parse(localStorage.getItem('kore_quantab') || '[]') || []; } catch (e) { A.qlots = []; } }
+function ecrireQLots() { try { localStorage.setItem('kore_quantab', JSON.stringify(A.qlots)); } catch (e) {} }
+function qLotParNom(nom) { for (var i = 0; i < (A.qlots || []).length; i++) if (A.qlots[i].lot === nom) return A.qlots[i]; return null; }
+function qGamme(ql) {
+  if (ql && ql.pts && ql.pts.length >= 2) return [ql.pts[0][1], ql.pts[ql.pts.length - 1][1]];
+  return Q_GAMMES[(ql && ql.gam) || 'bas'];
+}
+// Plus petite [Cl⁻] du bain que la bandelette sait lire, compte tenu de la dilution
+function qMinMesure(m) { return qGamme(qLotParNom(m && m.qLot))[0] * facteurQ(m); }
+// Conversion lecture → mg/L par interpolation linéaire dans la table du flacon
+function qInterp(ql, lec) {
+  if (!ql || !ql.pts || ql.pts.length < 2 || lec == null || isNaN(lec)) return null;
+  var t = ql.pts;
+  if (lec < t[0][0] || lec > t[t.length - 1][0]) return null;
+  for (var i = 1; i < t.length; i++) if (lec <= t[i][0]) {
+    var a = t[i - 1], b = t[i];
+    return b[0] === a[0] ? b[1] : a[1] + (lec - a[0]) / (b[0] - a[0]) * (b[1] - a[1]);
+  }
+  return null;
+}
+function parserTableQ(txt) {
+  var pts = [];
+  String(txt || '').split(/\n/).forEach(function(l) {
+    var n = l.match(/\d+(?:[.,]\d+)?/g);
+    if (n && n.length >= 2) pts.push([parseFloat(n[0].replace(',', '.')), parseFloat(n[1].replace(',', '.'))]);
+  });
+  pts.sort(function(a, b) { return a[0] - b[0]; });
+  return pts;
+}
+function ajouterQLot() {
+  var nom = sval('ql-lot'); if (!nom) { alert('Saisir le n° de lot du flacon (étiquette).'); return; }
+  var pts = parserTableQ(sval('ql-pts'));
+  if (sval('ql-pts') && pts.length < 2) { alert('Table illisible : une ligne par repère, « lecture ; mg/L ».'); return; }
+  for (var i = 1; i < pts.length; i++) if (pts[i][1] < pts[i - 1][1]) { alert('Table incohérente : les mg/L doivent augmenter avec la lecture (ligne ' + (i + 1) + ').'); return; }
+  var ex = qLotParNom(nom), o = ex || {id: 'Q' + Date.now().toString(36)};
+  o.lot = nom; o.gam = sval('ql-gam') || 'bas'; o.exp = sval('ql-exp'); o.pts = pts;
+  if (!ex) A.qlots.push(o);
+  ecrireQLots(); ['ql-lot', 'ql-pts', 'ql-exp'].forEach(function(f) { setv(f, ''); });
+  rendQLots(); remplirQLots(o.lot); majTitrage();
+}
+function supprimerQLot(id) {
+  if (!confirm('Retirer ce flacon de la liste ? Les mesures déjà enregistrées ne sont pas modifiées.')) return;
+  A.qlots = A.qlots.filter(function(q) { return q.id !== id; }); ecrireQLots(); rendQLots(); remplirQLots();
+}
+function rendQLots() {
+  var el = gid('cfg-qlots'); if (!el) return;
+  var td = aujourdhui();
+  el.innerHTML = !(A.qlots || []).length ? '<div class="muted">Aucun flacon enregistré.</div>' :
+    '<div class="mlist">' + A.qlots.map(function(q) {
+      var g = qGamme(q), per = q.exp && q.exp < td;
+      return '<div class="mlist-row"><span><b>' + esc(q.lot) + '</b> · gamme ' + fNum(g[0], 0) + '–' + fNum(g[1], 0) + ' mg/L · ' +
+        (q.pts && q.pts.length ? q.pts.length + ' repères' : 'sans table') + (q.exp ? ' · ' + (per ? '<span class="late">périmé le ' + fDate(q.exp) + '</span>' : 'à utiliser avant le ' + fDate(q.exp)) : '') +
+        '</span><button class="x-btn" title="Retirer" onclick="supprimerQLot(\'' + esc(q.id) + '\')">✕</button></div>';
+    }).join('') + '</div>';
+  rendValidationQ();
+}
+function remplirQLots(choix) {
+  var sel = gid('q-lot'); if (!sel) return;
+  var cur = choix || sel.value, td = aujourdhui();
+  var lots = (A.qlots || []).slice().sort(function(a, b) { return (b.exp || '').localeCompare(a.exp || ''); });
+  sel.innerHTML = '<option value="">' + (lots.length ? '— Choisir —' : 'Aucun flacon : en ajouter en Configuration') + '</option>' +
+    lots.map(function(q) { return '<option value="' + esc(q.lot) + '">' + esc(q.lot) + ' (' + (q.gam === 'haut' ? 'haute' : 'basse') + ')' + (q.exp && q.exp < td ? ' — périmé' : '') + '</option>'; }).join('');
+  if (cur && qLotParNom(cur)) sel.value = cur;
+  else { var ok = lots.filter(function(q) { return !q.exp || q.exp >= td; }); if (ok.length) sel.value = ok[0].lot; }
+}
+function qDepuisLecture() {
+  var ql = qLotParNom(sval('q-lot')), v = qInterp(ql, nv('q-lec'));
+  if (v != null) setv('q-ppm', Math.round(v));
+  majTitrage();
+}
+function majMethode(sansMaj) {
+  var q = sval('t-meth') === 'quantab';
+  gid('blk-mohr').style.display = q ? 'none' : 'block';
+  gid('blk-q').style.display = q ? 'block' : 'none';
+  if (q && !sval('q-ve')) setv('q-ve', A.cfg.qvech);
+  if (!sansMaj) majTitrage();
+}
+
+// Paires bandelette / Mohr faites le même jour dans le même bain, tous lots
+function pairesValidation() {
+  var out = [];
+  A.lots.forEach(function(l) {
+    var t = (l.mesures || []).filter(estTitrage);
+    t.forEach(function(q) {
+      if (!estQ(q) || q.borne) return;
+      var m = t.filter(function(x) { return !estQ(x) && x.date === q.date && cyN(x) === cyN(q); })[0];
+      if (m && m.cl > 0) out.push({lot: l, q: q, m: m, ecart: (q.cl - m.cl) / m.cl * 100});
+    });
+  });
+  return out;
+}
+function rendValidationQ() {
+  var el = gid('cfg-qvalid'); if (!el) return;
+  var pr = pairesValidation();
+  if (!pr.length) { el.innerHTML = '<div class="muted">Aucune paire pour l\'instant. Le même jour, sur le même bain, saisir une mesure Quantab puis un titrage de Mohr : KORE les compare ici. Commencer par un blanc (bain neuf sans chlorure) et des étalons de NaCl préparés dans le bain neuf, à noter hors KORE.</div>'; return; }
+  var ec = pr.map(function(x) { return x.ecart; }), med = mediane(ec), abs = mediane(ec.map(Math.abs));
+  var dedans = pr.filter(function(x) { return Math.abs(x.ecart) <= 15; }).length;
+  var verdict = pr.length < 5 ? 'a-info' : (abs <= 10 && Math.abs(med) <= 10 && dedans / pr.length >= 0.8 ? 'a-ok' : 'a-warn');
+  el.innerHTML = '<div class="alert ' + verdict + ' small" style="margin-bottom:6px">' + pr.length + ' paire(s) · écart médian ' + fPct(med) + ' (biais) · écart absolu médian ' + fNum(abs, 0) + ' % · ' + dedans + '/' + pr.length + ' à ±15 %.' +
+    (pr.length < 5 ? ' Au moins 5 paires sur des bains réels avant de conclure.' : verdict === 'a-ok' ? ' Accord satisfaisant : la méthode peut être déclarée validée ci-dessus.' : ' Accord insuffisant : vérifier la neutralisation et l\'oxydation du sulfite avant d\'utiliser les bandelettes seules.') + '</div>' +
+    '<div class="tbl-wrap"><table class="bt"><thead><tr><th>Date</th><th>Lot</th><th>Bain</th><th class="num">Quantab</th><th class="num">Mohr</th><th class="num">Écart</th></tr></thead><tbody>' +
+    pr.map(function(x) { return '<tr><td>' + fDate(x.q.date) + '</td><td>' + esc(x.lot.ref) + '</td><td>B.' + cyN(x.q) + '</td><td class="num">' + fNum(x.q.cl, 0) + '</td><td class="num">' + fNum(x.m.cl, 1) + '</td><td class="num">' + fPct(x.ecart) + '</td></tr>'; }).join('') + '</tbody></table></div>';
+}
+
 function lireTitrage(lot) {
   var cy = cycleCourant(lot) || 1;
-  var m = {evt: 'titrage', date: sval('t-date'), cycle: cy, volume: volBain(lot, cy) || lot.volume || null,
-    vagno3: nv('t-v'), nagno3: nv('t-n'), vech: nv('t-ve'), blanc: A.cfg.blanc || 0, temp: nv('t-temp'), obs: sval('t-obs'), operateur: operateur(), created: new Date().toISOString()};
+  var m = {evt: 'titrage', methode: sval('t-meth') === 'quantab' ? 'quantab' : 'mohr', date: sval('t-date'), cycle: cy, volume: volBain(lot, cy) || lot.volume || null,
+    temp: nv('t-temp'), obs: sval('t-obs'), operateur: operateur(), created: new Date().toISOString()};
+  if (estQ(m)) {
+    var ql = qLotParNom(sval('q-lot')), g = qGamme(ql);
+    m.vagno3 = null; m.nagno3 = null; m.blanc = null; m.temp = null;
+    m.vech = nv('q-ve'); m.vadd = nv('q-vadd') || 0; m.qLecture = nv('q-lec'); m.qLot = sval('q-lot'); m.borne = sval('q-borne');
+    m.qPpm = nv('q-ppm');
+    if (m.borne === '<') m.qPpm = g[0];          // borne haute de la valeur réelle
+    if (m.borne === '>') m.qPpm = g[1];          // borne basse de la valeur réelle
+    m.cl = (m.qPpm != null && m.qPpm >= 0 && m.vech > 0) ? m.qPpm * facteurQ(m) : null;
+    return m;
+  }
+  m.vagno3 = nv('t-v'); m.nagno3 = nv('t-n'); m.vech = nv('t-ve'); m.blanc = A.cfg.blanc || 0;
   m.cl = clDepuisTitrage(m.vagno3, m.nagno3, m.vech, m.blanc);
   return m;
 }
@@ -1429,6 +1624,15 @@ function controleTitrage(lot, m) {
   if (!m.date) err.push('Date manquante.');
   else if (m.date > aujourdhui()) err.push('Date dans le futur.');
   else if (d0 && m.date < d0) err.push('Date antérieure au début du bain ' + cyN(m) + ' (' + fDate(d0) + ').');
+  if (estQ(m)) {
+    var ql = qLotParNom(m.qLot), g = qGamme(ql);
+    if (!m.qLot) err.push('Choisir le flacon de bandelettes (ou en ajouter un en Configuration).');
+    if (!m.borne && m.qPpm == null) err.push('Valeur lue manquante : la saisir depuis la table du flacon, ou indiquer une lecture hors gamme.');
+    else if (!m.borne && (m.qPpm < g[0] || m.qPpm > g[1])) err.push('Valeur lue (' + fNum(m.qPpm, 0) + ' mg/L) hors de la gamme du flacon (' + fNum(g[0], 0) + '–' + fNum(g[1], 0) + ') : choisir « Lecture hors gamme ».');
+    if (!(m.vech > 0)) err.push('Volume d\'échantillon manquant.');
+    if (m.vadd < 0) err.push('Volume ajouté négatif.');
+    return err;
+  }
   if (m.vagno3 == null) err.push('Volume d\'AgNO₃ versé manquant.');
   else if (m.vagno3 < 0) err.push('Volume d\'AgNO₃ négatif.');
   if (!(m.nagno3 > 0) || !(m.vech > 0)) err.push('Normalité et volume d\'échantillon doivent être > 0 (Paramètres du titrage).');
@@ -1456,20 +1660,30 @@ function majTitrage() {
   }
   gid('t-ctx').innerHTML = cy ? 'Bain ' + cy + ' en place depuis le ' + fDate(d0) + (m.date && d0 ? ' — <b>' + joursEntre(d0, m.date) + ' j</b> d\'immersion à cette date' : '') + ' · volume ' + (m.volume ? fNum(m.volume, 1) + ' L' : '<span class="late">non renseigné</span>') : '<span class="late">Aucun bain en place : commencer par « Démarrer le bain 1 ».</span>';
   var box = gid('t-res');
-  if (m.vagno3 == null) { box.innerHTML = ''; return; }
+  if (estQ(m)) {
+    var qi = gid('q-info'), qlq = qLotParNom(m.qLot), gq = qGamme(qlq), fac = facteurQ(m), msgQ = [];
+    if (qlq && qlq.exp && m.date && qlq.exp < m.date) msgQ.push('<div class="alert a-warn small">Flacon périmé depuis le ' + fDate(qlq.exp) + ' : réaction plus lente et contraste réduit. Utiliser un flacon en cours de validité.</div>');
+    if (qlq && !(qlq.pts && qlq.pts.length >= 2) && m.qLecture != null) msgQ.push('<div class="cfg-note">Pas de table enregistrée pour ce flacon : saisir la valeur lue sur l\'étiquette.</div>');
+    else if (qlq && m.qLecture != null && qInterp(qlq, m.qLecture) == null) msgQ.push('<div class="cfg-note">Lecture hors de la table du flacon : vérifier, ou indiquer une lecture hors gamme.</div>');
+    msgQ.push('<div class="cfg-note">Gamme lisible dans ce bain, dilution comprise : ' + fNum(gq[0] * fac, 0) + ' à ' + fNum(gq[1] * fac, 0) + ' mg/L (facteur ' + fNum(fac, 2) + '). Neutraliser à pH ≈ 7 (HNO₃ 5 %) et oxyder le sulfite (H₂O₂) avant la mesure.</div>');
+    if (!A.cfg.qValide) msgQ.push('<div class="alert a-info small">Méthode en cours de validation sur les bains de l\'atelier : faire aussi un Mohr sur le même échantillon, le même jour (comparaison en Configuration).</div>');
+    if (qi) qi.innerHTML = msgQ.join('');
+    if (m.qPpm == null && !m.borne) { box.innerHTML = ''; return; }
+  } else if (m.vagno3 == null) { box.innerHTML = ''; return; }
   var err = controleTitrage(lot, m);
   if (m.cl == null) { box.innerHTML = '<div class="alert a-alert">' + esc(err.join(' ')) + '</div>'; return; }
   var liste = lot.mesures.concat([m]); trierRecs(liste);
   var ev = evalMesure(lot, m, liste), u = incRel(m), masse = masseM(lot, m, liste);
   var b = bilanCl(lot), prevBain = bains(lot).filter(function(x) { return x.n === cyN(m); })[0];
   var cumul = (b.total || 0) - (prevBain && prevBain.masse != null ? prevBain.masse : 0) + (masse || 0);
-  var h = '<div class="res"><div class="big">' + fNum(m.cl, 1) + ' mg/L' + (incAbs(m) != null ? ' <span style="font-size:12px;font-weight:500">± ' + fNum(incAbs(m), 1) + ' mg/L' + (u != null ? ' (' + fNum(u * 100, 0) + ' %)' : '') + '</span>' : '') + '</div>' +
-    '<div class="line">(' + fNum(m.vagno3, 2) + (m.blanc ? ' − ' + fNum(m.blanc, 2) : '') + ') × ' + fNum(m.nagno3, 3) + ' × 35 450 / ' + fNum(m.vech, 1) + '</div>' +
+  var h = '<div class="res"><div class="big">' + fCl(m) + ' mg/L' + (incAbs(m) != null && !m.borne ? ' <span style="font-size:12px;font-weight:500">± ' + fNum(incAbs(m), estQ(m) ? 0 : 1) + ' mg/L' + (u != null ? ' (' + fNum(u * 100, 0) + ' %)' : '') + '</span>' : '') + '</div>' +
+    (estQ(m) ? '<div class="line">Bandelette : ' + (m.borne === '<' ? 'sous le premier repère (' + fNum(m.qPpm, 0) + ' mg/L)' : m.borne === '>' ? 'au-dessus du dernier repère (' + fNum(m.qPpm, 0) + ' mg/L)' : fNum(m.qPpm, 0) + ' mg/L lus' + (m.qLecture != null ? ' (lecture ' + fNum(m.qLecture, 1) + ')' : '')) + ' × (' + fNum(m.vech, 1) + ' + ' + fNum(m.vadd || 0, 1) + ') / ' + fNum(m.vech, 1) + '</div>'
+      : '<div class="line">(' + fNum(m.vagno3, 2) + (m.blanc ? ' − ' + fNum(m.blanc, 2) : '') + ') × ' + fNum(m.nagno3, 3) + ' × 35 450 / ' + fNum(m.vech, 1) + '</div>') +
     (masse != null ? '<div class="line">Chlorure dans ce bain : <b>' + fMg(masse) + '</b> · cumul du lot : <b>' + fMg(cumul) + '</b>' + (lot.poids > 0 ? ' (' + fNum(cumul / lot.poids, 2) + ' mg/g)' : '') + '</div>' : '') + '</div>';
   // Garde-fou : une hausse brutale à normalité inchangée est le plus souvent
   // le signe d'un titrage réalisé avec l'autre solution sans l'avoir déclaré.
   var avT = titragesAvant(liste, m), pr = avT.length ? avT[avT.length - 1] : null;
-  if (pr && pr.cl > 0 && m.cl / pr.cl >= 3 && Math.abs((pr.nagno3 || 0) - (m.nagno3 || 0)) < 1e-9) {
+  if (!estQ(m) && pr && !estQ(pr) && pr.cl > 0 && m.cl / pr.cl >= 3 && Math.abs((pr.nagno3 || 0) - (m.nagno3 || 0)) < 1e-9) {
     var fact = m.cl / pr.cl, rap = NORMALITES[0] / NORMALITES[1];
     h += '<div class="alert a-warn small"><b>Hausse d\'un facteur ' + fNum(fact, 1) + ' — à vérifier</b><br>'
       + fNum(pr.cl, 1) + ' → ' + fNum(m.cl, 1) + ' mg/L avec la même solution déclarée (' + fNum(m.nagno3, 3) + ' mol/L). '
@@ -1481,7 +1695,7 @@ function majTitrage() {
   // titrage de marge : tant que la valeur reste loin du seuil, l'AgNO₃ courant
   // suffit et il n'y a aucune raison de sortir un deuxième flacon.
   var da_ = incAbs(m), zoneBascule = 3 * seuil(lot);
-  if (da_ != null && da_ > 0.1 * seuil(lot) && m.cl < zoneBascule && ev.statut !== 'Précision insuffisante') {
+  if (!estQ(m) && da_ != null && da_ > 0.1 * seuil(lot) && m.cl < zoneBascule && ev.statut !== 'Précision insuffisante') {
     var cBas = choixTitrage(seuil(lot), volDisp > 0 ? Math.max(5, Math.min(50, Math.floor(volDisp * (A.cfg.prelMax / 100) / 5) * 5)) : Math.max(20, A.cfg.vech || 0));
     h += '<div class="alert a-warn small"><b>Passer à l\'AgNO₃ dilué au prochain titrage de ce lot</b><br>'
       + fNum(m.cl, 1) + ' mg/L : la valeur entre dans la zone où l\'incertitude actuelle (±' + fNum(da_, 1) + ' mg/L) ne permettra bientôt plus de conclure face au seuil de ' + fNum(seuil(lot), 1) + ' mg/L.<br>'
@@ -1509,7 +1723,7 @@ function enregTitrage() {
   var lot = lotSel(); if (!lot) return;
   var m = lireTitrage(lot), err = controleTitrage(lot, m);
   if (err.length) { alert(err.join('\n')); return; }
-  var memeJour = (lot.mesures || []).filter(function(x) { return estTitrage(x) && x.date === m.date && cyN(x) === cyN(m); });
+  var memeJour = (lot.mesures || []).filter(function(x) { return estTitrage(x) && x.date === m.date && cyN(x) === cyN(m) && estQ(x) === estQ(m); });
   if (memeJour.length && !confirm('Un titrage du bain ' + cyN(m) + ' existe déjà à cette date. Enregistrer un second titrage ?')) return;
   var liste = lot.mesures.concat([m]); trierRecs(liste);
   m.deltaCl = deltaClBain(liste, m);
@@ -1518,8 +1732,8 @@ function enregTitrage() {
   creerPage(A.dbBainsId, propsMesure(lot, m), 'B', lot).then(function(page) {
     m.notionPageId = page.id; m.created = page.created_time || new Date().toISOString();
     lot.mesures.push(m); trierRecs(lot.mesures);
-    setv('t-v', ''); setv('t-obs', ''); setv('t-temp', ''); gid('t-res').innerHTML = '';
-    setStatus('Titrage enregistré : ' + fNum(m.cl, 1) + ' mg/L — ' + ev.statut, 'ok'); hideLoading(A.statusTok, 6000);
+    setv('t-v', ''); setv('t-obs', ''); setv('t-temp', ''); setv('q-lec', ''); setv('q-ppm', ''); setv('q-borne', ''); gid('t-res').innerHTML = '';
+    setStatus((estQ(m) ? 'Mesure Quantab' : 'Titrage') + ' enregistré' + (estQ(m) ? 'e' : '') + ' : ' + fCl(m) + ' mg/L — ' + ev.statut, 'ok'); hideLoading(A.statusTok, 6000);
     majSuivi(false); swTab(evalLot(lot).tab); ref();
     return recalcStatuts([lot], false);
   }).catch(function(e) { erreur('Titrage non enregistré', e); });
@@ -1677,8 +1891,8 @@ function majHistorique(lot) {
       h += '<tr class="grp"><td colspan="6">Bain ' + b.n + ' — ' + fDate(b.debut) + (b.fin ? ' → ' + fDate(b.fin) : ' (en cours)') + ' · ' + (b.volume ? fNum(b.volume, 1) + ' L' : 'volume ?') + (b.c0 != null ? ' · C₀ ' + fNum(b.c0, 2) + ' mS/cm' : '') + '</td></tr>';
       b.recs.forEach(function(m) {
         var i = lot.mesures.indexOf(m), ev = evalMesure(lot, m, lot.mesures);
-        var type = m.evt === 'debut' ? 'Mise en bain' : m.cl == null ? 'Relevé (conductivité)' : 'Titrage' + (m.obs === 'Titrage final avant vidange' ? ' final' : '');
-        h += '<tr><td>' + fDate(m.date) + '</td><td>' + type + (m.operateur ? '<div class="muted small">' + esc(m.operateur) + '</div>' : '') + '</td><td class="num">' + (m.cl != null ? fNum(m.cl, 1) : '—') + '</td><td class="num">' + (estTitrage(m) ? fMg(masseM(lot, m)) : '—') + '</td>' +
+        var type = m.evt === 'debut' ? 'Mise en bain' : m.cl == null ? 'Relevé (conductivité)' : estQ(m) ? 'Bandelette Quantab' : 'Titrage' + (m.obs === 'Titrage final avant vidange' ? ' final' : '');
+        h += '<tr><td>' + fDate(m.date) + '</td><td>' + type + (m.operateur ? '<div class="muted small">' + esc(m.operateur) + '</div>' : '') + '</td><td class="num">' + fCl(m) + '</td><td class="num">' + (estTitrage(m) ? fMg(masseM(lot, m)) : '—') + '</td>' +
           '<td>' + (m.evt === 'debut' || m.cl == null ? '' : '<span class="badge ' + ev.cls + '">' + esc(ev.statut) + '</span>') + '</td>' +
           '<td style="white-space:nowrap"><button class="x-btn" title="Modifier" onclick="editerMesure(' + i + ')">✎</button><button class="x-btn" title="Supprimer" onclick="supprimerMesure(' + i + ')">✕</button></td></tr>';
       });
@@ -1701,7 +1915,9 @@ function editerMesure(i) {
   ouvrirModal('<div class="card-title">' + (deb ? 'Modifier la mise en bain' : 'Modifier le relevé') + '</div>' +
     '<div class="row">' + champ('e-date', 'Date', m.date, 'date', '') + champ('e-cy', 'N° de bain', cyN(m), 'number', 'min="1" step="1"') + '</div>' +
     '<div class="row">' + champ('e-vol', 'Volume du bain (L)', m.volume) + champ('e-c0', 'C₀ (mS/cm)', m.c0) + '</div>' +
-    (deb ? '' : '<div class="row trio">' + champ('e-v', 'V AgNO₃ (mL)', m.vagno3) + champ('e-n', 'N AgNO₃', m.nagno3) + champ('e-ve', 'V éch. (mL)', m.vech) + '</div>' +
+    (deb ? '' : estQ(m) ? '<div class="row trio">' + champ('e-qppm', 'Valeur lue (mg/L)', m.qPpm) + champ('e-ve', 'V éch. (mL)', m.vech) + champ('e-vadd', 'V ajouté (mL)', m.vadd || 0) + '</div>' +
+      '<div class="row"><div><label>Lecture hors gamme</label><select id="e-borne">' + [['', 'Non'], ['<', 'Sous la gamme'], ['>', 'Au-dessus de la gamme']].map(function(o) { return '<option value="' + o[0] + '"' + (o[0] === (m.borne || '') ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select></div>' + champ('e-qlot', 'Flacon', m.qLot, 'text', '') + '</div>'
+      : '<div class="row trio">' + champ('e-v', 'V AgNO₃ (mL)', m.vagno3) + champ('e-n', 'N AgNO₃', m.nagno3) + champ('e-ve', 'V éch. (mL)', m.vech) + '</div>' +
       '<div class="row">' + champ('e-bl', 'Blanc (mL)', m.blanc != null ? m.blanc : 0) + champ('e-t', 'Température (°C)', m.temp) + '</div>') +
     '<label>Observations</label><input type="text" id="e-obs" value="' + esc(m.obs || '') + '">' +
     '<div class="cfg-note" style="margin-top:6px">La [Cl⁻] est recalculée à partir du volume versé ; les statuts du lot sont mis à jour dans Notion.</div>' +
@@ -1711,7 +1927,11 @@ function validerEditionMesure(i) {
   var lot = lotSel(), m = lot && lot.mesures[i]; if (!m) return;
   var n = {}; for (var k in m) n[k] = m[k];
   n.date = sval('e-date'); n.cycle = parseInt(sval('e-cy')) || 1; n.volume = nv('e-vol'); n.c0 = nv('e-c0'); n.obs = sval('e-obs');
-  if (m.evt !== 'debut') {
+  if (m.evt !== 'debut' && estQ(m)) {
+    n.qPpm = nv('e-qppm'); n.vech = nv('e-ve'); n.vadd = nv('e-vadd') || 0; n.borne = sval('e-borne'); n.qLot = sval('e-qlot');
+    n.cl = (n.qPpm != null && n.vech > 0) ? n.qPpm * facteurQ(n) : null;
+    if (n.cl == null) { alert('Valeur lue et volume d\'échantillon requis.'); return; }
+  } else if (m.evt !== 'debut') {
     n.vagno3 = nv('e-v'); n.nagno3 = nv('e-n'); n.vech = nv('e-ve'); n.blanc = nv('e-bl') || 0; n.temp = nv('e-t');
     n.cl = clDepuisTitrage(n.vagno3, n.nagno3, n.vech, n.blanc);
     if (m.cl != null && n.vagno3 == null) { alert('Volume d\'AgNO₃ manquant.'); return; }
@@ -1927,7 +2147,7 @@ function rapportHTML(lot, impr) {
   h += '<h3>Titrages</h3><div class="tbl-wrap"><table class="bt"><thead><tr><th>Date</th><th>Bain</th><th class="num">J bain</th><th class="num">V AgNO₃</th><th class="num">N</th><th class="num">V éch.</th><th class="num">[Cl⁻] mg/L</th><th class="num">± mg/L</th><th class="num">ΔCl⁻</th><th class="num">Cl⁻ bain</th><th>Statut</th><th>Opérateur</th></tr></thead><tbody>' +
     (titr.length ? titr.map(function(m) {
       var e = evalMesure(lot, m, lot.mesures), u = incRel(m);
-      return '<tr><td>' + fDate(m.date) + '</td><td>B.' + cyN(m) + '</td><td class="num">' + (e.jb != null ? e.jb : '—') + '</td><td class="num">' + fNum(m.vagno3, 2) + '</td><td class="num">' + fNum(m.nagno3, 3) + '</td><td class="num">' + fNum(m.vech, 1) + '</td><td class="num"><b>' + fNum(m.cl, 1) + '</b></td><td class="num">' + (incAbs(m) != null ? fNum(incAbs(m), 1) : '—') + '</td><td class="num">' + fPct(e.dCl) + '</td><td class="num">' + fMg(masseM(lot, m)) + '</td><td>' + esc(e.statut) + '</td><td>' + esc(m.operateur || '') + '</td></tr>' +
+      return '<tr><td>' + fDate(m.date) + '</td><td>B.' + cyN(m) + '</td><td class="num">' + (e.jb != null ? e.jb : '—') + '</td><td class="num">' + (estQ(m) ? 'Quantab' + (m.qLecture != null ? ' ' + fNum(m.qLecture, 1) : '') : fNum(m.vagno3, 2)) + '</td><td class="num">' + (estQ(m) ? '—' : fNum(m.nagno3, 3)) + '</td><td class="num">' + fNum(m.vech, 1) + '</td><td class="num"><b>' + fCl(m) + '</b></td><td class="num">' + (incAbs(m) != null && !m.borne ? fNum(incAbs(m), estQ(m) ? 0 : 1) : '—') + '</td><td class="num">' + fPct(e.dCl) + '</td><td class="num">' + fMg(masseM(lot, m)) + '</td><td>' + esc(e.statut) + '</td><td>' + esc(m.operateur || '') + '</td></tr>' +
         (m.obs ? '<tr><td></td><td colspan="11" class="muted small">' + esc(m.obs) + '</td></tr>' : '');
     }).join('') : '<tr><td colspan="12" class="muted">Aucun titrage.</td></tr>') + '</tbody></table></div>';
   h += '<h3>Rinçages</h3>' + (rs.length ? '<div class="tbl-wrap"><table class="bt"><thead><tr><th>N°</th><th>Date</th><th class="num">Eau neuve µS/cm</th><th class="num">Fin µS/cm</th><th class="num">Hausse</th><th>AgNO₃</th><th class="num">pH</th><th>Conforme</th><th>Opérateur</th></tr></thead><tbody>' +
@@ -1940,7 +2160,8 @@ function rapportHTML(lot, impr) {
     'Volume de solution : ' + fNum(C.ratioMin, 1) + ' à ' + fNum(C.ratioMax, 0) + ' mL par gramme d\'objet' + sourceRatio() + ' ; en dessous, le bain se charge et consomme la soude trop vite ; au-dessus, les chlorures sont trop dilués pour être dosés avec précision. ' +
     'Rinçages en eau déminéralisée : conductivité en fin de rinçage ≤ ' + fNum(C.crAbs, 0) + ' µS/cm, hausse pendant le rinçage ≤ ' + fNum(C.cr, 0) + ' µS/cm par rapport à l\'eau neuve, test AgNO₃ négatif' + ', pH ≤ ' + fNum(C.phMax, 1) + ' s\'il est mesuré. ' +
     'La conductivité des bains alcalins (C₀) sert au contrôle de la préparation, pas au suivi de l\'extraction. Seuils et délais : choix de l\'atelier (KORE ' + APP_VERSION + ').<br>' +
-    'Références sur la méthode : North &amp; Pearson 1975 ; Watkinson 1982 ; Gilberg &amp; Seeley 1982 ; Watkinson 2010 ; Rimmer, Watkinson &amp; Wang 2012 ; Lemoine 2019.</div>';
+    (titr.some(estQ) ? 'Suivi intermédiaire par bandelettes Quantab (Hach, dichromate d\'argent ; ±10 % certifiés par lot) après neutralisation à pH ≈ 7 et oxydation du sulfite : [Cl⁻] = valeur lue × (V<sub>éch</sub> + V<sub>ajouté</sub>) / V<sub>éch</sub> (CCI Note 4/4). Les bandelettes ne servent jamais à valider la fin de traitement : près du seuil, la valeur retenue est celle du titrage de Mohr.' + (A.cfg.qValide ? '' : ' Méthode en cours de validation sur les bains de l\'atelier (comparaison systématique à Mohr).') + '<br>' : '') +
+    'Références sur la méthode : North &amp; Pearson 1975 ; Watkinson 1982 ; Gilberg &amp; Seeley 1982 ; Watkinson 2010 ; Rimmer, Watkinson &amp; Wang 2012 ; Lemoine 2019' + (titr.some(estQ) ? ' ; Selwyn 2016 (CCI Note 4/4)' : '') + '.</div>';
   return h;
 }
 function loadRap() {
@@ -1977,18 +2198,18 @@ function expPDF() {
 // ============================================================
 function csvCell(v) { var s = v == null ? '' : String(v); return /[";\n]/.test(s) ? '"' + s.replace(/"/g, '""') + '"' : s; }
 function csvNum(v, d) { return v == null || isNaN(v) ? '' : Number(v).toFixed(d).replace('.', ','); }
-var CSV_ENTETE = ['Référence', 'Intitulé', 'Type', 'Date', 'J+', 'Bain', 'J dans le bain', 'Volume (L)', 'C0 (mS/cm)', 'V AgNO3 (mL)', 'N AgNO3', 'V éch (mL)', 'Blanc (mL)', '[Cl-] (mg/L)', '± (mg/L)', 'ΔCl- bain (%)', 'Cl- bain (mg)', 'Statut', 'Rinçage n°', 'Eau neuve (µS/cm)', 'Fin rinçage (µS/cm)', 'Test AgNO3', 'pH', 'Rinçage conforme', 'Opérateur', 'Observations'];
+var CSV_ENTETE = ['Référence', 'Intitulé', 'Type', 'Date', 'J+', 'Bain', 'J dans le bain', 'Volume (L)', 'C0 (mS/cm)', 'V AgNO3 (mL)', 'N AgNO3', 'V éch (mL)', 'Blanc (mL)', '[Cl-] (mg/L)', '± (mg/L)', 'ΔCl- bain (%)', 'Cl- bain (mg)', 'Statut', 'Rinçage n°', 'Eau neuve (µS/cm)', 'Fin rinçage (µS/cm)', 'Test AgNO3', 'pH', 'Rinçage conforme', 'Opérateur', 'Observations', 'Méthode', 'Flacon Quantab', 'Lecture Quantab', 'Quantab lu (mg/L)', 'V ajouté (mL)', 'Hors gamme'];
 function lignesCSV(lot) {
   var L = [];
   (lot.mesures || []).forEach(function(m) {
     var e = evalMesure(lot, m, lot.mesures), u = incRel(m);
     L.push([lot.ref, lot.int, m.evt === 'debut' ? 'Mise en bain' : m.cl == null ? 'Relevé' : 'Titrage', m.date, jPlus(lot, m.date), cyN(m), e.jb != null ? e.jb : joursEntre(debutBain(lot, cyN(m)), m.date),
       csvNum(volM(lot, m), 2), csvNum(m.c0, 2), csvNum(m.vagno3, 2), csvNum(m.nagno3, 4), csvNum(m.vech, 1), csvNum(m.blanc, 2), csvNum(m.cl, 2), incAbs(m) != null && m.cl != null ? csvNum(incAbs(m), 2) : '',
-      csvNum(deltaClBain(lot.mesures, m), 1), estTitrage(m) ? csvNum(masseM(lot, m), 1) : '', m.evt === 'debut' ? 'Début de bain' : e.statut, '', '', '', '', csvNum(m.ph, 1), '', m.operateur || '', m.obs || '']);
+      csvNum(deltaClBain(lot.mesures, m), 1), estTitrage(m) ? csvNum(masseM(lot, m), 1) : '', m.evt === 'debut' ? 'Début de bain' : e.statut, '', '', '', '', csvNum(m.ph, 1), '', m.operateur || '', m.obs || '', m.evt === 'debut' ? '' : estQ(m) ? 'Quantab' : 'Mohr', m.qLot || '', csvNum(m.qLecture, 1), csvNum(m.qPpm, 0), csvNum(m.vadd, 1), m.borne || '']);
   });
   (lot.rincages || []).forEach(function(r) {
     var er = evalRincage(r);
-    L.push([lot.ref, lot.int, 'Rinçage', r.date, jPlus(lot, r.date), '', '', '', '', '', '', '', '', '', '', '', '', '', r.num, csvNum(r.condAvant, 1), csvNum(r.condApres, 1), r.agno3 || '', csvNum(r.ph, 1), er.ok ? 'oui' : 'non', r.operateur || '', r.obs || '']);
+    L.push([lot.ref, lot.int, 'Rinçage', r.date, jPlus(lot, r.date), '', '', '', '', '', '', '', '', '', '', '', '', '', r.num, csvNum(r.condAvant, 1), csvNum(r.condApres, 1), r.agno3 || '', csvNum(r.ph, 1), er.ok ? 'oui' : 'non', r.operateur || '', r.obs || '', '', '', '', '', '', '']);
   });
   return L;
 }
@@ -2022,12 +2243,20 @@ function renderProtocole() {
     '<li>Faire un <b>blanc</b> (eau déminéralisée + mêmes réactifs, même volume) et saisir sa valeur en Configuration (actuellement ' + fNum(C.blanc, 2) + ' mL). Il est indispensable avec AgNO₃ 0,01 mol/L, où le volume nécessaire au virage du chromate n\'est plus négligeable.</li>' +
     '<li>Incertitude : une lecture de ±' + fNum(LECTURE_BURETTE, 2) + ' mL donne ±' + fNum(LECTURE_BURETTE * C.nag * 35450 / C.vech, 1) + ' mg/L avec les paramètres par défaut (N = ' + fNum(C.nag, 3) + ', ' + fNum(C.vech, 0) + ' mL). Suffisant en début de traitement ; <b>près du seuil de fin</b>, titrer avec ' + conseilPrecision(C.sc) + '. KORE signale « Précision insuffisante » quand l\'incertitude englobe le seuil.</li></ol>' +
     '<p class="muted">Ce rappel ne remplace pas le mode opératoire écrit de l\'atelier (concentrations des réactifs, sécurité : chromate de potassium toxique, AgNO₃ corrosif et tachant).</p>' +
+    '<h3>Bandelettes Quantab (suivi intermédiaire)</h3><ol>' +
+    '<li>Prélever ' + fNum(C.qvech, 0) + ' mL de bain dans un tube à essai.</li>' +
+    '<li>Oxyder le sulfite par quelques gouttes d\'H₂O₂, puis neutraliser à l\'acide nitrique 5 % jusqu\'à pH ≈ 7 (papier pH). Au-dessus de pH 10, l\'argent précipite et la mesure est fausse. Noter le volume total ajouté : KORE corrige la dilution.</li>' +
+    '<li>Plonger la bandelette (gamme basse 30–600 mg/L) et attendre que la bande du haut vire du jaune au noir, puis encore au moins 2 min (au plus 30 min).</li>' +
+    '<li>Lire la pointe de la zone blanche au 0,2 près et la convertir avec la table <b>du flacon utilisé</b> : elle change à chaque lot.</li>' +
+    '<li>Les bandelettes ne se réutilisent pas ; elles libèrent du dichromate (Cr VI) : déchets dangereux.</li></ol>' +
+    '<p>Précision ±10 %. Elles suffisent pour suivre la montée de la [Cl⁻] et repérer le plateau ; <b>près du seuil de fin (moins de ' + fNum(3 * C.sc, 0) + ' mg/L en conservation courante) ou sous leur gamme, KORE demande un titrage de Mohr</b>, seul retenu pour valider l\'arrêt.</p>' +
     '<h3>Lecture des statuts</h3><table><thead><tr><th>Statut</th><th>Signification</th><th>Action</th></tr></thead><tbody>' +
     [['Extraction active', 'La [Cl⁻] monte encore dans un bain en bon état', 'Retitrer à la date prévue'],
      ['Renouveler le bain', 'Extraction en cours, mais bain très chargé (> ' + fNum(C.clFort, 0) + ' mg/L), soude consommée (> ' + fNum(C.ohMax, 0) + ' %) ou bain de plus de ' + C.jmax + ' j', 'Titrage final puis changement de bain, sans attendre le plateau'],
      ['Plateau — changer le bain', 'La [Cl⁻] ne monte plus (≤ +' + fNum(C.dc, 0) + ' % en ≥ ' + C.jecart + ' j) mais reste au-dessus du seuil', 'Titrage final puis changement de bain'],
      ['Sous seuil — renouveler le bain', '[Cl⁻] basse dans un bain n° < ' + C.nbmin, 'Changer le bain et vérifier que l\'extraction ne reprend pas'],
      ['Sous seuil — trop tôt', 'Bain en place depuis moins de ' + C.jmin + ' j', 'Retitrer après ' + C.jmin + ' j d\'immersion'],
+     ['Quantab — confirmer par Mohr', 'Bandelette proche du seuil de fin ou sous sa gamme', 'Titrer le même bain par Mohr'],
      ['Précision insuffisante', 'L\'incertitude du titrage englobe le seuil de fin', 'Retitrer avec AgNO₃ plus dilué ou un échantillon plus grand'],
      ['Sous seuil — à confirmer', 'Un titrage bas, confirmation nécessaire', 'Retitrer le même bain ≥ ' + C.jecart + ' j plus tard'],
      ['OK — arrêt validé', 'Critères de fin atteints', 'Passer aux rinçages'],
@@ -2255,7 +2484,7 @@ function appliquerParametresURL() {
 }
 function init() {
   var v = gid('app-version'); if (v) v.textContent = APP_VERSION;
-  chargerCfg(); chargerOperateur(); lCfg(); majOperateur();
+  chargerCfg(); chargerQLots(); chargerOperateur(); lCfg(); majOperateur();
   var td = aujourdhui();
   document.querySelectorAll('input[type=date]').forEach(function(e) { if (!e.value) e.value = td; });
   gid('modal').addEventListener('click', function(e) { if (e.target === gid('modal')) fermerModal(); });
