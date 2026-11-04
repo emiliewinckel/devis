@@ -733,7 +733,8 @@ var SCHEMA_OBJETS = {
   'Intitulé': {title: {}}, 'KORE ID': {rich_text: {}}, 'Référence': {rich_text: {}}, 'Type': {select: {}},
   'Opération': {rich_text: {}}, 'Responsable': {rich_text: {}}, 'Date début': {date: {}}, 'Solution': {select: {}},
   'Poids objet (g)': {number: {format: 'number'}}, 'Volume solution (L)': {number: {format: 'number'}},
-  'Enjeu conservation': {select: {}}, 'Fréquence relevés': {select: {}}, 'Statut': {rich_text: {}}
+  'Enjeu conservation': {select: {}}, 'Fréquence relevés': {select: {}}, 'Statut': {rich_text: {}},
+  'Prochaine action': {rich_text: {}}, 'Échéance': {date: {}}
 };
 var SCHEMA_BAINS = {
   'Nom': {title: {}}, 'KORE ID Bain': {rich_text: {}}, 'KORE ID Objet': {rich_text: {}}, 'Type entrée': {select: {}},
@@ -817,13 +818,18 @@ function pageToLot(page) {
     type: ps(page, 'Type'), operation: pt(page, 'Opération'), responsable: pt(page, 'Responsable'),
     dateDebut: pd(page, 'Date début'), solution: ps(page, 'Solution'), poids: pn(page, 'Poids objet (g)'),
     volume: pn(page, 'Volume solution (L)'), enjeu: ps(page, 'Enjeu conservation') || 'courant',
-    freq: ps(page, 'Fréquence relevés'), statutLot: pt(page, 'Statut'), mesures: [], rincages: []
+    freq: ps(page, 'Fréquence relevés'), statutLot: pt(page, 'Statut'), mesures: [], rincages: [],
+    prochaine: pt(page, 'Prochaine action'), echeance: pd(page, 'Échéance')
   };
 }
 function trierRecs(arr) {
   arr.sort(function(a, b) { return (a.date || '').localeCompare(b.date || '') || (a.created || '').localeCompare(b.created || ''); });
 }
 function loadLotsFromNotion() {
+  A.chargeOk = false;
+  return _loadLotsFromNotion().then(function(r) { A.chargeOk = true; return r; });
+}
+function _loadLotsFromNotion() {
   if (!A.dbObjetsId) return Promise.resolve();
   return queryAll(A.dbObjetsId).then(function(pages) {
     A.lots = pages.map(pageToLot);
@@ -1316,6 +1322,31 @@ function remplirSelects() {
 // ============================================================
 // ACCUEIL : lots triés par urgence, prochaine action
 // ============================================================
+
+// ============================================================
+// ÉCHÉANCES → NOTION : la prochaine action et sa date sont écrites dans la fiche du lot,
+// pour le bandeau « à faire » d'ARGOS Lab. Écrit seulement ce qui a changé, une page à la fois.
+// ============================================================
+var _echQ = [], _echOn = false;
+function syncEcheances() {
+  if (!A.chargeOk) return;   // jamais sur des données partielles (chargement interrompu)
+  A.lots.forEach(function(l) {
+    if (!l.notionPageId) return;
+    var ev = evalLot(l), act = ev.code === 'aucune' ? 'Terminé' : (ev.label || ''), ech = ev.code === 'aucune' ? '' : (ev.due || '');
+    if (act === (l.prochaine || '') && ech === (l.echeance || '')) return;
+    l.prochaine = act; l.echeance = ech;
+    _echQ = _echQ.filter(function(x) { return x.id !== l.notionPageId; });
+    _echQ.push({id: l.notionPageId, props: {'Prochaine action': {rich_text: act ? [{text: {content: act}}] : []}, 'Échéance': {date: ech ? {start: ech} : null}}});
+  });
+  if (!_echOn) _echRun();
+}
+function _echRun() {
+  var x = _echQ.shift(); if (!x) { _echOn = false; return; } _echOn = true;
+  notionFetch('/v1' + '/pages/' + x.id, 'PATCH', {properties: x.props})
+    .catch(function(e) { console.warn('Échéance non écrite dans Notion :', e.message); })
+    .then(function() { setTimeout(_echRun, 350); });
+}
+
 function ref() {
   var c = gid('lots-list'), ct = gid('lots-termines'), rs = gid('accueil-resume'); if (!c) return;
   majOperateur();
@@ -1341,6 +1372,7 @@ function ref() {
   c.innerHTML = enCours.map(function(x) { return carteLot(x.lot, x.ev); }).join('') || '<div class="muted">Aucun lot en cours.</div>';
   if (ct) ct.innerHTML = termines.length ? '<details><summary class="muted" style="cursor:pointer;font-weight:600">Lots terminés (' + termines.length + ')</summary><div class="lot-list" style="margin-top:8px">' +
     termines.map(function(x) { return carteLot(x.lot, x.ev); }).join('') + '</div></details>' : '';
+  syncEcheances();
 }
 function carteLot(lot, ev) {
   var t = (lot.mesures || []).filter(estTitrage), last = t[t.length - 1], b = bilanCl(lot);

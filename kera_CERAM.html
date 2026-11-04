@@ -586,6 +586,10 @@ function createDb(name, parentId, schema) {
 // NOTION — CHARGER LES OBJETS
 // ============================================================
 function loadObjetsFromNotion() {
+  A.chargeOk = false;
+  return _loadObjetsFromNotion().then(function(r) { A.chargeOk = true; return r; });
+}
+function _loadObjetsFromNotion() {
   if (!A.dbObjetsId) return Promise.resolve();
   return queryAllPages(A.dbObjetsId).then(function(pages) {
     A.lots = pages.map(pageToLot).filter(Boolean);
@@ -635,6 +639,8 @@ function pageToLot(page) {
     fragilite:   sel('Fragilité'),
     freq:        sel('Fréquence relevés'),
     statut:      txt('Statut'),
+    prochaine:   txt('Prochaine action'),
+    echeance:    dt('Échéance'),
     mesures:     [],
     sechages:    []
   };
@@ -891,6 +897,31 @@ function evalLot(lot) {
   var r = o.due ? joursEntre(o.due, today) : 0; o.retard = r > 0 ? r : 0;
   return o;
 }
+
+// ============================================================
+// ÉCHÉANCES → NOTION : la prochaine action et sa date sont écrites dans la fiche du lot,
+// pour le bandeau « à faire » d'ARGOS Lab. Écrit seulement ce qui a changé, une page à la fois.
+// ============================================================
+var _echQ = [], _echOn = false;
+function syncEcheances() {
+  if (!A.chargeOk) return;   // jamais sur des données partielles (chargement interrompu)
+  A.lots.forEach(function(l) {
+    if (!l.notionPageId) return;
+    var ev = evalLot(l), act = ev.code === 'aucune' ? 'Terminé' : (ev.label || ''), ech = ev.code === 'aucune' ? '' : (ev.due || '');
+    if (act === (l.prochaine || '') && ech === (l.echeance || '')) return;
+    l.prochaine = act; l.echeance = ech;
+    _echQ = _echQ.filter(function(x) { return x.id !== l.notionPageId; });
+    _echQ.push({id: l.notionPageId, props: {'Prochaine action': {rich_text: act ? [{text: {content: act}}] : []}, 'Échéance': {date: ech ? {start: ech} : null}}});
+  });
+  if (!_echOn) _echRun();
+}
+function _echRun() {
+  var x = _echQ.shift(); if (!x) { _echOn = false; return; } _echOn = true;
+  notionFetch('' + '/pages/' + x.id, 'PATCH', {properties: x.props})
+    .catch(function(e) { console.warn('Échéance non écrite dans Notion :', e.message); })
+    .then(function() { setTimeout(_echRun, 350); });
+}
+
 function ref() {
   var c = gid('lots-list'), ct = gid('lots-termines'), rs = gid('accueil-resume');
   if (!A.lots.length) {
@@ -914,6 +945,7 @@ function ref() {
   c.innerHTML = enCours.map(function(x) { return carteLot(x.lot, x.ev); }).join('') || '<div class="muted">Aucun objet en cours.</div>';
   if (ct) ct.innerHTML = termines.length ? '<details><summary class="muted" style="cursor:pointer;font-weight:600">Objets terminés (' + termines.length + ')</summary><div class="lot-list" style="margin-top:8px">' +
     termines.map(function(x) { return carteLot(x.lot, x.ev); }).join('') + '</div></details>' : '';
+  syncEcheances();
 }
 function carteLot(lot, ev) {
   var nb = lot.mesures ? lot.mesures.length : 0, l = nb ? lot.mesures[nb - 1] : null, k = l ? computeKadj(l, lot) : null;
