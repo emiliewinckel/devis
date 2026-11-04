@@ -550,7 +550,7 @@ function calcul() {
   var fStab = F.stab === 'Une partie' ? Math.min(num(F.stabPct), 100) / 100 : 1;
   if (F.stab === 'Une partie' && !fStab) miss('part du mobilier à stabiliser, en % (à saisir)');
   if (F.etude === 'Une partie' && !num(F.quota)) miss('nombre ou part des objets à nettoyer pour étude (à saisir)');
-  var lignesMat = [], quotaTot = 0, nObj = 0, minEtude = 0, minStab = 0, depasse = [];
+  var lignesMat = [], quotaTot = 0, nObj = 0, minEtude = 0, minSed = 0, minNet = 0, nNet = 0, minStab = 0, depasse = [];
   var row = function(m, r, c) { var t = P.mats[m.src || m.k] && P.mats[m.src || m.k][r]; var v = t && typeof t === 'object' ? t[c] : t; return val(v, m.n + ' — ' + LIB[r] + (c ? ' ' + c : '') + ' (grille)'); };
   MATS.forEach(function(m) {
     if (m.k === 'clous' || m.k === 'mottes') return;
@@ -560,13 +560,16 @@ function calcul() {
     (m.cls ? C4 : [null]).forEach(function(c) {
       var nc = c ? qte(m.k, c) : qte(m.k); if (!nc) return;
       var nquota = m.appro ? (alloc.par[m.k + (c || '')] || 0) : 0, ncons = 0; nq += m.appro ? nquota : 0;
-      (m.tous || []).forEach(function(r) { et += nc * row(m, r, c); });
-      (m.simple || []).forEach(function(r) { et += (nc - nquota) * row(m, r, c); });
-      (m.appro || []).forEach(function(r) { et += nquota * row(m, r, c); });
+      // base pour tous les objets (retrait du sédiment, nettoyage simple, prise en charge) ; nettoyage pour étude = objets choisis, et les monnaies (toujours une à une)
+      var b0 = 0, n0 = 0;
+      (m.tous || []).forEach(function(r) { if (m.k === 'monnaies') n0 += nc * row(m, r, c); else b0 += nc * row(m, r, c); });
+      (m.simple || []).forEach(function(r) { b0 += (nc - nquota) * row(m, r, c); });
+      (m.appro || []).forEach(function(r) { n0 += nquota * row(m, r, c); });
+      et += b0 + n0; minSed += b0; minNet += n0;
       (m.conso || []).forEach(function(r) { st += ncons * row(m, r, c); });
       (m.stab || []).forEach(function(r) { st += nc * row(m, r, c); });
     });
-    quotaTot += nq;
+    quotaTot += nq; nNet += m.k === 'monnaies' ? n : nq;
     var seuil = m.k === 'fer' ? P.seuilFer : P.seuils[m.src || m.k];
     if (seuil != null && n > seuil) depasse.push(m.n + ' : ' + n + ' (seuil ' + seuil + ')');
     st *= fStab; minEtude += et; minStab += st;
@@ -598,7 +601,7 @@ function calcul() {
   var jhTerrain = num(F.terrain);
 
   var L = {ferme: [], option: [], parMat: lignesMat};
-  // Quatre postes seulement (comme les lignes du PSTI). Fiches de lot, suivi de projet, majoration de contexte
+  // Cinq postes seulement (comme les lignes du PSTI). Fiches de lot, suivi de projet, majoration de contexte
   // et consommables (convertis en JH au taux horaire de la grille) sont lissés dans ces postes, sans être détaillés.
   var eJH = function(e) { return e ? e / (val(P.taux, 'taux horaire du laboratoire (Hypothèses)') * val(P.coef, 'coefficient de vente (Hypothèses)') * (P.jh || 7)) : 0; };
   var curLib = [], qtot = function(k) { return totalMat(MATS.filter(function(m) { return m.k === k; })[0]); };
@@ -607,7 +610,8 @@ function calcul() {
   if (qtot('ceram') || qtot('lapid')) curLib.push('dessalement');
   var postes = {
     rx: {l: 'Radiographie (RX)', jh: jhRadio + eJH(eClich), w: 'ferme'},
-    etude: {l: 'Mise en état d’étude', jh: (minEtude + minClous) / H * (1 + majo), w: 'ferme'},
+    sed: {l: 'Retrait du sédiment (ensemble du mobilier)', jh: (minSed + minClous) / H * (1 + majo), w: 'ferme'},
+    net: {l: 'Nettoyage pour étude (' + nNet + ' objet' + (nNet > 1 ? 's' : '') + ')', jh: minNet / H * (1 + majo), w: 'ferme'},
     cur: {l: 'Conservation curative' + (curLib.length ? ' (' + curLib.join(', ') + ')' : ''), jh: minStab / H * (1 + majo) + jhBains + eJH(eSol), w: stabFerme ? 'ferme' : 'option'},
     motte: {l: 'Fouille des prélèvements en motte', jh: minMottes / H * (1 + majo), w: 'ferme'}
   };
@@ -615,7 +619,7 @@ function calcul() {
   var commun = minLots / H + jhCoord, baseF = 0;
   Object.keys(postes).forEach(function(k) { if (postes[k].w === 'ferme') baseF += postes[k].jh; });
   var arr = function(x) { return x > 0 ? Math.max(0.1, Math.round(x * 10) / 10) : 0; };
-  ['rx', 'etude', 'cur', 'motte'].forEach(function(k) {
+  ['rx', 'sed', 'net', 'cur', 'motte'].forEach(function(k) {
     var x = postes[k], jh = x.jh + (x.w === 'ferme' && baseF ? commun * x.jh / baseF : 0);
     if (jh > 0) L[x.w].push({l: x.l, jh: arr(jh), k: k});
   });
@@ -691,7 +695,7 @@ function renderRes() {
     '<p class="hint" style="margin:4px 0 0">tranche ferme' + (R.option ? ', + ' + fmt(R.option) + ' JH en option (conservation curative)' : '') + '</p>';
   h += '<ul class="lines">' + R.L.ferme.map(function(x) { return '<li><span>' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') +
     R.L.option.map(function(x) { return '<li class="opt"><span>Option : ' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') + '</ul>';
-  h += '<p class="hint" style="margin:8px 0 0">' + (R.quotaTot ? 'Dont ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' nettoyé' + (R.quotaTot > 1 ? 's' : '') + ' pour étude.' : 'Sans nettoyage pour étude.') + (R.fStab < 1 ? ' Stabilisation de ' + pct(R.fStab) + ' du mobilier.' : '') + '</p>';
+  h += '<p class="hint" style="margin:8px 0 0">' + (R.fStab < 1 ? 'Stabilisation de ' + pct(R.fStab) + ' du mobilier. ' : '') + '</p>';
   h += '<p class="hint" style="margin:6px 0 0">Fiches, photographies, suivi de projet, contexte et consommables sont compris dans ces postes.</p>';
   R.alertes.forEach(function(a) { h += '<div class="al">' + esc(a) + '</div>'; });
   h += '<button class="btn" id="dl">Télécharger le volet (.odt)</button>';
