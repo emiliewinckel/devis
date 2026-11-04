@@ -154,6 +154,7 @@ var PARAMS = {
   "ferMois": 6
  },
  "ficheLot": 30,
+ "ouverture": 0.5,
  "coord": {
   "base": 0.5,
   "palier": 30,
@@ -551,9 +552,11 @@ function calcul() {
     minEtude += et; minStab += st;
     lignesMat.push({m: m, n: n, nq: nq, et: et, st: st});
   });
-  // fer : boîtes de bain (une par classe stabilisée, comme le simulateur) et solution au poids
+  // ouverture de dossier : ½ journée incompressible pour la déchloruration et pour la radiographie (forfait par dossier, quel que soit le nombre d'objets)
+  var jhOuv = P.ouverture != null ? P.ouverture : 0.5;
+  // fer : forfait d'ouverture de la déchloruration et solution au poids
   var ferCls = C4.filter(function(c) { return qte('fer', c) > 0; }), boites = ferCls.length;
-  var minBoites = boites ? boites * val(P.stab.ferHBoite, 'fer — temps par boîte de bain (Hypothèses)') * 60 : 0;
+  var jhBains = boites ? jhOuv : 0;
   var poidsFer = ferCls.reduce(function(a, c) { return a + qte('fer', c) * val(P.fer.poids[c], 'fer — poids moyen ' + c + ' (Hypothèses)'); }, 0) / 1000;
   var eSol = boites ? poidsFer * val(P.stab.ferLKg, 'fer — litres par kg') * val(P.stab.ferEL, 'fer — coût d’un litre') : 0;
   // clous, mottes
@@ -562,8 +565,7 @@ function calcul() {
   var minMottes = C4.reduce(function(a, c) { var n = qte('mottes', c); return a + (n ? n * val(P.motte[c], 'motte ' + c + ' (Hypothèses)') : 0); }, 0);
   // radiographie : lots d'objets métalliques ; clichés selon la classe (fer) ou par monnaie
   var nMet = MATS.filter(function(m) { return m.metal; }).reduce(function(a, m) { return a + totalMat(m); }, 0);
-  var lotsRadio = nMet ? Math.ceil(nMet / val(P.radio.objLot, 'radiographie — objets par lot')) : 0;
-  var minRadio = lotsRadio * val(P.radio.hLot, 'radiographie — heures par lot') * 60;
+  var jhRadio = nMet ? jhOuv : 0;
   var eClich = 0;
   MATS.filter(function(m) { return m.metal && m.cls; }).forEach(function(m) { C4.forEach(function(c) { var n = qte(m.k, c); if (n) eClich += n * val(P.fer.clicheE[c], 'coût d’un cliché ' + c) / val(P.fer.objCliche[c], 'objets par cliché ' + c); }); });
   if (qte('monnaies')) eClich += qte('monnaies') * val(P.fer.clicheE.S, 'coût d’un cliché S') / val(P.mats.monnaies.parCliche, 'monnaies par cliché');
@@ -582,11 +584,11 @@ function calcul() {
   lignesMat.forEach(function(x) { add('ferme', x.m.n + ' : mise en état d’étude (' + x.n + ')', x.et / H); });
   add('ferme', 'Clous, tiges et tôles (' + nClous + ' restes)', minClous / H);
   add('ferme', 'Fouille des prélèvements en motte (' + nMottes + ')', minMottes / H);
-  add('ferme', 'Radiographie : préparation et lecture (' + lotsRadio + ' lot' + (lotsRadio > 1 ? 's' : '') + ')', minRadio / H);
+  add('ferme', 'Radiographie : ouverture du dossier, préparation et lecture (forfait)', jhRadio);
   add('ferme', 'Fiches de lot (' + nLots + ')', minLots / H);
   var w = stabFerme ? 'ferme' : 'option';
   lignesMat.forEach(function(x) { if (x.st) add(w, x.m.n + ' : ' + (x.m.k === 'fer' ? 'déchloruration, post-bain' : x.m.k === 'ceram' || x.m.k === 'lapid' ? 'dessalement' : 'stabilisation'), x.st / H); });
-  add(w, 'Fer : suivi des bains (' + boites + ' boîte' + (boites > 1 ? 's' : '') + ')', minBoites / H);
+  add(w, 'Fer : ouverture de la déchloruration, mise en place et suivi des bains (forfait)', jhBains);
   if (minMajo > 0) add('ferme', 'Majoration liée au contexte (' + F.contexte.toLowerCase() + ', +' + pct(majo) + ')', minMajo / H);
   if (!stabFerme && majo > 0 && minStab > 0) add('option', 'Majoration liée au contexte sur la stabilisation', minStab * majo / H);
   add('ferme', 'Présence du conservateur-restaurateur sur le terrain', jhTerrain);
@@ -935,6 +937,7 @@ function lireGrille(wb) {
   var ip = trouve(A, /^paramètres communs/), iS = trouve(A, /^seuil du domaine de validité/), PC = [ip + 1, iS < 0 ? A.length : iS];
   P.radio = {hLot: b1(PC, /^radiographie/), objLot: b1(PC, /^nombre moyen d'objets par lot/)};
   var fl = b1(PC, /^fiche de lot/); if (fl != null) P.ficheLot = fl;
+  var ouv = b1(PC, /^ouverture de dossier/); if (ouv == null) ouv = h1(/^ouverture de dossier/); P.ouverture = ouv != null ? ouv : 0.5;
   P.clousMin = b1(PC, /^clous/);
   P.seuils = {};
   var noms = {cu: /^alliages cuivreux/, monnaies: /^monnaies/, plomb: /^plomb/, precieux: /^argent/, verre: /^verre/, ceram: /^céramique/, os: /^os travaillé/, parure: /^lignite/, humide: /^bois, cuir/, lapid: /^lapidaire/};
