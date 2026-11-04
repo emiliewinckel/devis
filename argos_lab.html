@@ -272,7 +272,7 @@ body.compact .brand .ico{display:block;height:38px;width:38px}
    et écrit uniquement dans la base Interventions (+ n/a, bain KORE, date de retour). */
 const NV='2022-06-28';
 const DB={dossiers:'38fd72a9-3a1d-80c0-b86c-efb3b089a640',objets:'38fd72a9-3a1d-8077-9ef1-c2aaf4e8886e',
-  interv:'89043251-ce2b-454c-b3a8-01626197deea',kore:'39cd72a9-3a1d-81ae-be42-dd641ea14c73'};
+  interv:'89043251-ce2b-454c-b3a8-01626197deea',kore:'39cd72a9-3a1d-81ae-be42-dd641ea14c73',kera:'39bd72a9-3a1d-807d-aae7-e05dd07023a8'};
 const DEF_PROXY='https://kera-proxy.emiliewinckel.workers.dev';
 // Les autres modules sont publiés à côté de ce fichier (même dépôt GitHub Pages)
 const BASE=/github\.io$/.test(location.hostname)?location.href.replace(/[^/]*([?#].*)?$/,''):'https://emiliewinckel.github.io/devis/';
@@ -343,7 +343,8 @@ function parseStep(s){
   if(!s)return {x:'todo'};
   if(s==='n/a')return {x:'na'};
   if(s.startsWith('✓'))return {x:'done',d:s.replace('✓','').trim()};
-  if(s.includes('KORE'))return {x:'run',kore:true};
+  if(s.includes('KORE'))return {x:'run',app:'kore'};
+  if(s.includes('KERA'))return {x:'run',app:'kera'};
   if(s.includes('en cours'))return {x:'run'};
   return {x:'todo'};
 }
@@ -353,7 +354,7 @@ function mapDossier(pg){const P=pg.properties;return {id:pg.id,num:pv(P['N° lab
   types:pv(P["Type d'intervention"])||[],nObj:(pv(P['Objets'])||[]).length,op:pv(P['Type Opération']),etat:pv(P['Etat'])}}
 function mapObjet(pg){const P=pg.properties,o={id:pg.id,nom:pv(P['Nom']),idObj:pv(P['ID objet']),inv:pv(P['N° inventaire']),
   d:pv(P['Description']),m:(pv(P['Matériau'])||[]).join(', '),nr:pv(P['NR']),t:pv(P["Description de l'intervention"]),
-  na:pv(P['Étapes non applicables'])||[],kore:pv(P['Bain KORE'])||[],koreStat:pv(P['Statut KORE']),masse:pv(P['Masse (g)']),dossier:(pv(P['Dossier'])||[])[0],steps:{}};
+  na:pv(P['Étapes non applicables'])||[],kore:pv(P['Bain KORE'])||[],koreStat:pv(P['Statut KORE']),kera:pv(P['Lot KERA'])||[],keraStat:pv(P['Statut KERA']),masse:pv(P['Masse (g)']),dossier:(pv(P['Dossier'])||[])[0],steps:{}};
   STEPS.forEach(s=>o.steps[s.k]=pv(P[s.col]));return o}
 function mapIv(pg){const P=pg.properties;return {id:pg.id,etape:pv(P['Étape']),statut:pv(P['Statut']),date:pv(P['Date']),
   op:pv(P['Opérateur']),proto:pv(P['Protocole']),note:pv(P['Note'])}}
@@ -387,11 +388,12 @@ const Notion={
     return (await nfetch('/pages','POST',{parent:{database_id:DB.interv},properties:P})).id},
   archive(id){return nfetch('/pages/'+id,'PATCH',{archived:true})},
   setNA(o,na){return nfetch('/pages/'+o.id,'PATCH',{properties:{'Étapes non applicables':{multi_select:na.map(name=>({name}))}}})},
-  setKore(o,kid){return nfetch('/pages/'+o.id,'PATCH',{properties:{'Bain KORE':{relation:kid?[{id:kid}]:[]}}})},
-  async koreLots(){const j=await nfetch('/databases/'+DB.kore+'/query','POST',{page_size:40,
+  setBain(o,app,kid){return nfetch('/pages/'+o.id,'PATCH',{properties:{[BATH[app].prop]:{relation:kid?[{id:kid}]:[]}}})},
+  // Bains KORE / lots KERA en cours (les terminés ne sont pas proposés)
+  async bainLots(app){const B=BATH[app],j=await nfetch('/databases/'+DB[app]+'/query','POST',{page_size:40,
     sorts:[{property:'Date début',direction:'descending'}]});
-    return (j.results||[]).map(pg=>({id:pg.id,int:pv(pg.properties['Intitulé']),ref:pv(pg.properties['Référence']),statut:pv(pg.properties['Statut'])}))
-      .filter(l=>!/termin/i.test(l.statut))},
+    return (j.results||[]).map(pg=>({id:pg.id,int:pv(pg.properties[B.title]),ref:pv(pg.properties['Référence']),statut:pv(pg.properties['Statut']),kid:pv(pg.properties[B.nom+' ID'])}))
+      .filter(l=>!/termin/i.test(l.statut||''))},
   setRetour(d,date){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Date de retour':{date:date?{start:date}:null}}})},
   async creerObjet(d,x){const P={'Nom':{title:[{text:{content:x.id+(x.inv?' · '+x.inv:'')}}]},'ID objet':{rich_text:[{text:{content:x.id}}]},
       'Dossier':{relation:[{id:d.id}]}};
@@ -416,10 +418,12 @@ const DTR={radio:'radiographie',etude:'nettoyage pour étude',ns:'nettoyage et s
 function demoFresh(){return {
   dossiers:[{id:'demo-witry',etat:'en cours',num:'2026_8249-8',commune:'Witry-lès-Reims',site:'Les Cabouzets',ro:'S. Bündgen',nb:20,av:0,fin:0,rapport:'à rédiger',retour:'',arrivee:'2026-10-12',types:['Déchloruration','Nettoyage pour étude','Radiographie X'],nObj:20},
     {id:'demo-autre',etat:'à faire',num:'2026_8870-01',commune:'Saint-Léonard (51)',site:'Centre Bourg',ro:'M-A Thierry',nb:0,av:0,fin:0,rapport:'',retour:'',arrivee:'2026-07-23',types:['Déchloruration'],nObj:0}],
-  objets:SEED.map(([oi,d,m,t,nr],i)=>{const o={id:'demo-o'+i,dossier:'demo-witry',nom:'',idObj:'2026_8249-8_'+String(i+1).padStart(3,'0'),inv:'OI '+oi,d,m,nr,t:DTR[t],na:[...DNA[t]],kore:[],koreStat:'',steps:{}};
+  objets:SEED.map(([oi,d,m,t,nr],i)=>{const o={id:'demo-o'+i,dossier:'demo-witry',nom:'',idObj:'2026_8249-8_'+String(i+1).padStart(3,'0'),inv:'OI '+oi,d,m,nr,t:DTR[t],na:[...DNA[t]],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
     STEPS.forEach(s=>o.steps[s.k]=o.na.includes(s.n)?'n/a':'');return o}),
-  journal:{},kore:[{id:'demo-k1',int:'WITRY-LES-REIMS - Les Cabouzets',ref:'2026_8249-8 lot fer 1',statut:'En cours'},{id:'demo-k2',int:'SAINT-LEONARD - Centre Bourg',ref:'2026-8870-01 lot 2',statut:'En cours'}]}}
+  journal:{},kore:[{id:'demo-k1',int:'WITRY-LES-REIMS - Les Cabouzets',ref:'2026_8249-8 lot fer 1',statut:'En cours'},{id:'demo-k2',int:'SAINT-LEONARD - Centre Bourg',ref:'2026-8870-01 lot 2',statut:'En cours'}],
+  kera:[{id:'demo-c1',int:'Saint-Léonard - Centre Bourg',ref:'2026_8870-01 céramiques',statut:'En cours',kid:'KDEMO1'}]}}
 let DEMO=LS.get('argoslab:demo2',null)||demoFresh();
+if(!DEMO.kera)DEMO.kera=demoFresh().kera;DEMO.objets.forEach(o=>{if(!o.kera)o.kera=[]});
 const dsave=()=>LS.set('argoslab:demo2',DEMO);
 const Demo={
   async dossiers(){return DEMO.dossiers.map(d=>{const ob=DEMO.objets.filter(o=>o.dossier===d.id);
@@ -432,17 +436,17 @@ const Demo={
     this._sync(o);dsave();return id},
   async archive(id){Object.values(DEMO.journal).forEach(l=>{const i=l.findIndex(x=>x.id===id);if(i>=0)l.splice(i,1)});dsave()},
   async setNA(o,na){this._sync(o);dsave()},
-  async setKore(o,kid){this._sync(o);dsave()},
-  async koreLots(){return DEMO.kore},
+  async setBain(o,app,kid){this._sync(o);dsave()},
+  async bainLots(app){return DEMO[app]||[]},
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
-  async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,t:x.trait||'',na:[],kore:[],koreStat:'',steps:{}};
+  async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,t:x.trait||'',na:[],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
     STEPS.forEach(st=>o.steps[st.k]='');DEMO.objets.push(o);const dd=DEMO.dossiers.find(y=>y.id===d.id);if(dd)dd.nObj=(dd.nObj||0)+1;dsave();return JSON.parse(JSON.stringify(o))},
   _sync(o){const i=DEMO.objets.findIndex(x=>x.id===o.id);DEMO.objets[i]=JSON.parse(JSON.stringify(o))},
-  async koreFin(o){o.kore=[];o.steps.st='✓ '+fr(iso());this._sync(o);(DEMO.journal[o.id]=DEMO.journal[o.id]||[]).unshift({id:'k'+Date.now(),etape:'Stabilisation',statut:'terminé',date:iso(),op:'KORE',proto:['Déchloruration (KORE)'],note:'Fin du bain dans KORE'});dsave()}
+  async bainFin(o,app){const B=BATH[app];o[app]=[];o.steps.st='✓ '+fr(iso());this._sync(o);(DEMO.journal[o.id]=DEMO.journal[o.id]||[]).unshift({id:'k'+Date.now(),etape:'Stabilisation',statut:'terminé',date:iso(),op:B.nom,proto:[B.proto],note:'Fin du '+B.lot+' dans '+B.nom});dsave()}
 };
 
 /* ---------- état ---------- */
-const S={mode:null,dossiers:[],d:null,objs:[],journal:[],koreLots:null,loading:''};
+const S={mode:null,dossiers:[],d:null,objs:[],journal:[],lots:{},loading:''};
 let view={v:'home',q:'',filter:'all',oid:null,step:null,sel:new Set(),lotProto:new Set(),lotSt:'terminé'};
 let undo=null,toastT=null,busy=false;
 const API=()=>S.mode==='demo'?Demo:Notion;
@@ -523,23 +527,24 @@ function dossierV(){
     <span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
     <span class="d"><b>${esc(o.d||o.nom)}</b><span>${short(o)?short(o)+' · ':''}${esc(o.m)}${o.t?' · '+esc(o.t):''}</span>
       <span class="dots">${STEPS.map(s=>{const x=st(o,s.k);return `<i class="${x==='run'?'run':n&&n.k===s.k?'next':x}"></i>`}).join('')}</span></span>
-    <span class="next ${n?(r?'run':''):'ok'}">${n?(r?(parseStep(o.steps[n.k]).kore?'KORE':'en cours'):n.n):'Terminé'}</span></button>`}).join('')}</div>
+    <span class="next ${n?(r?'run':''):'ok'}">${n?(r?(parseStep(o.steps[n.k]).app?BATH[parseStep(o.steps[n.k]).app].nom:'en cours'):n.n):'Terminé'}</span></button>`}).join('')}</div>
   <p class="foot"><button class="link" data-a="addobj">+ Ajouter des objets à ce dossier</button></p>`;
 }
 
 function stepLine(o,k){
   const x=st(o,k),p=parseStep(o.steps[k]);
   if(x==='done')return p.d||'fait';
-  if(x==='run')return p.kore?'en cours · KORE':'en cours';
+  if(x==='run')return p.app?'en cours · '+BATH[p.app].nom:'en cours';
   return x==='na'?'non applicable':'à faire';
 }
 function objetV(){
   const i=S.objs.findIndex(o=>o.id===view.oid),o=S.objs[i],n=next(o),r=n&&st(o,n.k)==='run',d=S.d;
   let go;
   if(!n)go=`<div class="go done"><span><small>Objet</small><b>Toutes les étapes sont faites</b></span><span class="ck">${ICON.check}</span></div>`;
-  else if(r&&n.k==='st'&&parseStep(o.steps.st).kore)go=`<div class="go kore"><span><small>Stabilisation suivie dans KORE</small><b>${esc(o.koreName||'Bain KORE')}</b><em>L'étape se validera seule quand le bain sera « Terminé » dans KORE.</em></span>
-      <a class="ko" href="${URLS.kore}?prefill=1&notionId=${o.kore[0]||''}" target="_blank" rel="noopener">Ouvrir KORE</a></div>
-      ${S.mode==='demo'?'<button class="link sim" data-a="korefin">Démo : simuler la fin du bain dans KORE</button>':''}`;
+  else if(r&&n.k==='st'&&parseStep(o.steps.st).app){const a=parseStep(o.steps.st).app,B=BATH[a];
+    go=`<div class="go kore"><span><small>Stabilisation suivie dans ${B.nom}</small><b>${esc(o.bainName||B.prop)}</b><em>L'étape se validera seule quand ${B.fin}.</em></span>
+      <a class="ko" href="${bainOpen(o,a)}" target="_blank" rel="noopener">Ouvrir ${B.nom}</a></div>
+      ${S.mode==='demo'?`<button class="link sim" data-a="bainfin" data-app="${a}">Démo : simuler la fin du ${B.lot} dans ${B.nom}</button>`:''}`}
   else if(r)go=`<button class="go" data-fin="${n.k}"><span><small>En cours</small><b>Terminer : ${n.n}</b></span><span class="ck">${ICON.check}</span></button>`;
   else go=`<button class="go" data-go="${n.k}"><span><small>Étape suivante</small><b>${n.n}</b></span><span class="ck">${hasP(o,n.k)?ICON.clock:ICON.check}</span></button>`;
   return `<button class="back" data-a="dossier">‹ ${esc(d.num)} · ${esc(d.commune)}</button>${topInfo()}
@@ -576,9 +581,9 @@ function lotV(){
     <div class="seg ${P.length?'three':'two'}">${P.length?`<button data-ls="en cours" aria-pressed="${view.lotSt==='en cours'}">Commencé</button>`:''}<button data-ls="terminé" aria-pressed="${view.lotSt==='terminé'}">Terminé</button><button data-ls="na" aria-pressed="${view.lotSt==='na'}">Non applicable</button></div>
     ${P.length&&view.lotSt!=='na'?`<div class="label">Protocole · plusieurs choix possibles</div>
     <div class="chips cwrap">${P.map(p=>`<button class="chip" data-lp="${esc(p)}" aria-pressed="${view.lotProto.has(p)}">${esc(p)}</button>`).join('')}</div>`:''}
-    ${k==='st'&&S.objs.some(isFer)?(()=>{const sf=S.objs.filter(o=>view.sel.has(o.id)&&isFer(o)),m=sf.reduce((a,o)=>a+(Number(o.masse)||0),0);
-      return `<div class="kbox"><div><b>Déchloruration dans KORE</b><span>Cochez les objets en fer ci-dessous${sf.length?` · <strong>${sf.length}</strong> sélectionné${sf.length>1?'s':''}${m?' · '+Math.round(m)+' g au total':''}`:''}</span></div>
-      <div class="kb"><button data-a="korenew" ${sf.length?'':'disabled'}>Mettre en bain KORE ${ICON.ext}</button><button data-a="korepick" ${sf.length?'':'disabled'}>Relier à un bain existant</button></div></div>`})():''}
+    ${k==='st'?APPS.filter(a=>S.objs.some(BATH[a].test)).map(a=>{const B=BATH[a],sf=S.objs.filter(o=>view.sel.has(o.id)&&B.test(o)),m=sf.reduce((x,o)=>x+(Number(o.masse)||0),0);
+      return `<div class="kbox"><div><b>${B.act} dans ${B.nom}</b><span>Cochez les objets ${B.mat} ci-dessous${sf.length?` · <strong>${sf.length}</strong> sélectionné${sf.length>1?'s':''}${m?' · '+Math.round(m)+' g au total':''}`:''}</span></div>
+      <div class="kb"><button data-a="bnew" data-app="${a}" ${sf.length?'':'disabled'}>${B.nouveau} ${ICON.ext}</button><button data-a="bpick" data-app="${a}" ${sf.length?'':'disabled'}>Relier à un ${B.lot} existant</button></div></div>`}).join(''):''}
   </section>
   <div class="lot-tools"><div class="label">2. Objets concernés</div>
     ${cand.length?`<button class="link" data-a="all">${view.sel.size===cand.length?'Tout désélectionner':'Tout sélectionner ('+cand.length+')'}</button>`:''}</div>
@@ -587,7 +592,7 @@ function lotV(){
      <span class="d" style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${esc(o.d||o.nom)}</b><span style="font-size:11px;color:var(--txt2)">${esc(o.m)}${st(o,k)==='run'?' · en cours':''}</span></span></button>`).join('')
      :'<p class="empty" style="padding:16px">Rien à faire pour cette étape.</p>'}</div>`;
 }
-function lotCand(){const k=view.step;return S.objs.filter(o=>view.lotSt==='en cours'?st(o,k)==='todo':['todo','run'].includes(st(o,k))&&!(k==='st'&&parseStep(o.steps.st).kore))}
+function lotCand(){const k=view.step;return S.objs.filter(o=>view.lotSt==='en cours'?st(o,k)==='todo':['todo','run'].includes(st(o,k))&&!(k==='st'&&parseStep(o.steps.st).app))}
 
 function loadingV(msg){return `<div class="loading"><span class="spin"></span>${esc(msg)}</div>`}
 function render(){
@@ -620,7 +625,7 @@ async function openDossier(id,thenObj){
   S.loading='Chargement du dossier…';render();
   try{S.d=S.dossiers.find(d=>d.id===id)||await API().dossier(id);S.objs=await API().objets(id);
     view={...view,v:'dossier',filter:'all',sel:new Set()};S.loading='';
-    if(thenObj)return openObj(thenObj);render();scrollTo(0,0);setUrl({dossier:hex(id)});setTimeout(checkKore,400)}
+    if(thenObj)return openObj(thenObj);render();scrollTo(0,0);setUrl({dossier:hex(id)});setTimeout(checkBain,400)}
   catch(e){S.loading='';fail(e);render()}}
 async function openObj(id){
   const o=S.objs.find(x=>hex(x.id)===hex(id));
@@ -628,17 +633,18 @@ async function openObj(id){
     try{S.loading='Recherche de l’objet…';render();const ob=await API().objet(id);S.loading='';if(!ob.dossier)throw new Error('objet sans dossier');return openDossier(ob.dossier,id)}
     catch(e){S.loading='';render();return toast('Étiquette inconnue : '+(e.message||e),0,1)}}
   view={...view,v:'obj',oid:o.id};S.journal=[];S.loading='journal';render();scrollTo(0,0);setUrl({objet:hex(o.id)});
-  koreName(o);
+  bainName(o);
   try{S.journal=await API().journal(o.id)}catch(e){S.journal=[]}S.loading='';if(view.oid===o.id)render();
 }
-async function koreName(o){if(!o.kore.length||o.koreName)return;try{const l=S.koreLots||(S.koreLots=await API().koreLots());
-  const k=l.find(x=>hex(x.id)===hex(o.kore[0]));if(k){o.koreName=k.ref||k.int;if(view.oid===o.id)render()}}catch(e){}}
+async function bainName(o){const a=bainOf(o);if(!a||o.bainName)return;try{const l=await lotsOf(a);
+  const k=l.find(x=>hex(x.id)===hex(o[a][0]));if(k){o.bainName=k.ref||k.int;if(view.oid===o.id)render()}}catch(e){}}
+async function lotsOf(a,fresh){if(fresh||!S.lots[a])S.lots[a]=await API().bainLots(a);return S.lots[a]}
 function setUrl(p){try{const u=new URL(location.href);u.search=new URLSearchParams(p).toString();history.replaceState(null,'',u)}catch(e){}}
 
 /* ---------- écritures ---------- */
 // Une validation = une ligne dans Interventions ; l'état affiché est mis à jour tout de suite,
 // les colonnes ①…⑧ de Notion se recalculent de leur côté.
-function applyLocal(o,k,statut,kore){o.steps[k]=statut==='terminé'?'✓ '+fr(iso()):statut==='en cours'?(kore?'en cours · KORE':'en cours'):''}
+function applyLocal(o,k,statut,app){o.steps[k]=statut==='terminé'?'✓ '+fr(iso()):statut==='en cours'?(app?'en cours · '+BATH[app].nom:'en cours'):''}
 async function record(objs,k,statut,proto){
   const prev=objs.map(o=>({o,s:o.steps[k]})),ids=[];
   objs.forEach(o=>applyLocal(o,k,statut));render();
@@ -652,8 +658,8 @@ async function record(objs,k,statut,proto){
 async function doUndo(){if(!undo)return;const u=undo;undo=null;
   try{for(const id of (u.ids||[]))await API().archive(id);
     if(u.na)await API().setNA(u.na.o,u.na.prev);
-    if(u.kore)await API().setKore(u.kore.o,u.kore.prev||null);
-    if(u.multiKore)for(const m of u.multiKore){await API().setKore(m.o,m.prev);m.o.kore=m.prev?[m.prev]:[]}
+    if(u.bain)await API().setBain(u.bain.o,u.bain.app,u.bain.prev||null);
+    if(u.multiBain)for(const m of u.multiBain){await API().setBain(m.o,m.app,m.prev);m.o[m.app]=m.prev?[m.prev]:[]}
     if(u.naMulti)for(const m of u.naMulti){await API().setNA(m.o,m.na);if(S.mode!=='demo')await sleep(340)}}catch(e){return fail(e)}
   if(u.restore)u.restore();
   (u.prev||[]).forEach(p=>{p.o.steps[u.k]=p.s});
@@ -662,21 +668,20 @@ async function doUndo(){if(!undo)return;const u=undo;undo=null;
 
 /* ---------- feuilles ---------- */
 function stepSheet(o,k){
-  const fer=/fer/i.test(o.m)&&k==='st';
+  const app=k==='st'?bathFor(o):null,B=app&&BATH[app];
   const l=sheet(`<div class="sh-h"><small>${esc(o.inv||'')}${o.idObj?' · '+esc(o.idObj):''}</small><b>${sn(k)}</b></div>
     <div class="label">Protocole · plusieurs choix possibles</div>
     <div class="chips cwrap" id="pp">${protos(o,k).map(p=>`<button class="chip" data-pp="${esc(p)}" aria-pressed="false">${esc(p)}</button>`).join('')}</div>
     <div class="label">Note (facultatif)</div><textarea id="snote" rows="2" class="ta" placeholder="Paramètres, durée, remarque…"></textarea>
-    ${fer?`<div class="kbox"><div><b>Déchloruration ?</b><span>Reliez l'objet à son bain : KORE prend le relais, rien à ressaisir ici.</span></div>
-      <div class="kb" id="kb"><span class="empty">Chargement des bains KORE…</span></div></div>`:''}
+    ${B?`<div class="kbox"><div><b>${B.act} ?</b><span>Reliez l'objet à son ${B.lot} : ${B.nom} prend le relais, rien à ressaisir ici.</span></div>
+      <div class="kb" id="kb"><span class="empty">Chargement des ${B.lot}s ${B.nom}…</span></div></div>`:''}
     <div class="sh-act">${st(o,k)==='todo'?`<button class="big secondary" data-sv="en cours">${ICON.clock}Commencé</button>`:''}
       <button class="big primary" data-sv="terminé">${ICON.check}Terminé</button></div>
     <button class="link" data-a="close" style="align-self:center">Fermer</button>`,k);
-  if(fer)(S.koreLots?Promise.resolve(S.koreLots):API().koreLots().then(x=>S.koreLots=x)).then(lots=>{
+  if(B)lotsOf(app).then(lots=>{
     const kb=l.querySelector('#kb');if(!kb)return;
-    const pre=koreUrl(S.d,[o]);
-    kb.innerHTML=lots.slice(0,8).map(b=>`<button data-bain="${b.id}">${esc(b.ref||b.int)}<small>${esc(b.int)}</small></button>`).join('')+
-      `<a class="newk" data-kp="${o.id}" href="${pre}" target="_blank" rel="noopener">+ Créer le bain dans KORE ${ICON.ext}</a>`}).catch(()=>{const kb=l.querySelector('#kb');if(kb)kb.innerHTML='<span class="empty">KORE inaccessible.</span>'});
+    kb.innerHTML=lots.slice(0,8).map(b=>`<button data-bain="${b.id}" data-app="${app}">${esc(b.ref||b.int)}<small>${esc(b.int)}</small></button>`).join('')+
+      `<a class="newk" data-kp="${o.id}" data-kapp="${app}" href="${bainUrl(app,S.d,[o])}" target="_blank" rel="noopener">+ ${B.nouveau} ${ICON.ext}</a>`}).catch(()=>{const kb=l.querySelector('#kb');if(kb)kb.innerHTML=`<span class="empty">${B.nom} inaccessible.</span>`});
 }
 function opSheet(){
   const ops=LS.get('argoslab:ops',[]);
@@ -727,16 +732,16 @@ document.addEventListener('click',async e=>{
     closeSheet();const prev=o.steps[k];applyLocal(o,k,d.sv);render();
     try{const id=await API().add(o,k,d.sv,p,note);undo={ids:[id],prev:[{o,s:prev}],k};toast(`${sn(k)} ${d.sv} · ${label(o)}`,true);
       S.journal=await API().journal(o.id).catch(()=>S.journal);render()}catch(err){o.steps[k]=prev;render();fail(err)}return}
-  if(d.bain){const o=cur(),prevK=o.kore[0]||null,prev=o.steps.st;closeSheet();o.kore=[d.bain];o.koreName=null;applyLocal(o,'st','en cours',true);render();
-    try{await API().setKore(o,d.bain);const id=await API().add(o,'st','en cours',['Déchloruration (KORE)']);
-      undo={ids:[id],kore:{o,prev:prevK},prev:[{o,s:prev}],k:'st',restore:()=>{o.kore=prevK?[prevK]:[]}};koreName(o);toast('Objet relié au bain KORE',true);
-      S.journal=await API().journal(o.id).catch(()=>S.journal);render()}catch(err){o.kore=prevK?[prevK]:[];o.steps.st=prev;render();fail(err)}return}
+  if(d.bain){const app=d.app||'kore',B=BATH[app],o=cur(),prevK=o[app][0]||null,prev=o.steps.st;closeSheet();o[app]=[d.bain];o.bainName=null;applyLocal(o,'st','en cours',app);render();
+    try{await API().setBain(o,app,d.bain);const id=await API().add(o,'st','en cours',[B.proto]);
+      undo={ids:[id],bain:{o,app,prev:prevK},prev:[{o,s:prev}],k:'st',restore:()=>{o[app]=prevK?[prevK]:[]}};bainName(o);toast(`Objet relié au ${B.lot} ${B.nom}`,true);
+      S.journal=await API().journal(o.id).catch(()=>S.journal);render()}catch(err){o[app]=prevK?[prevK]:[];o.steps.st=prev;render();fail(err)}return}
   if(d.na){e.stopPropagation();const o=cur(),n=sn(d.na),on=!o.na.includes(n),prevNa=[...o.na],prev=o.steps[d.na];
     o.na=on?[...o.na,n]:o.na.filter(x=>x!==n);o.steps[d.na]=on?'n/a':'';render();
     try{await API().setNA(o,o.na);undo={na:{o,prev:prevNa},prev:[{o,s:prev}],k:d.na,restore:()=>{o.na=prevNa}};toast(`${n} ${on?'non applicable':'remis à faire'}`,true)}
     catch(err){o.na=prevNa;o.steps[d.na]=prev;render();fail(err)}return}
   if(d.s){const o=cur(),k=d.s,x=st(o,k);if(x==='na'||x==='done')return x==='done'&&toast('Déjà fait : utilisez « Annuler » juste après une saisie, ou corrigez dans Notion.');
-    if(x==='run'&&parseStep(o.steps[k]).kore)return;if(hasP(o,k))return stepSheet(o,k);return record([o],k,'terminé')}
+    if(x==='run'&&parseStep(o.steps[k]).app)return;if(hasP(o,k))return stepSheet(o,k);return record([o],k,'terminé')}
   if(d.go){const o=cur();if(hasP(o,d.go))return stepSheet(o,d.go);return record([o],d.go,'terminé')}
   if(d.fin){return stepSheet(cur(),d.fin)}
   if(d.o!==undefined){if(d.o)openObj(d.o);return}
@@ -748,10 +753,10 @@ document.addEventListener('click',async e=>{
   if(d.t){view.sel.has(d.t)?view.sel.delete(d.t):view.sel.add(d.t);render();return}
   if(d.cm){view.cMode=d.cm;rerenderCreer();return}
   if(d.pick){closeSheet();openObj(d.pick);return}
-  if(d.klink){closeSheet();const p=LS.get('argoslab:korepending',null);
-    let objs=S.objs.filter(o=>view.sel.has(o.id)&&isFer(o));
-    if(p&&p.did===S.d.id&&(!objs.length||view.v!=='lot'))objs=S.objs.filter(o=>p.ids.includes(o.id));
-    if(objs.length)linkKore(objs,d.klink);return}
+  if(d.klink){closeSheet();const app=d.kapp||'kore',p=LS.get('argoslab:korepending',null);
+    let objs=S.objs.filter(o=>view.sel.has(o.id)&&BATH[app].test(o));
+    if(p&&p.did===S.d.id&&(p.app||'kore')===app&&(!objs.length||view.v!=='lot'))objs=S.objs.filter(o=>p.ids.includes(o.id));
+    if(objs.length)linkBain(objs,d.klink,app);return}
   if(d.opn){LS.set('argoslab:op',d.opn);closeSheet();render();return}
   switch(d.a){
     case 'home':setUrl({});if(!S.dossiers.length)return loadHome();view={...view,v:'home',sel:new Set()};render();scrollTo(0,0);break;
@@ -767,13 +772,13 @@ document.addEventListener('click',async e=>{
     case 'all':{const c=lotCand();view.sel=view.sel.size===c.length?new Set():new Set(c.map(o=>o.id));render();break}
     case 'apply':{const objs=S.objs.filter(o=>view.sel.has(o.id)),s=view.lotSt==='na'?'na':protosLot(view.step).length?view.lotSt:'terminé';view.sel=new Set();if(s==='na')await naLot(objs,view.step);else await record(objs,view.step,s,[...view.lotProto]);break}
     case 'retour':{const dd=S.d;try{await API().setRetour(dd,iso());dd.retour=iso();toast('Date de retour enregistrée');render()}catch(err){fail(err)}break}
-    case 'korefin':{const o=cur();await Demo.koreFin(o);S.journal=await Demo.journal(o.id);toast('Bain terminé dans KORE : stabilisation validée');render();break}
-    case 'korenew':{const objs=S.objs.filter(o=>view.sel.has(o.id)&&isFer(o));if(!objs.length)return;
-      window.open(koreUrl(S.d,objs),'_blank','noopener');korePending(objs);toast('KORE ouvert : créez le bain, puis revenez ici');break}
-    case 'korepick':{const objs=S.objs.filter(o=>view.sel.has(o.id)&&isFer(o));if(!objs.length)return;
-      const lots=S.koreLots||(S.koreLots=await API().koreLots().catch(()=>[]));
-      sheet(`<div class="sh-h"><small>${objs.length} objet${objs.length>1?'s':''} en fer</small><b>Choisir le bain KORE</b></div>
-        <div class="kb">${lots.length?lots.slice(0,10).map(l=>`<button data-klink="${l.id}">${esc(l.ref||l.int)}<small>${esc(l.int)}</small></button>`).join(''):'<span class="empty">Aucun bain en cours dans KORE.</span>'}</div>
+    case 'bainfin':{const o=cur(),B=BATH[d.app];await Demo.bainFin(o,d.app);S.journal=await Demo.journal(o.id);toast(`${B.act} terminé dans ${B.nom} : stabilisation validée`);render();break}
+    case 'bnew':{const B=BATH[d.app],objs=S.objs.filter(o=>view.sel.has(o.id)&&B.test(o));if(!objs.length)return;
+      window.open(bainUrl(d.app,S.d,objs),'_blank','noopener');bainPending(objs,d.app);toast(`${B.nom} ouvert : créez le ${B.lot}, puis revenez ici`);break}
+    case 'bpick':{const app=d.app,B=BATH[app],objs=S.objs.filter(o=>view.sel.has(o.id)&&B.test(o));if(!objs.length)return;
+      const lots=await lotsOf(app).catch(()=>[]);
+      sheet(`<div class="sh-h"><small>${objs.length} objet${objs.length>1?'s':''} ${B.mat}</small><b>Choisir le ${B.lot} ${B.nom}</b></div>
+        <div class="kb">${lots.length?lots.slice(0,10).map(l=>`<button data-klink="${l.id}" data-kapp="${app}">${esc(l.ref||l.int)}<small>${esc(l.int)}</small></button>`).join(''):`<span class="empty">Aucun ${B.lot} en cours dans ${B.nom}.</span>`}</div>
         <button class="link" data-a="close" style="align-self:center">Fermer</button>`);break}
     case 'kplater':closeSheet();break;
     case 'creer':creerFiches();break;
@@ -920,41 +925,54 @@ async function creerFiches(){
   catch(e){busy=false;render();fail(e);if(ok)toast(`${ok} fiche${ok>1?'s':''} créée${ok>1?'s':''} avant l’erreur`,0,1)}
 }
 
-/* ---------- passage en bain KORE ---------- */
+/* ---------- passage en bain KORE (fer) ou en lot KERA (céramique) ---------- */
 const isFer=o=>/\bfer\b/i.test(o.m||'');
+const isCeram=o=>/céram|terre cuite/i.test(o.m||'');
+const BATH={
+  kore:{nom:'KORE',prop:'Bain KORE',title:'Intitulé',proto:'Déchloruration (KORE)',test:o=>isFer(o),mat:'en fer',act:'Déchloruration',lot:'bain',
+    nouveau:'Créer le bain dans KORE',fin:'le bain sera « Terminé » dans KORE'},
+  kera:{nom:'KERA',prop:'Lot KERA',title:'Désignation',proto:'Dessalement (KERA)',test:o=>isCeram(o),mat:'en céramique',act:'Dessalement',lot:'lot',
+    nouveau:'Créer le lot dans KERA',fin:'le dessalement sera terminé dans KERA (bouton « Terminer le dessalement »)'}};
+const APPS=['kore','kera'];
+const bathFor=o=>APPS.find(a=>BATH[a].test(o));
+const bainOf=o=>APPS.find(a=>(o[a]||[]).length)||null;
+function bainUrl(app,d,objs){return app==='kore'?koreUrl(d,objs):URLS.kera}
+function bainOpen(o,app){if(app==='kore')return URLS.kore+'?prefill=1&notionId='+(o.kore[0]||'');
+  const l=(S.lots.kera||[]).find(x=>hex(x.id)===hex(o.kera[0]));return URLS.kera+(l&&l.kid?'?lot='+encodeURIComponent(l.kid):'')}
 // Fiche KORE pré-remplie : référence, intitulé, responsable, type d'opération, date, poids total des objets choisis
 function koreUrl(d,objs){const q=new URLSearchParams({prefill:'1',ref:d.num||'',int:(d.commune||'')+(d.site?' - '+d.site:''),resp:d.ro||'',dd:iso()});
   if(d.op)q.set('op',d.op);const m=objs.reduce((a,o)=>a+(Number(o.masse)||0),0);if(m)q.set('poids',String(Math.round(m*10)/10));return URLS.kore+'?'+q}
-// On note les bains KORE existants avant d'ouvrir KORE : au retour, le nouveau bain est repéré et proposé pour les objets choisis
-async function korePending(objs){let known=[];try{S.koreLots=await API().koreLots();known=S.koreLots.map(l=>hex(l.id))}catch(e){}
-  LS.set('argoslab:korepending',{did:S.d.id,num:S.d.num,ids:objs.map(o=>o.id),known,t:Date.now()});
-  if(S.mode==='demo')setTimeout(()=>{DEMO.kore.unshift({id:'demo-k'+Date.now(),int:S.d.commune+' - '+S.d.site,ref:S.d.num+' lot fer '+(DEMO.kore.length+1),statut:'En cours'});dsave();checkKore()},1500)}
-let koreChecking=false;
-async function checkKore(){const p=LS.get('argoslab:korepending',null);
-  if(!p||koreChecking||!S.d||S.d.id!==p.did||document.querySelector('.sheet'))return;
+// On note les bains / lots existants avant d'ouvrir KORE ou KERA : au retour, le nouveau est repéré et proposé pour les objets choisis
+async function bainPending(objs,app){let known=[];try{known=(await lotsOf(app,true)).map(l=>hex(l.id))}catch(e){}
+  LS.set('argoslab:korepending',{app,did:S.d.id,num:S.d.num,ids:objs.map(o=>o.id),known,t:Date.now()});
+  if(S.mode==='demo')setTimeout(()=>{DEMO[app].unshift({id:'demo-'+app+Date.now(),int:S.d.commune+' - '+S.d.site,ref:S.d.num+(app==='kore'?' lot fer ':' céramiques ')+(DEMO[app].length+1),statut:'En cours',kid:'KDEMO'+Date.now()});dsave();checkBain()},1500)}
+let bainChecking=false;
+async function checkBain(){const p=LS.get('argoslab:korepending',null);
+  if(!p||bainChecking||!S.d||S.d.id!==p.did||document.querySelector('.sheet'))return;
   if(Date.now()-p.t>8*3600e3){LS.set('argoslab:korepending',null);return}
-  koreChecking=true;try{S.koreLots=await API().koreLots()}catch(e){koreChecking=false;return}koreChecking=false;
-  const nw=S.koreLots.filter(l=>!p.known.includes(hex(l.id)));if(!nw.length)return;
+  const app=p.app||'kore',B=BATH[app];let lots;
+  bainChecking=true;try{lots=await lotsOf(app,true)}catch(e){bainChecking=false;return}bainChecking=false;
+  const nw=lots.filter(l=>!p.known.includes(hex(l.id)));if(!nw.length)return;
   nw.sort((a,b)=>(String(b.ref+b.int).includes(p.num)?1:0)-(String(a.ref+a.int).includes(p.num)?1:0));
   const objs=S.objs.filter(o=>p.ids.includes(o.id));if(!objs.length)return;
-  sheet(`<div class="sh-h"><small>Nouveau bain dans KORE</small><b>Relier ${objs.length} objet${objs.length>1?'s':''} ?</b></div>
+  sheet(`<div class="sh-h"><small>Nouveau ${B.lot} dans ${B.nom}</small><b>Relier ${objs.length} objet${objs.length>1?'s':''} ?</b></div>
     <p class="hint">${objs.map(o=>esc(label(o))).join(', ')}</p>
-    <div class="kb">${nw.slice(0,4).map((l,i)=>`<button class="${i?'':'on'}" data-klink="${l.id}">${esc(l.ref||l.int)}<small>${esc(l.int)}</small></button>`).join('')}</div>
-    <div class="sh-act"><button class="big secondary" data-a="kplater">Plus tard</button><button class="big primary" data-klink="${nw[0].id}">${ICON.check}Relier</button></div>`);
+    <div class="kb">${nw.slice(0,4).map((l,i)=>`<button class="${i?'':'on'}" data-klink="${l.id}" data-kapp="${app}">${esc(l.ref||l.int)}<small>${esc(l.int)}</small></button>`).join('')}</div>
+    <div class="sh-act"><button class="big secondary" data-a="kplater">Plus tard</button><button class="big primary" data-klink="${nw[0].id}" data-kapp="${app}">${ICON.check}Relier</button></div>`);
 }
-async function linkKore(objs,kid){
-  const prev=objs.map(o=>({o,s:o.steps.st,k:o.kore[0]||null})),ids=[];
-  objs.forEach(o=>{o.kore=[kid];o.koreName=null;applyLocal(o,'st','en cours',true)});render();
-  try{for(let i=0;i<objs.length;i++){if(objs.length>1){busy=`Liaison KORE ${i+1} / ${objs.length}…`;render()}
-      await API().setKore(objs[i],kid);ids.push(await API().add(objs[i],'st','en cours',['Déchloruration (KORE)']));if(S.mode!=='demo')await sleep(340)}
+async function linkBain(objs,kid,app){const B=BATH[app];
+  const prev=objs.map(o=>({o,s:o.steps.st,k:o[app][0]||null})),ids=[];
+  objs.forEach(o=>{o[app]=[kid];o.bainName=null;applyLocal(o,'st','en cours',app)});render();
+  try{for(let i=0;i<objs.length;i++){if(objs.length>1){busy=`Liaison ${B.nom} ${i+1} / ${objs.length}…`;render()}
+      await API().setBain(objs[i],app,kid);ids.push(await API().add(objs[i],'st','en cours',[B.proto]));if(S.mode!=='demo')await sleep(340)}
     busy=false;LS.set('argoslab:korepending',null);view.sel=new Set();
-    undo={ids,k:'st',prev:prev.map(p=>({o:p.o,s:p.s})),multiKore:prev.map(p=>({o:p.o,prev:p.k}))};
-    toast(`${objs.length} objet${objs.length>1?'s':''} en bain KORE`,true);render()}
-  catch(e){busy=false;prev.slice(ids.length).forEach(p=>{p.o.steps.st=p.s;p.o.kore=p.k?[p.k]:[]});render();fail(e)}
+    undo={ids,k:'st',prev:prev.map(p=>({o:p.o,s:p.s})),multiBain:prev.map(p=>({o:p.o,app,prev:p.k}))};
+    toast(`${objs.length} objet${objs.length>1?'s':''} relié${objs.length>1?'s':''} ${app==='kore'?'au bain KORE':'au lot KERA'}`,true);render()}
+  catch(e){busy=false;prev.slice(ids.length).forEach(p=>{p.o.steps.st=p.s;p.o[app]=p.k?[p.k]:[]});render();fail(e)}
 }
-document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(checkKore,600)});
-window.addEventListener('focus',()=>setTimeout(checkKore,600));
-document.addEventListener('click',e=>{const a=e.target.closest('a[data-kp]');if(!a)return;const o=S.objs.find(x=>x.id===a.dataset.kp);if(o){closeSheet();korePending([o])}});
+document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')setTimeout(checkBain,600)});
+window.addEventListener('focus',()=>setTimeout(checkBain,600));
+document.addEventListener('click',e=>{const a=e.target.closest('a[data-kp]');if(!a)return;const o=S.objs.find(x=>x.id===a.dataset.kp);if(o){closeSheet();bainPending([o],a.dataset.kapp||'kore')}});
 
 /* ---------- page d'accueil / connexion ---------- */
 // Affichée à chaque ouverture (tablette partagée) : on choisit qui travaille, la clé n'est demandée qu'une fois par appareil.
