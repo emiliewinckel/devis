@@ -917,7 +917,7 @@ function findDataBlock(pageId){
   });
 }
 function majStatutRapport(pageId){
-  // Statut « Rapport de traitement » du dossier, lu par ARGOS Lab : passe à « rédigé » à l'enregistrement
+  // Statut « Rapport de traitement » du dossier, lu par ARGOS CR : passe à « rédigé » à l'enregistrement
   // (sauf s'il est déjà « en relecture » ou « envoyé », qu'on ne fait pas reculer)
   return nfetch("/pages/"+pageId).then(function(pg){
     var p=pg.properties&&pg.properties["Rapport de traitement"], cur=p&&p.select?p.select.name:"";
