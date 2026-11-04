@@ -81,7 +81,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 .late{color:#A32D2D;font-weight:600}
 .lot-meta{font-size:10px;color:#4A5F72;text-align:right;line-height:1.5}
 .muted{font-size:11px;color:#4A5F72;line-height:1.5}
-/* OBJETS ARGOS LAB DU LOT */
+/* OBJETS ARGOS CR DU LOT */
 .argos-box{margin-top:10px;border-top:0.5px solid #D8E4EE;padding-top:8px}
 .argos-box .t{font-size:10px;font-weight:700;letter-spacing:.5px;color:#2E3192;text-transform:uppercase;margin-bottom:5px}
 .argos-box a{display:flex;justify-content:space-between;gap:8px;font-size:11px;color:#2C2C2A;text-decoration:none;padding:5px 8px;border-radius:6px;background:#EAF6FB;margin-bottom:3px}
@@ -403,9 +403,9 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 // ============================================================
 
 var NOTION_VERSION = '2022-06-28';
-// Adresse de cette page (QR codes) et d'ARGOS Lab (objets reliés aux lots)
+// Adresse de cette page (QR codes) et d'ARGOS CR (objets reliés aux lots)
 var APP_URL = /github\.io$/.test(location.hostname) ? location.href.replace(/[?#].*$/, '') : 'https://emiliewinckel.github.io/devis/kera_CERAM.html';
-var ARGOS_URL = APP_URL.replace(/[^\/]*$/, '') + 'argos_lab.html';
+var ARGOS_URL = APP_URL.replace(/[^\/]*$/, '') + 'argos_cr.html';
 var ARGOS_OBJETS_DB = '38fd72a9-3a1d-8077-9ef1-c2aaf4e8886e';
 var DB_OBJETS_NAME = 'KERA Objets';
 var DB_BAINS_NAME  = 'KERA Bains';
@@ -900,7 +900,7 @@ function evalLot(lot) {
 
 // ============================================================
 // ÉCHÉANCES → NOTION : la prochaine action et sa date sont écrites dans la fiche du lot,
-// pour le bandeau « à faire » d'ARGOS Lab. Écrit seulement ce qui a changé, une page à la fois.
+// pour le bandeau « à faire » d'ARGOS CR. Écrit seulement ce qui a changé, une page à la fois.
 // ============================================================
 var _echQ = [], _echOn = false;
 function syncEcheances() {
@@ -959,7 +959,7 @@ function carteLot(lot, ev) {
     '<button class="x-btn" title="Supprimer" onclick="event.stopPropagation();delLot(\'' + id + '\')">✕</button></div></div>';
 }
 
-// Fin / reprise du dessalement : écrit « Statut » dans Notion (lu par ARGOS Lab pour valider la stabilisation)
+// Fin / reprise du dessalement : écrit « Statut » dans Notion (lu par ARGOS CR pour valider la stabilisation)
 function majBoutonsLot(lot) {
   var b = gid('lot-ctx-btns'); if (!b) return;
   var fini = /termin/i.test(lot.statut || '');
@@ -987,7 +987,7 @@ function rouvrirDessalement() {
   ecrireStatut(lot, 'En cours').then(function() { lot.statut = 'En cours'; hideLoading(); chargerLot(); ref(); })
     .catch(function(e) { lot.statut = ancien; setStatus('Erreur Notion : ' + e.message, 'error'); });
 }
-// Objets ARGOS Lab reliés à ce lot (relation « Lot KERA » des fiches objets)
+// Objets ARGOS CR reliés à ce lot (relation « Lot KERA » des fiches objets)
 function argosObjets(lot) {
   var z = gid('lot-argos'); if (!z) return; z.innerHTML = '';
   if (!lot.notionPageId) return;
@@ -997,7 +997,7 @@ function argosObjets(lot) {
     var cur = gL(gid('s-sel').value); if (!cur || cur.notionPageId !== pid) return;
     var r = j.results || []; if (!r.length) return;
     var t = function(pg, n) { var x = pg.properties[n]; if (!x) return ''; return (x.title || x.rich_text || []).map(function(y) { return y.plain_text || ''; }).join(''); };
-    z.innerHTML = '<div class="argos-box"><div class="t">Objets ARGOS Lab dans ce lot · ' + r.length + '</div>' + r.map(function(pg) {
+    z.innerHTML = '<div class="argos-box"><div class="t">Objets ARGOS CR dans ce lot · ' + r.length + '</div>' + r.map(function(pg) {
       return '<a href="' + ARGOS_URL + '?objet=' + pg.id.replace(/-/g, '') + '" target="_blank" rel="noopener"><b>' + esc(t(pg, 'ID objet') || t(pg, 'Nom')) + '</b><span>' + esc([t(pg, 'N° inventaire'), t(pg, 'Description')].filter(Boolean).join(' · ')) + '</span></a>';
     }).join('') + '</div>';
   }).catch(function() {});
@@ -1775,7 +1775,7 @@ function calcC() {
 }
 
 // ============================================================
-// ÉTIQUETTES : planche A4 prédécoupée 4 × 4 (52,5 × 74,25 mm), commune à KORE, KERA et ARGOS Lab
+// ÉTIQUETTES : planche A4 prédécoupée 4 × 4 (52,5 × 74,25 mm), commune à KORE, KERA et ARGOS CR
 // o = { titre, couleur, filet, cartes:[{tete, qr, nm, rf, dt}] }  →  { html, ouvrir(fenêtre) }
 // La fenêtre ouverte permet de choisir la case de départ (planche déjà entamée).
 // ============================================================
