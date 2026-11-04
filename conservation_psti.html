@@ -498,7 +498,7 @@ var LIB = {sed: 'dégagement du sédiment', surf: 'dégagement de la surface d�
 /* ---------------------------------------------------------------------
    ÉTAT DU FORMULAIRE (gardé dans le navigateur)
    --------------------------------------------------------------------- */
-function vide() { return {op: '', commune: '', ro: '', ref: '', contexte: '', delai: '', stab: 'Tout le mobilier', stabPct: '', etude: 'Aucun', terrain: '', quota: '', quotaU: 'objets', q: {}}; }
+function vide() { return {op: '', commune: '', projet: '', ro: '', ref: '', contexte: '', delai: '', stab: 'Tout le mobilier', stabPct: '', etude: 'Aucun', terrain: '', quota: '', quotaU: 'objets', q: {}}; }
 var F = vide();
 var sv = null;
 try { sv = JSON.parse(localStorage.getItem('psti-cons2') || 'null'); if (sv) F = Object.assign(F, sv); } catch (e) {}
@@ -648,7 +648,7 @@ function renderForm() {
   if (!PARAMS) { document.getElementById('form').innerHTML = '<section class="card"><h2>Paramètres du laboratoire absents</h2><p class="hint">La responsable du pôle doit charger la grille de chiffrage dans l’écran Paramètres.</p></section>' + (ADMIN ? adminHtml() : ''); return; }
   var P = PARAMS, h = '';
   h += '<section class="card"><h2>1. Opération</h2><p class="hint">Ces informations figurent en tête du document.</p><div class="grid">' +
-    fld('op', 'Nom de l’opération') + fld('commune', 'Commune (département)') + fld('ro', 'Responsable d’opération') + fld('ref', 'N° d’arrêté de prescription (facultatif)') + '</div></section>';
+    fld('commune', 'Commune (département)') + fld('op', 'Nom de l’opération') + fld('projet', 'N° de projet') + fld('ro', 'Responsable d’opération') + fld('ref', 'N° d’arrêté de prescription (facultatif)') + '</div></section>';
   h += '<section class="card"><h2>2. Contexte et délais</h2><p class="hint">Si le site mêle plusieurs contextes, choisissez le contexte dominant.</p>' +
     '<label>Contexte de l’opération</label>' + seg('contexte', Object.keys(P.ctx), F.contexte) +
     '<div class="grid" style="margin-top:12px">' + fld('delai', 'Délai de rendu après la fouille (mois)', 'number') + fld('terrain', 'Jours de présence du C-R sur le terrain (facultatif)', 'number') + '</div></section>';
@@ -806,9 +806,9 @@ function odtContent(R) {
 
   b += p('Projet scientifique et technique d’intervention', 'Surtitre');
   b += p('Volet conservation-restauration du mobilier', 'Titre');
-  b += p((F.op || '[opération]') + (F.commune ? ' — ' + F.commune : ''), 'SousTitre');
+  b += p((F.commune ? F.commune + ' — ' : '') + (F.op || '[opération]'), 'SousTitre');
   b += table(['A', 'B'], ['Opération', ''], [
-    ['Responsable d’opération', F.ro || '—'], ['Arrêté de prescription', F.ref || '—'], ['Contexte', F.contexte],
+    ['N° de projet', F.projet || '—'], ['Responsable d’opération', F.ro || '—'], ['Arrêté de prescription', F.ref || '—'], ['Contexte', F.contexte],
     ['Délai de rendu prévu', num(F.delai) ? num(F.delai) + ' mois après la fouille' : '—'],
     ['Établi à partir de', 'la grille de chiffrage du ' + TEXTES.signataire + (P.version ? ' (version du ' + P.version.split('-').reverse().join('/') + ')' : '')], ['Date', aujourdhui()]]);
 
@@ -928,7 +928,7 @@ function telecharger() {
   z.file('mimetype', 'application/vnd.oasis.opendocument.text', {compression: 'STORE'});
   z.file('META-INF/manifest.xml', x.manifest); z.file('content.xml', x.content); z.file('styles.xml', x.styles); z.file('meta.xml', x.meta);
   return z.generateAsync({type: 'blob', mimeType: 'application/vnd.oasis.opendocument.text', compression: 'DEFLATE'}).then(function(blob) {
-    var nom = 'Volet_conservation_' + (F.op || 'operation').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '_').replace(/^_|_$/g, '') + '.odt';
+    var nom = 'Volet_conservation_' + ((F.projet ? F.projet + '_' : '') + (F.op || 'operation')).normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/[^\w-]+/g, '_').replace(/^_|_$/g, '') + '.odt';
     var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nom; document.body.appendChild(a); a.click();
     setTimeout(function() { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
     return nom;
