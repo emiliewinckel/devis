@@ -493,7 +493,8 @@ var ADMIN = /[?&]admin\b/.test(location.search);
 
 function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
 function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) && n > 0 ? n : 0; }
-function fmt(x) { return (Math.round(x * 10) / 10).toLocaleString('fr-FR', {minimumFractionDigits: 1, maximumFractionDigits: 1}); }
+// Une décimale ; deux pour les petites valeurs, pour ne jamais afficher « 0,0 » sur un poste réel
+function fmt(x) { var d = x > 0 && x < 0.095 ? 2 : 1; x = Math.round(x * Math.pow(10, d)) / Math.pow(10, d); if (x === 0 && arguments[0] > 0) return '< 0,01'; return x.toLocaleString('fr-FR', {minimumFractionDigits: d, maximumFractionDigits: d}); }
 function fmtE(x) { return Math.round(x).toLocaleString('fr-FR') + ' €'; }
 function pct(x) { return Math.round(x * 100) + ' %'; }
 function aujourdhui() { var d = new Date(); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
