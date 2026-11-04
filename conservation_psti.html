@@ -10,52 +10,52 @@
 <style>
 /* Charte : celle du module de rapports de traitement (olive Éveha) */
 :root{--olive:#79874C;--olive-d:#5A6636;--olive-dd:#3F4826;--olive-l:#EEF0E3;--olive-ll:#F6F7F0;--ink:#2B2D26;--muted:#6E7063;--faint:#9A9C8E;
-  --line:#E1E2D7;--bg:#F4F3EC;--card:#fff;--warn:#B4651E;--warn-l:#FBF1E6;--err:#A33A2D;--ok:#4E7A2E;--r:10px;
+  --line:#E1E2D7;--bg:#F4F3EC;--card:#fff;--warn:#B4651E;--warn-l:#FBF1E6;--err:#A33A2D;--err-l:#F8E7E4;--r:10px;
   --shadow:0 1px 2px rgba(40,44,30,.06),0 4px 16px rgba(40,44,30,.05)}
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 'Titillium Web',Arial,sans-serif}
 header{background:var(--olive-dd);color:#fff;padding:14px 16px}
-header .in{max-width:1080px;margin:0 auto;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+header .in{max-width:1120px;margin:0 auto;display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
 header b{font-size:20px;letter-spacing:.3px}header span{opacity:.8;font-size:13px}
-main{max-width:1080px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 330px;gap:16px;align-items:start}
-@media(max-width:860px){main{grid-template-columns:1fr}}
+main{max-width:1120px;margin:0 auto;padding:16px;display:grid;grid-template-columns:minmax(0,1fr) 340px;gap:16px;align-items:start}
+@media(max-width:900px){main{grid-template-columns:1fr}}
 .card{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:16px;margin-bottom:16px}
 h2{font-size:16px;margin:0 0 4px;color:var(--olive-dd)}
 .hint{font-size:13px;color:var(--muted);margin:0 0 12px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px 14px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px 14px}
 label{display:block;font-size:12.5px;font-weight:600;color:var(--muted);margin-bottom:3px}
 input,select,textarea{width:100%;font:inherit;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:#fff;color:var(--ink)}
-input:focus,select:focus,textarea:focus{outline:2px solid var(--olive);outline-offset:-1px;border-color:var(--olive)}
+input:focus,textarea:focus{outline:2px solid var(--olive);outline-offset:-1px;border-color:var(--olive)}
 .seg{display:flex;flex-wrap:wrap;gap:6px}
 .seg button{flex:1 1 auto;padding:8px 12px;border:1px solid var(--line);background:#fff;border-radius:8px;font:inherit;font-weight:600;color:var(--muted);cursor:pointer}
 .seg button[aria-pressed="true"]{background:var(--olive);border-color:var(--olive);color:#fff}
-table.mob{width:100%;border-collapse:collapse;font-size:14px}
-table.mob th{text-align:left;font-size:12px;color:var(--muted);font-weight:600;padding:6px 6px;border-bottom:1px solid var(--line)}
-table.mob td{padding:6px;border-bottom:1px solid var(--line);vertical-align:middle}
-table.mob td.m b{display:block}table.mob td.m small{color:var(--faint);font-size:12px;line-height:1.25;display:block}
-table.mob input[type=number]{width:96px}
-table.mob td.c{text-align:center;white-space:nowrap}
-table.mob input[type=checkbox]{width:18px;height:18px;accent-color:var(--olive)}
-@media(max-width:560px){table.mob td.m small{display:none}table.mob input[type=number]{width:74px}}
+.tw{overflow-x:auto;margin:0 -4px}
+table.mob{width:100%;border-collapse:collapse;font-size:14px;min-width:520px}
+table.mob th{text-align:center;font-size:12px;color:var(--muted);font-weight:600;padding:6px 4px;border-bottom:1px solid var(--line);line-height:1.2}
+table.mob th:first-child{text-align:left}
+table.mob th small{display:block;font-weight:400;color:var(--faint)}
+table.mob td{padding:5px 4px;border-bottom:1px solid var(--line);vertical-align:middle}
+table.mob td.m b{display:block;font-size:14px}table.mob td.m small{color:var(--faint);font-size:12px;line-height:1.25;display:block}
+table.mob input{width:100%;min-width:52px;padding:6px 6px;text-align:center}
+table.mob td.one{text-align:left}
+details.cls{margin:10px 0 0;font-size:13px;color:var(--muted)}details.cls summary{cursor:pointer;font-weight:600;color:var(--olive-d)}
+details.cls ul{margin:6px 0 0;padding-left:18px}
 .res{position:sticky;top:12px}
 .big{font-size:40px;font-weight:700;color:var(--olive-dd);line-height:1}
 .big small{font-size:16px;font-weight:600;color:var(--muted)}
 .lines{margin:12px 0 0;padding:0;list-style:none;font-size:14px}
 .lines li{display:flex;justify-content:space-between;gap:10px;padding:5px 0;border-bottom:1px dashed var(--line)}
-.lines li b{white-space:nowrap}
-.lines li.opt{color:var(--muted)}
+.lines li b{white-space:nowrap}.lines li.opt{color:var(--muted)}
 .al{background:var(--warn-l);color:#7a4310;border-radius:8px;padding:8px 10px;font-size:13px;margin-top:10px}
+.al.err{background:var(--err-l);color:var(--err)}
 .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:12px;border:0;border-radius:10px;background:var(--olive-d);color:#fff;font:inherit;font-weight:700;font-size:16px;cursor:pointer;margin-top:14px}
 .btn:disabled{opacity:.45;cursor:not-allowed}
-.btn.sec{background:#fff;color:var(--olive-dd);border:1px solid var(--line);font-size:14px;padding:9px}
+.btn.sec{background:#fff;color:var(--olive-dd);border:1px solid var(--line);font-size:14px;padding:9px;margin-top:8px}
 .paste{font-size:13px;background:var(--olive-ll);border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin-top:10px}
 .foot{font-size:12px;color:var(--faint);text-align:center;margin:8px 0 24px}
-.adm h3{font-size:14px;margin:14px 0 6px;color:var(--olive-d)}
-.adm .row{display:grid;grid-template-columns:minmax(0,1fr) 110px;gap:8px;align-items:center;font-size:13px;padding:3px 0;border-bottom:1px solid var(--olive-ll)}
-.adm .row.k4{grid-template-columns:minmax(0,1fr) repeat(4,64px)}
-.adm .row input{padding:4px 6px}
 .adm textarea{min-height:110px;font-size:13px}
-.flag{color:var(--warn);font-weight:700}
+.adm table{width:100%;border-collapse:collapse;font-size:12.5px;margin-top:8px}.adm td{padding:3px 4px;border-bottom:1px solid var(--olive-ll)}
+.adm .ko{color:var(--err);font-weight:700}
 </style>
 </head>
 <body>
@@ -68,154 +68,531 @@ table.mob input[type=checkbox]{width:18px;height:18px;accent-color:var(--olive)}
 
 <script>
 /* =====================================================================
-   PARAMÈTRES DU LABORATOIRE — réglés par la responsable du pôle C-R
-   (page ?admin). Ne pas modifier à la main : utiliser l'écran Paramètres,
-   qui régénère ce bloc. Les valeurs marquées « à valider » ne viennent pas
-   encore du suivi des temps du laboratoire.
+   PARAMÈTRES DU LABORATOIRE
+   Lus dans le classeur « Grille_traitement_mobilier.xlsx » (onglets Hypothèses
+   et Autres matériaux) depuis l'écran Paramètres (page ?admin). Une case vide
+   du classeur donne null ici : l'outil signale alors « valeur manquante ».
    ===================================================================== */
 /*PARAMS-DEBUT*/
 var PARAMS = {
-  "version": "2026-11-04",
-  "responsable": "Émilie Winckel, responsable du pôle Conservation-Restauration",
-  "jh": 7,
-  "fer": {
-    "mix": {"S": 0.4, "M": 0.35, "L": 0.2, "XL": 0.05},
-    "sediment": {"S": 5, "M": 10, "L": 20, "XL": 30},
-    "surface": {"S": 30, "M": 45, "L": 120, "XL": 240},
-    "consolidation": {"S": 15, "M": 20, "L": 30, "XL": 60},
-    "postbain": {"S": 5, "M": 5, "L": 10, "XL": 15},
-    "fiche": {"S": 15, "M": 15, "L": 30, "XL": 60},
-    "poids": {"S": 15, "M": 80, "L": 250, "XL": 400},
-    "clicheEuros": 40,
-    "objetsParCliche": {"S": 20, "M": 5, "L": 3, "XL": 0.5}
+ "version": "2026-11-04",
+ "jh": 7,
+ "seuilFer": 50,
+ "dimMax": 60,
+ "exemples": {
+  "S": "Parure (fibules, bagues, épingles), petits outils (alênes, aiguilles, pointes de flèche), clés, boucles simples",
+  "M": "Outils, plaques-boucles, couteaux, forces, petits fers de lance",
+  "L": "Fragments de vaisselle, haches, outils agricoles, éléments de char (hors roue), éléments d'architecture (pentures, crampons), scramasaxes courts",
+  "XL": "Scramasaxes longs, fers de lance longs, grandes pentures"
+ },
+ "dims": {
+  "S": "< 10 cm",
+  "M": "10 à < 20 cm",
+  "L": "20 à < 40 cm",
+  "XL": "≥ 40 cm"
+ },
+ "fer": {
+  "sed": {
+   "S": 5,
+   "M": 10,
+   "L": 20,
+   "XL": 30
   },
-  "quotaSurface": 0.10,
-  "partConsolidation": 0.10,
-  "radioMinObjet": 3,
-  "clousMinReste": 1,
-  "coef": {"cu": 0.8, "monnaies": 0.6, "plomb": 0.5, "precieux": 0.8, "verre": 1.0, "ceram": 1.0, "os": 0.8, "parure": 0.8},
-  "stab": {
-    "ferHeuresBoite": 6, "ferObjetsBoite": 30, "ferLitresKg": 10, "ferEurosLitre": 1, "ferDureeMois": 6,
-    "cuMinObjet": 10, "cuDureeMois": 1,
-    "ceramMinObjet": 20, "ceramDureeMois": 3
+  "surf": {
+   "S": 30,
+   "M": 45,
+   "L": 120,
+   "XL": 240
   },
-  "motteMin": 60,
-  "ficheLotMin": 30,
-  "coordBase": 0.5, "coordPalier": 30, "coordAjout": 0.5,
-  "seuilObjets": 50,
-  "contextes": {"Rural / habitat": 0, "Urbain": 0.15, "Funéraire": 0.25, "Subaquatique / milieu humide": 0.20},
-  "aValider": ["quotaSurface", "partConsolidation", "radioMinObjet", "clousMinReste", "coef", "ferObjetsBoite", "cuMinObjet", "ceramMinObjet", "ceramDureeMois", "cuDureeMois", "motteMin"],
-  "textes": {
-    "moyens": "Le laboratoire de conservation-restauration de l'agence Éveha de Caen assure la prise en charge du mobilier de la sortie de fouille à la remise pour étude. Il dispose notamment : d'un caisson de micro-sablage équipé d'un stéréomicroscope ; de loupes binoculaires et de micro-outillage (scalpels, micro-tour, outils en bois et en polyéthylène) ; de bains de stabilisation en boîtes hermétiques adaptées au volume des objets, suivis par titrage des chlorures (déchloruration des métaux ferreux) ou par mesure de conductivité (dessalement des céramiques) ; d'enceintes semi-closes pour les séchages lents ; et du matériel de conditionnement de conservation (boîtes hermétiques, gel de silice, mousses Plastazote®, Tyvek®). La radiographie X est réalisée en interne ou par un prestataire selon le format des objets.",
-    "tracabilite": "Chaque objet est suivi individuellement, de son arrivée au laboratoire à sa remise : inventaire, étiquetage indirect imputrescible avec QR code, journal des interventions (protocoles, produits, dates, opérateurs) et suivi des bains. L'inventaire, les étiquettes et les fiches de traitement relèvent des données scientifiques de l'archéologie au sens de l'arrêté du 7 février 2022 et sont versés avec le mobilier."
+  "consol": {
+   "S": 15,
+   "M": 20,
+   "L": 30,
+   "XL": 60
+  },
+  "postbain": {
+   "S": 5,
+   "M": 5,
+   "L": 10,
+   "XL": 15
+  },
+  "fiche": {
+   "S": 15,
+   "M": 15,
+   "L": 30,
+   "XL": 60
+  },
+  "poids": {
+   "S": 15,
+   "M": 80,
+   "L": 250,
+   "XL": 400
+  },
+  "clicheE": {
+   "S": 40,
+   "M": 40,
+   "L": 40,
+   "XL": 40
+  },
+  "objCliche": {
+   "S": 20,
+   "M": 5,
+   "L": 3,
+   "XL": 0.5
   }
+ },
+ "motte": {
+  "S": 30,
+  "M": 60,
+  "L": 120,
+  "XL": 240
+ },
+ "stab": {
+  "ferLKg": 10,
+  "ferEL": 1,
+  "ferHBoite": 6,
+  "ferMois": 6
+ },
+ "ficheLot": 30,
+ "coord": {
+  "base": 0.5,
+  "palier": 30,
+  "ajout": 0.5
+ },
+ "ctx": {
+  "Rural / habitat": {
+   "majo": 0,
+   "quota": null,
+   "consol": null
+  },
+  "Urbain": {
+   "majo": 0.15,
+   "quota": null,
+   "consol": null
+  },
+  "Funéraire": {
+   "majo": 0.25,
+   "quota": null,
+   "consol": null
+  },
+  "Subaquatique / milieu humide": {
+   "majo": 0.2,
+   "quota": null,
+   "consol": null
+  }
+ },
+ "mats": {
+  "fer": {
+   "sed": {
+    "S": 5,
+    "M": 10,
+    "L": 20,
+    "XL": 30
+   },
+   "surf": {
+    "S": 30,
+    "M": 45,
+    "L": 120,
+    "XL": 240
+   },
+   "consol": {
+    "S": 15,
+    "M": 20,
+    "L": 30,
+    "XL": 60
+   },
+   "postbain": {
+    "S": 5,
+    "M": 5,
+    "L": 10,
+    "XL": 15
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 60
+   }
+  },
+  "cu": {
+   "sed": {
+    "S": 5,
+    "M": 10,
+    "L": 20,
+    "XL": 30
+   },
+   "surf": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "consol": {
+    "S": 15,
+    "M": 30,
+    "L": 45,
+    "XL": 60
+   },
+   "stab": {
+    "S": 15,
+    "M": 20,
+    "L": 25,
+    "XL": 30
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 60
+   }
+  },
+  "monnaies": {
+   "deg": 30,
+   "stab": 15,
+   "fiche": 5,
+   "parCliche": 1
+  },
+  "plomb": {
+   "net": {
+    "S": 5,
+    "M": 10,
+    "L": 20,
+    "XL": 30
+   },
+   "consol": {
+    "S": 15,
+    "M": 30,
+    "L": 45,
+    "XL": 60
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 60
+   }
+  },
+  "precieux": {
+   "net": {
+    "S": 5,
+    "M": 10,
+    "L": 20,
+    "XL": 30
+   },
+   "stab": {
+    "S": 15,
+    "M": 30,
+    "L": 45,
+    "XL": 60
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 60
+   }
+  },
+  "verre": {
+   "sed": {
+    "S": 5,
+    "M": 10,
+    "L": 20,
+    "XL": 30
+   },
+   "appro": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "remontage": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 30
+   }
+  },
+  "ceram": {
+   "sed": {
+    "S": 5,
+    "M": 10,
+    "L": 20,
+    "XL": 30
+   },
+   "appro": {
+    "S": 15,
+    "M": 30,
+    "L": 60,
+    "XL": 90
+   },
+   "consol": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "dessal": {
+    "S": 60,
+    "M": 90,
+    "L": 150,
+    "XL": 210
+   },
+   "remontage": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 30
+   }
+  },
+  "os": {
+   "net": {
+    "S": 15,
+    "M": 30,
+    "L": 60,
+    "XL": 90
+   },
+   "consol": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 30
+   }
+  },
+  "parure": {
+   "net": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "consol": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 30
+   }
+  },
+  "humide": {
+   "pec": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 30
+   }
+  },
+  "lapid": {
+   "net": {
+    "S": 30,
+    "M": 90,
+    "L": 180,
+    "XL": 210
+   },
+   "consol": {
+    "S": 60,
+    "M": 180,
+    "L": 360,
+    "XL": 420
+   },
+   "dessal": {
+    "S": 60,
+    "M": 180,
+    "L": 360,
+    "XL": 420
+   },
+   "fiche": {
+    "S": 15,
+    "M": 15,
+    "L": 30,
+    "XL": 30
+   }
+  }
+ },
+ "radio": {
+  "hLot": 3.5,
+  "objLot": 50
+ },
+ "clousMin": 5,
+ "seuils": {
+  "cu": 100,
+  "monnaies": 100,
+  "plomb": 25,
+  "precieux": 100,
+  "verre": 50,
+  "ceram": 100,
+  "os": 50,
+  "parure": 25,
+  "humide": 25,
+  "lapid": 20
+ }
 };
 /*PARAMS-FIN*/
+/*TEXTES-DEBUT*/
+var TEXTES = {
+  "signataire": "Pôle Conservation-Restauration, Éveha",
+  "moyens": "Le laboratoire de conservation-restauration de l'agence Éveha de Caen assure la prise en charge du mobilier de la sortie de fouille à la remise pour étude. Il dispose notamment : d'un caisson de micro-sablage équipé d'un stéréomicroscope ; de loupes binoculaires et de micro-outillage (scalpels, micro-tour, outils en bois et en polyéthylène) ; de bains de stabilisation en boîtes hermétiques adaptées au volume des objets, suivis par titrage des chlorures (déchloruration des métaux ferreux) ou par mesure de conductivité (dessalement des céramiques) ; d'enceintes semi-closes pour les séchages lents ; et du matériel de conditionnement de conservation (boîtes hermétiques, gel de silice, mousses Plastazote®, Tyvek®). La radiographie X est réalisée en interne ou par un prestataire selon le format des objets.",
+  "tracabilite": "Chaque objet est suivi individuellement, de son arrivée au laboratoire à sa remise : inventaire, étiquetage indirect imputrescible avec QR code, journal des interventions (protocoles, produits, dates, opérateurs) et suivi des bains. L'inventaire, les étiquettes et les fiches de traitement relèvent des données scientifiques de l'archéologie au sens de l'arrêté du 7 février 2022 et sont versés avec le mobilier."
+};
+/*TEXTES-FIN*/
 
+var C4 = ['S', 'M', 'L', 'XL'];
 /* ---------------------------------------------------------------------
-   MATÉRIAUX proposés au chargé de projet
+   MATÉRIAUX : clé, libellé, saisie (classes S-XL ou nombre), et rôle de chaque
+   ligne de temps de la grille :
+     tous = tous les objets ; simple = objets hors quota ; appro = objets du quota
+     (surface d'origine / traitement approfondi, fiche individuelle) ;
+     conso = objets consolidés ; stab = stabilisation (ferme ou option)
    --------------------------------------------------------------------- */
 var MATS = [
-  {k:'fer',      n:'Fer — objets',                       u:'objets', d:'Outils, armes, parure, éléments de construction… (hors clous)'},
-  {k:'clous',    n:'Fer — clous, tiges, tôles',          u:'restes', d:'Traités par lot, radiographie sélective'},
-  {k:'cu',       n:'Alliages cuivreux',                  u:'objets', d:'Bronze, laiton : parure, vaisselle, appliques…'},
-  {k:'monnaies', n:'Monnaies',                           u:'monnaies', d:'Traitées par lot'},
-  {k:'plomb',    n:'Plomb, étain',                       u:'objets', d:''},
-  {k:'precieux', n:'Argent, or',                         u:'objets', d:''},
-  {k:'verre',    n:'Verre',                              u:'objets ou vases', d:'Vaisselle, perles, verre à vitre'},
-  {k:'ceram',    n:'Céramique à consolider ou dessaler', u:'vases ou lots', d:'Pâtes peu cuites, pulvérulentes, salées : pas la céramique courante'},
-  {k:'os',       n:'Os travaillé, tabletterie',          u:'objets', d:'Peignes, épingles, dés…'},
-  {k:'parure',   n:'Autres matériaux (lignite, ambre, jais…)', u:'objets', d:''},
-  {k:'mottes',   n:'Prélèvements en motte',              u:'mottes', d:'Sépultures, dépôts, objets trop fragiles pour être levés seuls'},
-  {k:'humide',   n:'Bois, cuir, textile gorgés d’eau',   u:'', d:'Toujours sur devis', devis:true},
-  {k:'lapid',    n:'Lapidaire, enduits peints, mosaïque',   u:'', d:'Toujours sur devis', devis:true}
+  {k: 'fer', n: 'Fer', d: 'hors clous, tiges et tôles', cls: true, simple: ['sed'], appro: ['surf', 'fiche'], conso: ['consol'], stab: ['postbain'], metal: true},
+  {k: 'clous', n: 'Fer — clous, tiges, tôles', d: 'nombre de restes, traités par lot', cls: false, u: 'restes'},
+  {k: 'cu', n: 'Alliages cuivreux', d: 'bronze, laiton', cls: true, simple: ['sed'], appro: ['surf', 'fiche'], conso: ['consol'], stab: ['stab'], metal: true},
+  {k: 'monnaies', n: 'Monnaies', d: 'traitées une à une', cls: false, u: 'monnaies', tous: ['deg', 'fiche'], stab: ['stab'], metal: true},
+  {k: 'plomb', n: 'Plomb, étain', d: '', cls: true, tous: ['net'], appro: ['fiche'], conso: ['consol'], metal: true},
+  {k: 'precieux', n: 'Argent, or', d: '', cls: true, tous: ['net'], appro: ['fiche'], stab: ['stab'], metal: true},
+  {k: 'verre', n: 'Verre', d: 'classe du vase ou du lot', cls: true, simple: ['sed'], appro: ['appro', 'remontage', 'fiche']},
+  {k: 'ceram', n: 'Céramique fragile', d: 'pâtes peu cuites, pulvérulentes, salées ; classe du vase ou du lot', cls: true, simple: ['sed'], appro: ['appro', 'remontage', 'fiche'], conso: ['consol'], stab: ['dessal']},
+  {k: 'os', n: 'Os travaillé, tabletterie', d: '', cls: true, tous: ['net'], appro: ['fiche'], conso: ['consol']},
+  {k: 'parure', n: 'Lignite, jais, ambre, autres', d: '', cls: true, tous: ['net'], appro: ['fiche'], conso: ['consol']},
+  {k: 'humide', n: 'Bois, cuir, textile gorgés d’eau', d: 'stabilisation pérenne sur devis', cls: true, tous: ['pec'], appro: ['fiche']},
+  {k: 'lapid', n: 'Lapidaire, enduits peints, mosaïque', d: '', cls: true, tous: ['net'], appro: ['fiche'], conso: ['consol'], stab: ['dessal']},
+  {k: 'mottes', n: 'Prélèvements en motte', d: 'classe = plus grande dimension de la motte', cls: true}
 ];
-var METAUX = ['fer','cu','monnaies','plomb','precieux'];
+var LIB = {sed: 'dégagement du sédiment', surf: 'dégagement de la surface d’origine', fiche: 'fiche individuelle', consol: 'consolidation', postbain: 'post-bain (stabilisation)',
+  stab: 'stabilisation', deg: 'dégagement', net: 'nettoyage', appro: 'traitement approfondi', remontage: 'remontage', dessal: 'dessalement', pec: 'prise en charge'};
 
 /* ---------------------------------------------------------------------
-   ÉTAT DU FORMULAIRE (gardé dans le navigateur, pour reprendre plus tard)
+   ÉTAT DU FORMULAIRE (gardé dans le navigateur)
    --------------------------------------------------------------------- */
-var F = {op:'', commune:'', ro:'', cp:'', ref:'', contexte:'Rural / habitat', delai:'', stab:'oui', terrain:'', q:{}, inc:{}};
-try { var sv = JSON.parse(localStorage.getItem('psti-cons') || 'null'); if (sv) F = Object.assign(F, sv); } catch (e) {}
-function save() { try { localStorage.setItem('psti-cons', JSON.stringify(F)); } catch (e) {} }
+function vide() { return {op: '', commune: '', ro: '', ref: '', contexte: '', delai: '', stab: 'oui', terrain: '', q: {}}; }
+var F = vide();
+try { var sv = JSON.parse(localStorage.getItem('psti-cons2') || 'null'); if (sv) F = Object.assign(F, sv); } catch (e) {}
+function save() { try { localStorage.setItem('psti-cons2', JSON.stringify(F)); } catch (e) {} }
 var ADMIN = /[?&]admin\b/.test(location.search);
 
-function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
 function num(v) { var n = parseFloat(String(v == null ? '' : v).replace(',', '.')); return isFinite(n) && n > 0 ? n : 0; }
-function r1(x) { return Math.round(x * 10) / 10; }
-function fmt(x) { return r1(x).toLocaleString('fr-FR', {minimumFractionDigits: 1, maximumFractionDigits: 1}); }
+function fmt(x) { return (Math.round(x * 10) / 10).toLocaleString('fr-FR', {minimumFractionDigits: 1, maximumFractionDigits: 1}); }
 function fmtE(x) { return Math.round(x).toLocaleString('fr-FR') + ' €'; }
+function pct(x) { return Math.round(x * 100) + ' %'; }
 function aujourdhui() { var d = new Date(); return ('0' + d.getDate()).slice(-2) + '/' + ('0' + (d.getMonth() + 1)).slice(-2) + '/' + d.getFullYear(); }
+function qte(k, c) { var v = F.q[k] || {}; return num(c ? v[c] : v.n); }
+function totalMat(m) { return m.cls ? C4.reduce(function(a, c) { return a + qte(m.k, c); }, 0) : qte(m.k); }
 
 /* =====================================================================
-   CALCUL
-   Tout est exprimé en minutes puis converti en jours-hommes (1 JH = PARAMS.jh heures).
+   CALCUL — mêmes règles que le simulateur de la grille, étendues aux autres matériaux.
+   Temps en minutes, convertis en jours-hommes (1 JH = P.jh heures).
    ===================================================================== */
 function calcul() {
-  var P = PARAMS, f = P.fer, C = ['S','M','L','XL'];
-  var moy = function(t) { return C.reduce(function(a, c) { return a + f.mix[c] * t[c]; }, 0); };
-  // Temps moyen d'un objet en fer (mise en état d'étude) : sédiment ou surface d'origine (quota) + consolidation + fiche individuelle
-  var tFer = (1 - P.quotaSurface) * moy(f.sediment) + P.quotaSurface * (moy(f.surface) + moy(f.fiche)) + P.partConsolidation * moy(f.consolidation);
-  var poidsMoy = moy(f.poids);           // g
-  var clicheObjet = C.reduce(function(a, c) { return a + f.mix[c] * (f.clicheEuros / (f.objetsParCliche[c] || 1)); }, 0);
-  var majo = P.contextes[F.contexte] || 0;
-  var q = {}; MATS.forEach(function(m) { q[m.k] = m.devis ? 0 : num(F.q[m.k]); });
-  var H = 60 * P.jh, L = {ferme: [], option: [], devis: []};
-  var add = function(where, label, min, detail) { if (min > 0) L[where].push({l: label, jh: min / H, d: detail || ''}); };
-
-  // --- mise en état d'étude, par matériau ---
-  var objMin = 0, nObj = 0;
-  var etude = {fer: q.fer * tFer, cu: q.cu * tFer * P.coef.cu, monnaies: q.monnaies * tFer * P.coef.monnaies, plomb: q.plomb * tFer * P.coef.plomb,
-    precieux: q.precieux * tFer * P.coef.precieux, verre: q.verre * tFer * P.coef.verre, ceram: q.ceram * tFer * P.coef.ceram,
-    os: q.os * tFer * P.coef.os, parure: q.parure * tFer * P.coef.parure};
-  Object.keys(etude).forEach(function(k) { objMin += etude[k]; nObj += q[k]; });
-  var clous = q.clous * P.clousMinReste, mottes = q.mottes * P.motteMin;
-  var nMet = METAUX.reduce(function(a, k) { return a + q[k]; }, 0);
-  var radio = nMet * P.radioMinObjet;
-  var nLots = MATS.filter(function(m) { return !m.devis && q[m.k] > 0; }).length;
-  var fichesLot = nLots * P.ficheLotMin;
-  var base = objMin + clous + mottes;
-  add('ferme', 'Mise en état d’étude des objets (dégagement, consolidation, fiches)', objMin);
-  add('ferme', 'Clous, tiges et tôles (traitement par lot)', clous);
-  add('ferme', 'Fouille des prélèvements en motte', mottes);
-  add('ferme', 'Radiographie : préparation des lots et lecture', radio);
-  add('ferme', 'Fiches de lot', fichesLot);
-  if (majo > 0) add('ferme', 'Majoration liée au contexte (' + F.contexte.toLowerCase() + ', +' + Math.round(majo * 100) + ' %)', base * majo);
-  var terrain = num(F.terrain) * H;
-  add('ferme', 'Présence du conservateur-restaurateur sur le terrain', terrain);
-  var coord = nObj + q.mottes > 0 ? (P.coordBase + P.coordAjout * Math.max(0, Math.ceil((nObj + q.mottes) / P.coordPalier) - 1)) * H : 0;
-  add('ferme', 'Suivi de projet et coordination', coord);
-
-  // --- stabilisation (ferme si demandée par le CCS, sinon en option) ---
-  var st = P.stab, stabWhere = F.stab === 'oui' ? 'ferme' : 'option';
-  var boites = q.fer > 0 ? Math.max(1, Math.ceil(q.fer / st.ferObjetsBoite)) : 0;
-  var stFer = q.fer > 0 ? q.fer * moy(f.postbain) + boites * st.ferHeuresBoite * 60 : 0;
-  add(stabWhere, 'Stabilisation du fer : déchloruration (' + boites + ' boîte' + (boites > 1 ? 's' : '') + ' de bain, post-bain)', stFer);
-  add(stabWhere, 'Stabilisation des alliages cuivreux et monnaies (L-cystéine)', (q.cu + q.monnaies) * st.cuMinObjet);
-  add(stabWhere, 'Dessalement des céramiques (bains suivis par conductivité)', q.ceram * st.ceramMinObjet);
-  var dureeStab = Math.max(q.fer ? st.ferDureeMois : 0, (q.cu + q.monnaies) ? st.cuDureeMois : 0, q.ceram ? st.ceramDureeMois : 0);
-  if (!num(F.terrain)) L.option.push({l: 'Présence du conservateur-restaurateur sur le terrain (prélèvements, consolidation in situ)', jh: null, d: 'sur demande, au jour'});
-
-  // --- consommables et prestations (€ HT) ---
-  var eClich = nMet * clicheObjet, eSol = (stabWhere === 'ferme' && q.fer) ? q.fer * poidsMoy / 1000 * st.ferLitresKg * st.ferEurosLitre : 0;
-
-  // --- provisions sur devis ---
+  var P = PARAMS, manque = [], H = 60 * (P.jh || 7);
+  var miss = function(lib) { if (manque.indexOf(lib) < 0) manque.push(lib); };
+  var val = function(v, lib) { if (v == null || !isFinite(v)) { miss(lib); return 0; } return v; };
+  var ctx = P.ctx[F.contexte] || {};
+  if (!F.contexte) miss('contexte de l’opération (à choisir)');
+  var q = F.contexte ? val(ctx.quota, 'quota surface d’origine — ' + F.contexte + ' (Hypothèses)') : 0;
+  var k = F.contexte ? val(ctx.consol, 'part d’objets consolidés — ' + F.contexte + ' (Hypothèses)') : 0;
+  var majo = F.contexte ? val(ctx.majo, 'majoration — ' + F.contexte + ' (Hypothèses)') : 0;
+  var stabFerme = F.stab === 'oui';
+  var lignesMat = [], quotaTot = 0, nObj = 0, minEtude = 0, minStab = 0, depasse = [];
+  var row = function(m, r, c) { var t = P.mats[m.k] && P.mats[m.k][r]; var v = t && typeof t === 'object' ? t[c] : t; return val(v, m.n + ' — ' + LIB[r] + (c ? ' ' + c : '') + ' (grille)'); };
   MATS.forEach(function(m) {
-    if (m.devis && F.inc[m.k]) L.devis.push({l: m.n, d: 'présence attendue'});
-    else if (!m.devis && F.inc[m.k] && !q[m.k]) L.devis.push({l: m.n, d: 'présence possible, quantité inconnue'});
+    if (m.k === 'clous' || m.k === 'mottes') return;
+    var n = totalMat(m); if (!n) return;
+    nObj += n;
+    var et = 0, st = 0, nq = 0;
+    (m.cls ? C4 : [null]).forEach(function(c) {
+      var nc = c ? qte(m.k, c) : qte(m.k); if (!nc) return;
+      var nquota = Math.round(nc * q), ncons = Math.round(nc * k); nq += m.appro ? nquota : 0;
+      (m.tous || []).forEach(function(r) { et += nc * row(m, r, c); });
+      (m.simple || []).forEach(function(r) { et += (nc - nquota) * row(m, r, c); });
+      (m.appro || []).forEach(function(r) { et += nquota * row(m, r, c); });
+      (m.conso || []).forEach(function(r) { et += ncons * row(m, r, c); });
+      (m.stab || []).forEach(function(r) { st += nc * row(m, r, c); });
+    });
+    quotaTot += nq;
+    var seuil = m.k === 'fer' ? P.seuilFer : P.seuils[m.k];
+    if (seuil != null && n > seuil) depasse.push(m.n + ' : ' + n + ' (seuil ' + seuil + ')');
+    minEtude += et; minStab += st;
+    lignesMat.push({m: m, n: n, nq: nq, et: et, st: st});
   });
-  L.devis.push({l: 'Objets hors gabarit (plus de 60 cm) et objets composites', d: ''});
-  L.devis.push({l: 'Étude des restes organiques minéralisés par un spécialiste', d: 'prestation complémentaire'});
-  L.devis.push({l: 'Analyses (composition, datation, contenus)', d: 'prestation complémentaire'});
-  L.devis.push({l: 'Restauration pour présentation au public', d: ''});
+  // fer : boîtes de bain (une par classe stabilisée, comme le simulateur) et solution au poids
+  var ferCls = C4.filter(function(c) { return qte('fer', c) > 0; }), boites = ferCls.length;
+  var minBoites = boites ? boites * val(P.stab.ferHBoite, 'fer — temps par boîte de bain (Hypothèses)') * 60 : 0;
+  var poidsFer = ferCls.reduce(function(a, c) { return a + qte('fer', c) * val(P.fer.poids[c], 'fer — poids moyen ' + c + ' (Hypothèses)'); }, 0) / 1000;
+  var eSol = boites ? poidsFer * val(P.stab.ferLKg, 'fer — litres par kg') * val(P.stab.ferEL, 'fer — coût d’un litre') : 0;
+  // clous, mottes
+  var nClous = qte('clous'), minClous = nClous ? nClous * val(P.clousMin, 'clous — temps par reste (Autres matériaux)') : 0;
+  var nMottes = totalMat(MATS.filter(function(m) { return m.k === 'mottes'; })[0]);
+  var minMottes = C4.reduce(function(a, c) { var n = qte('mottes', c); return a + (n ? n * val(P.motte[c], 'motte ' + c + ' (Hypothèses)') : 0); }, 0);
+  // radiographie : lots d'objets métalliques ; clichés selon la classe (fer) ou par monnaie
+  var nMet = MATS.filter(function(m) { return m.metal; }).reduce(function(a, m) { return a + totalMat(m); }, 0);
+  var lotsRadio = nMet ? Math.ceil(nMet / val(P.radio.objLot, 'radiographie — objets par lot')) : 0;
+  var minRadio = lotsRadio * val(P.radio.hLot, 'radiographie — heures par lot') * 60;
+  var eClich = 0;
+  MATS.filter(function(m) { return m.metal && m.cls; }).forEach(function(m) { C4.forEach(function(c) { var n = qte(m.k, c); if (n) eClich += n * val(P.fer.clicheE[c], 'coût d’un cliché ' + c) / val(P.fer.objCliche[c], 'objets par cliché ' + c); }); });
+  if (qte('monnaies')) eClich += qte('monnaies') * val(P.fer.clicheE.S, 'coût d’un cliché S') / val(P.mats.monnaies.parCliche, 'monnaies par cliché');
+  // fiches de lot : une par matériau dont des objets sont traités simplement (hors quota)
+  var nLots = lignesMat.filter(function(x) { return x.n - x.nq > 0; }).length + (nClous ? 1 : 0);
+  var minLots = nLots * val(P.ficheLot, 'fiche de lot (Hypothèses)');
+  var nCoord = nObj + nMottes;
+  var jhCoord = nCoord ? val(P.coord.base, 'coordination — base') + val(P.coord.ajout, 'coordination — ajout par palier') * Math.max(0, Math.ceil(nCoord / val(P.coord.palier, 'coordination — palier')) - 1) : 0;
+  // majoration : sur le temps de traitement des objets (comme le simulateur), pas sur les forfaits ni la coordination
+  var baseMajo = minEtude + minMottes + minClous + (stabFerme ? minStab : 0);
+  var minMajo = baseMajo * majo;
+  var jhTerrain = num(F.terrain);
 
-  var sum = function(a) { return a.reduce(function(s, x) { return s + (x.jh || 0); }, 0); };
+  var L = {ferme: [], option: [], parMat: lignesMat};
+  var add = function(w, l, jh, d) { if (jh > 0) L[w].push({l: l, jh: jh, d: d || ''}); };
+  lignesMat.forEach(function(x) { add('ferme', x.m.n + ' : mise en état d’étude (' + x.n + ')', x.et / H); });
+  add('ferme', 'Clous, tiges et tôles (' + nClous + ' restes)', minClous / H);
+  add('ferme', 'Fouille des prélèvements en motte (' + nMottes + ')', minMottes / H);
+  add('ferme', 'Radiographie : préparation et lecture (' + lotsRadio + ' lot' + (lotsRadio > 1 ? 's' : '') + ')', minRadio / H);
+  add('ferme', 'Fiches de lot (' + nLots + ')', minLots / H);
+  var w = stabFerme ? 'ferme' : 'option';
+  lignesMat.forEach(function(x) { if (x.st) add(w, x.m.n + ' : ' + (x.m.k === 'fer' ? 'déchloruration, post-bain' : x.m.k === 'ceram' || x.m.k === 'lapid' ? 'dessalement' : 'stabilisation'), x.st / H); });
+  add(w, 'Fer : suivi des bains (' + boites + ' boîte' + (boites > 1 ? 's' : '') + ')', minBoites / H);
+  if (minMajo > 0) add('ferme', 'Majoration liée au contexte (' + F.contexte.toLowerCase() + ', +' + pct(majo) + ')', minMajo / H);
+  if (!stabFerme && majo > 0 && minStab > 0) add('option', 'Majoration liée au contexte sur la stabilisation', minStab * majo / H);
+  add('ferme', 'Présence du conservateur-restaurateur sur le terrain', jhTerrain);
+  add('ferme', 'Suivi de projet et coordination', jhCoord);
+  var sum = function(a) { return a.reduce(function(s, x) { return s + x.jh; }, 0); };
+
   var alertes = [];
-  var delai = num(F.delai);
-  if (dureeStab && delai && dureeStab > delai) alertes.push('La stabilisation dure environ ' + dureeStab + ' mois, plus que le délai de rendu (' + delai + ' mois) : elle se fera après le rendu, ou sortira du périmètre de l’offre.');
-  if (nObj > P.seuilObjets) alertes.push('Le corpus attendu (' + nObj + ' objets) dépasse le domaine de validité de la grille (' + P.seuilObjets + ' objets) : au-delà, tranche conditionnelle ou devis.');
-  if (!nObj && !q.clous && !q.mottes) alertes.push('Aucune quantité saisie : renseignez le mobilier attendu (rapport de diagnostic ou estimation du RO).');
-  return {L: L, ferme: sum(L.ferme), option: sum(L.option), eClich: eClich, eSol: eSol, alertes: alertes, nObj: nObj, q: q, dureeStab: dureeStab, majo: majo, boites: boites, stabWhere: stabWhere};
+  var delai = num(F.delai), dureeFer = P.stab.ferMois;
+  if (boites && dureeFer && delai && dureeFer > delai) alertes.push('La déchloruration dure environ ' + dureeFer + ' mois, plus que le délai de rendu (' + delai + ' mois) : elle se fera après le rendu, ou sortira du périmètre de l’offre.');
+  if (depasse.length) alertes.push('Au-delà du domaine de validité de la grille — ' + depasse.join(' ; ') + ' : tranche conditionnelle ou devis pour les quantités supplémentaires.');
+  var vide_ = !nObj && !nClous && !nMottes;
+  return {L: L, ferme: sum(L.ferme), option: sum(L.option), eClich: eClich, eSol: stabFerme ? eSol : 0, eSolOpt: stabFerme ? 0 : eSol,
+    alertes: alertes, manque: manque, vide: vide_, nObj: nObj, nMottes: nMottes, nClous: nClous, quotaTot: quotaTot, q: q, k: k, majo: majo, boites: boites, depasse: depasse, stabFerme: stabFerme};
 }
 
 /* =====================================================================
@@ -224,53 +601,65 @@ function calcul() {
 function seg(name, opts, cur) {
   return '<div class="seg" data-seg="' + name + '">' + opts.map(function(o) { return '<button type="button" data-v="' + esc(o) + '" aria-pressed="' + (o === cur) + '">' + esc(o) + '</button>'; }).join('') + '</div>';
 }
-function renderForm() {
-  var h = '';
-  h += '<section class="card"><h2>1. Opération</h2><p class="hint">Ces informations figurent en tête du document.</p><div class="grid">' +
-    fld('op', 'Nom de l’opération') + fld('commune', 'Commune (département)') + fld('ro', 'Responsable d’opération') +
-    fld('ref', 'N° d’arrêté de prescription (facultatif)') + fld('cp', 'Chargé(e) de projet') + '</div></section>';
-  h += '<section class="card"><h2>2. Contexte et délais</h2><p class="hint">Si le site mêle plusieurs contextes, choisissez le contexte dominant.</p>' +
-    '<label>Contexte de l’opération</label>' + seg('contexte', Object.keys(PARAMS.contextes), F.contexte) +
-    '<div class="grid" style="margin-top:12px">' + fld('delai', 'Délai de rendu après la fouille (mois)', 'number') +
-    fld('terrain', 'Jours de présence du C-R sur le terrain (facultatif)', 'number') + '</div>' +
-    '<label style="margin-top:12px">Le cahier des charges demande-t-il la stabilisation ?</label>' + seg('stab', ['oui', 'non'], F.stab) + '</section>';
-  h += '<section class="card"><h2>3. Mobilier attendu</h2><p class="hint">Reprenez les chiffres du rapport de diagnostic, ou l’estimation du RO. Si un matériau est probable mais que vous n’avez pas de chiffre, cochez « probable » : il passera en provision sur devis.</p>' +
-    '<table class="mob"><thead><tr><th>Matériau</th><th>Nombre</th><th class="c">Probable,<br>sans chiffre</th></tr></thead><tbody>' +
-    MATS.map(function(m) {
-      return '<tr><td class="m"><b>' + esc(m.n) + '</b><small>' + esc(m.d) + '</small></td><td>' +
-        (m.devis ? '<small style="color:var(--faint)">sur devis</small>' : '<input type="number" min="0" step="1" inputmode="numeric" data-q="' + m.k + '" value="' + esc(F.q[m.k] || '') + '" placeholder="' + esc(m.u) + '" aria-label="' + esc(m.n) + ' : nombre de ' + esc(m.u) + '">') +
-        '</td><td class="c"><input type="checkbox" data-inc="' + m.k + '"' + (F.inc[m.k] ? ' checked' : '') + ' aria-label="' + esc(m.n) + ' probable"></td></tr>';
-    }).join('') + '</tbody></table></section>';
-  if (ADMIN) h += adminHtml();
-  document.getElementById('form').innerHTML = h;
-}
 function fld(k, lab, type) {
   return '<div><label for="f-' + k + '">' + esc(lab) + '</label><input id="f-' + k + '" data-f="' + k + '" type="' + (type || 'text') + '"' + (type === 'number' ? ' min="0" inputmode="decimal"' : '') + ' value="' + esc(F[k]) + '"></div>';
+}
+function renderForm() {
+  if (!PARAMS) { document.getElementById('form').innerHTML = '<section class="card"><h2>Paramètres du laboratoire absents</h2><p class="hint">La responsable du pôle doit charger la grille de chiffrage dans l’écran Paramètres.</p></section>' + (ADMIN ? adminHtml() : ''); return; }
+  var P = PARAMS, h = '';
+  h += '<section class="card"><h2>1. Opération</h2><p class="hint">Ces informations figurent en tête du document.</p><div class="grid">' +
+    fld('op', 'Nom de l’opération') + fld('commune', 'Commune (département)') + fld('ro', 'Responsable d’opération') + fld('ref', 'N° d’arrêté de prescription (facultatif)') + '</div></section>';
+  h += '<section class="card"><h2>2. Contexte et délais</h2><p class="hint">Si le site mêle plusieurs contextes, choisissez le contexte dominant.</p>' +
+    '<label>Contexte de l’opération</label>' + seg('contexte', Object.keys(P.ctx), F.contexte) +
+    '<div class="grid" style="margin-top:12px">' + fld('delai', 'Délai de rendu après la fouille (mois)', 'number') + fld('terrain', 'Jours de présence du C-R sur le terrain (facultatif)', 'number') + '</div>' +
+    '<label style="margin-top:12px">Le cahier des charges demande-t-il la stabilisation ?</label>' + seg('stab', ['oui', 'non'], F.stab) + '</section>';
+  h += '<section class="card"><h2>3. Mobilier attendu</h2><p class="hint">Nombre d’objets par classe de taille (plus grande dimension conservée), d’après le rapport de diagnostic ou l’estimation du RO. Laissez vide ce qui n’est pas attendu. En cas de doute entre deux classes, prenez la classe supérieure.</p>' +
+    '<div class="tw"><table class="mob"><thead><tr><th>Matériau</th>' + C4.map(function(c) { return '<th>' + c + '<small>' + esc(P.dims[c] || '') + '</small></th>'; }).join('') + '</tr></thead><tbody>' +
+    MATS.map(function(m) {
+      var cells = m.cls ? C4.map(function(c) { return '<td><input type="number" min="0" step="1" inputmode="numeric" data-q="' + m.k + '" data-c="' + c + '" value="' + esc((F.q[m.k] || {})[c] || '') + '" aria-label="' + esc(m.n) + ' ' + c + '"></td>'; }).join('')
+        : '<td class="one" colspan="4"><input type="number" min="0" step="1" inputmode="numeric" data-q="' + m.k + '" value="' + esc((F.q[m.k] || {}).n || '') + '" placeholder="nombre de ' + esc(m.u) + '" aria-label="' + esc(m.n) + '" style="max-width:220px;text-align:left"></td>';
+      return '<tr><td class="m"><b>' + esc(m.n) + '</b>' + (m.d ? '<small>' + esc(m.d) + '</small>' : '') + '</td>' + cells + '</tr>';
+    }).join('') + '</tbody></table></div>' +
+    '<details class="cls"><summary>Exemples par classe (mobilier métallique)</summary><ul>' + C4.map(function(c) { return '<li><b>' + c + '</b> (' + esc(P.dims[c] || '') + ') : ' + esc(P.exemples[c] || '') + '</li>'; }).join('') +
+    '<li>Au-delà de ' + (P.dimMax || 60) + ' cm, ou objet qui ne tient pas dans les bacs : hors gabarit, sur devis.</li></ul></details></section>';
+  if (ADMIN) h += adminHtml();
+  document.getElementById('form').innerHTML = h;
 }
 
 /* =====================================================================
    RÉSULTAT
    ===================================================================== */
 function renderRes() {
+  var el = document.getElementById('res');
+  if (!PARAMS) { el.innerHTML = '<h2>Enveloppe conservation</h2><p class="hint">Paramètres absents.</p>'; return; }
   var R = calcul(), h = '';
+  if (R.vide) { el.innerHTML = '<h2>Enveloppe conservation</h2><p class="hint">Saisissez le contexte et le mobilier attendu.</p>'; return; }
+  if (R.manque.length) {
+    h = '<h2>Enveloppe conservation</h2><div class="al err"><b>Calcul impossible : valeur manquante.</b><br>' + R.manque.map(esc).join('<br>') +
+      (R.manque.length === 1 && /contexte de l/.test(R.manque[0]) ? '' : '<br><br>Ces valeurs sont à remplir par la responsable du pôle dans la grille de chiffrage.') + '</div>';
+    el.innerHTML = h; return;
+  }
   h += '<h2>Enveloppe conservation</h2><div class="big">' + fmt(R.ferme) + ' <small>jours-hommes</small></div>' +
-    '<p class="hint" style="margin:4px 0 0">tranche ferme' + (R.option ? ', + ' + fmt(R.option) + ' JH en option' : '') + '</p>';
+    '<p class="hint" style="margin:4px 0 0">tranche ferme' + (R.option ? ', + ' + fmt(R.option) + ' JH en option (stabilisation)' : '') + '</p>';
   h += '<ul class="lines">' + R.L.ferme.map(function(x) { return '<li><span>' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') +
-    R.L.option.map(function(x) { return '<li class="opt"><span>Option : ' + esc(x.l) + '</span><b>' + (x.jh == null ? esc(x.d) : fmt(x.jh)) + '</b></li>'; }).join('') + '</ul>';
-  if (R.eClich + R.eSol > 0) h += '<p class="hint" style="margin:8px 0 0">Consommables et prestations : environ ' + fmtE(R.eClich + R.eSol) + ' HT (clichés' + (R.eSol ? ', solution de déchloruration' : '') + ').</p>';
+    R.L.option.map(function(x) { return '<li class="opt"><span>Option : ' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') + '</ul>';
+  if (R.quotaTot) h += '<p class="hint" style="margin:8px 0 0">Dont ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' en traitement approfondi (quota de ' + pct(R.q) + ').</p>';
+  var e = R.eClich + R.eSol;
+  if (e > 0) h += '<p class="hint" style="margin:6px 0 0">Consommables et prestations : environ ' + fmtE(e) + ' HT.</p>';
   R.alertes.forEach(function(a) { h += '<div class="al">' + esc(a) + '</div>'; });
-  h += '<button class="btn" id="dl"' + (R.nObj || R.q.clous || R.q.mottes ? '' : ' disabled') + '>Télécharger le volet (.odt)</button>';
+  h += '<button class="btn" id="dl">Télécharger le volet (.odt)</button>';
   h += '<div class="paste"><b>À reporter dans le PSTI :</b><br><span id="pst">' + esc(ligne(R)) + '</span></div>';
   h += '<button class="btn sec" id="cp">Copier la ligne</button><button class="btn sec" id="raz">Nouvelle opération (vider)</button>';
-  document.getElementById('res').innerHTML = h;
+  el.innerHTML = h;
 }
 function ligne(R) {
+  var e = R.eClich + R.eSol;
   return 'Conservation-restauration du mobilier : ' + fmt(R.ferme) + ' JH (tranche ferme)' + (R.option ? ' + ' + fmt(R.option) + ' JH en option' : '') +
-    (R.eClich + R.eSol > 0 ? ', consommables ' + fmtE(R.eClich + R.eSol) + ' HT' : '') + ' ; provisions sur devis et conditions : voir volet conservation-restauration joint.';
+    (e > 0 ? ', consommables et prestations ' + fmtE(e) + ' HT' : '') + ' ; conditions et réserves : voir volet conservation-restauration joint.';
 }
 
 /* =====================================================================
-   DOCUMENT .ODT (OpenDocument, lisible par OpenOffice / LibreOffice)
+   DOCUMENT .ODT
    ===================================================================== */
 var REFS = {
   cpat: 'Code du patrimoine, articles L. 541-4, R. 546-1, R. 546-2 et R. 546-6.',
@@ -288,20 +677,34 @@ var REFS = {
   bergeron: 'BERGERON, RÉMILLARD 2021 — BERGERON (A.), RÉMILLARD (F.), L’archéologue et la conservation : vade-mecum québécois, 3ᵉ éd., Québec : Centre de conservation du Québec, 2021.',
   pain: 'PAÏN 2015 — PAÏN (S.), Manuel de gestion du mobilier archéologique : méthodologie et pratiques, Paris : Éditions de la Maison des sciences de l’homme, 2015 (Documents d’archéologie française, 109).'
 };
-// Protocoles : textes repris des PSTI du pôle (métal, verre, ossements, matériaux gorgés d'eau) et des modèles du module de rapports
+// Réserves par matériau (tableau récapitulatif du laboratoire, colonne « Réserve type à intégrer au devis »)
+var RESERVES = {
+  cu: 'Alliages cuivreux : le protocole final dépendra de l’ampleur réelle de la corrosion chlorurée révélée après ouverture et nettoyage.',
+  fer: 'Fer : la durée et le coût de la stabilisation varient fortement selon le temps nécessaire à l’abaissement des chlorures et à la stabilisation hygrométrique.',
+  plomb: 'Plomb, étain : la proposition est soumise à l’absence de pulvérulence évolutive et à la compatibilité des matériaux de stockage.',
+  precieux: 'Argent, or : l’intervention restera minimale sauf présence de matériaux associés ou de placages fragiles ; elle sera réajustée si l’ouverture révèle un argent plaqué, une chlorargyrite active ou des associations cuivreuses instables.',
+  verre: 'Verre : toute immersion ou tout dessalement ne sera engagé qu’après validation par des tests de stabilité.',
+  ceram: 'Céramique : le coût final dépendra du nombre réel de fragments, de la salinité et du degré de remontage attendu.',
+  os: 'Os travaillé, tabletterie : une réserve est posée si l’identification du matériau ou la présence de sels impose des tests complémentaires.',
+  parure: 'Lignite, jais, ambre : la proposition est émise sous réserve de compatibilité aux solvants et à l’eau, à valider par des tests préalables.',
+  humide: 'Matériaux gorgés d’eau : la prise en charge chiffrée couvre le lavage, le conditionnement en eau et le suivi ; la stabilisation pérenne (imprégnation, lyophilisation) fait l’objet d’un devis distinct, et ne pourra être arrêtée qu’après validation des paramètres de stabilité et de séchage.',
+  lapid: 'Lapidaire, enduits peints : le chiffrage est tributaire du poids, de la nature de la pierre, de la profondeur des sels et des anciens montages à déposer ; il sera ajusté après une campagne de tests.'
+};
 function protocoles(R) {
-  var q = R.q, inc = F.inc, has = function(k) { return q[k] > 0 || inc[k]; }, out = [];
-  var metal = METAUX.some(has) || has('clous');
+  var has = function(k) { return k === 'clous' || k === 'monnaies' ? qte(k) > 0 : totalMat(MATS.filter(function(m) { return m.k === k; })[0]) > 0; };
+  var out = [], quota = R.quotaTot ? ' Pour cette opération, le quota est estimé à ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' (' + pct(R.q) + ' du corpus).' : '';
+  var metal = ['fer', 'clous', 'cu', 'monnaies', 'plomb', 'precieux'].some(has);
   if (metal) out.push({t: 'Mobilier métallique', r: ['cpat', 'mc', 'winckel23', 'winckel26'], p: [
     'Conformément aux articles R. 546-1 et R. 546-2 du Code du patrimoine, la prise en charge du mobilier métallique archéologique inclut sa conservation préventive ainsi que sa mise en état d’étude, conduite sous le contrôle scientifique et technique de l’État. Cette dernière notion recouvre un large spectre d’interventions : du simple retrait des terres jusqu’aux dégagements mécaniques profonds, certaines de ces opérations s’apparentent en réalité à de la conservation curative, voire à de la restauration (WINCKEL 2023). Notre protocole tient compte de cette réalité en proposant une stratégie graduée.',
     'Pour l’ensemble du corpus, la mise en état d’étude débutera par l’imagerie radiographique, outil non invasif permettant au spécialiste d’accéder à la morphologie sous-jacente, aux éventuels décors et aux restes organiques minéralisés sans toucher à la stratigraphie des produits de corrosion (WINCKEL et al. 2026). Ce premier niveau sera complété par un nettoyage mécanique superficiel limité à l’élimination des sédiments meubles, garantissant la lisibilité et la manipulation sécurisée des objets, avant leur conditionnement en atmosphère contrôlée au titre de la conservation préventive (MINISTÈRE DE LA CULTURE 2022, fiche n° 6).',
-    'Certains questionnements scientifiques (lecture de détails micrométriques, identification de damasquinures, restes organiques minéralisés…) peuvent requérir un dégagement plus poussé des couches de corrosion jusqu’à la limite de la surface d’origine. Un quota d’objets est réservé à ces traitements approfondis. Leur sélection sera décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA. Le laboratoire ne pratique pas de nettoyage partiel « en fenêtres », qui crée un déséquilibre et des altérations après traitement.',
+    'Certains questionnements scientifiques (lecture de détails micrométriques, identification de damasquinures, restes organiques minéralisés…) peuvent requérir un dégagement plus poussé des couches de corrosion jusqu’à la limite de la surface d’origine. Un quota d’objets est réservé à ces traitements approfondis, chacun faisant l’objet d’une fiche individuelle.' + quota + ' Leur sélection sera décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA. Le laboratoire ne pratique pas de nettoyage partiel « en fenêtres », qui crée un déséquilibre et des altérations après traitement.',
     has('clous') ? 'Les clous, tiges et tôles sont traités par lot, avec une radiographie sélective ; la conservation sélective prévue par les fiches nationales permet de ne pas conserver l’intégralité de ce mobilier courant, en accord avec le SRA.' : '',
     (has('fer') ? 'Stabilisation des métaux ferreux : déchloruration par bains alcalins successifs en boîtes hermétiques adaptées au volume des objets, avec suivi de l’extraction des chlorures par titrage, puis rinçages, séchage, passivation à l’acide tannique et protection réversible (Paraloid® B72). Un bain dure plusieurs mois. ' : '') +
-    ((has('cu') || has('monnaies')) ? 'Stabilisation des alliages cuivreux : dégagement mécanique sous loupe binoculaire préservant les patines stables, puis traitement à la L-cystéine, alternative non toxique au benzotriazole (BTA), et protection réversible (Paraloid® B72). Les monnaies sont traitées par lot. ' : '') +
-    (has('plomb') ? 'Le plomb est nettoyé exclusivement avec des outils tendres et des poussières aspirées (toxicité), sans revêtement ; sa stabilité repose sur un conditionnement à l’abri des vapeurs acides. ' : '') +
+    ((has('cu') || has('monnaies')) ? 'Stabilisation des alliages cuivreux : dégagement mécanique sous loupe binoculaire préservant les patines stables, puis traitement à la L-cystéine, alternative non toxique au benzotriazole (BTA), et protection réversible (Paraloid® B72). ' : '') +
+    (has('monnaies') ? 'Les monnaies sont traitées une à une, jusqu’à la lisibilité des légendes et des types, et font chacune l’objet d’une fiche. ' : '') +
+    (has('plomb') ? 'Le plomb est nettoyé exclusivement avec des outils tendres, les poussières de corrosion étant aspirées (toxicité), sans revêtement ; sa stabilité repose sur un conditionnement à l’abri des vapeurs acides. ' : '') +
     (has('precieux') ? 'L’argent et l’or font l’objet d’un nettoyage doux sous fort grossissement, préservant les traces de fabrication. ' : '') +
-    (R.stabWhere === 'option' ? 'Ces stabilisations sont proposées en option.' : '')
+    (R.stabFerme ? '' : 'Ces stabilisations sont proposées en option.')
   ]});
   if (has('verre')) out.push({t: 'Verre', r: ['mc', 'bailly', 'leroy', 'winckel26'], p: [
     'L’ensemble des verreries fera l’objet d’une prise en charge continue par un conservateur-restaurateur, de l’exhumation à la remise pour étude, conformément aux préconisations ministérielles (MINISTÈRE DE LA CULTURE 2022, fiche n° 9).',
@@ -309,20 +712,21 @@ function protocoles(R) {
     'Au laboratoire, les mottes seront micro-fouillées sous loupe binoculaire, avec relevé des contacts entre fragments ; la terre interne des vases sera conservée humide en vue d’analyses de contenus. Un séchage très lent, étalé sur plusieurs semaines en enceintes semi-closes, permettra au réseau silicaté de s’accommoder au retrait hydrique (LE ROY-LAFAURIE 2013 : 43). Le nettoyage sera conduit à sec ou par tamponnement à l’éthanol, les feuillets d’irisation instables consolidés par capillarité au Paraloid® B72 en faible concentration, et les remontages nécessaires à l’étude collés au Paraloid® B72, résine réversible dont l’indice de réfraction est proche de celui du verre (MINISTÈRE DE LA CULTURE 2022, fiche n° 9).'
   ]});
   if (has('ceram')) out.push({t: 'Céramique fragile', r: ['mc'], p: [
-    'La céramique courante est lavée et traitée par l’équipe de fouille ; seule la céramique nécessitant une intervention de conservation curative est prise en charge par le laboratoire : pâtes peu cuites ou pulvérulentes, surfaces décorées fragiles, céramiques chargées en sels solubles (MINISTÈRE DE LA CULTURE 2022, fiche n° 8).',
-    'Les pâtes peu cuites ne seront pas lavées à l’eau : le sédiment sera retiré à sec ou par micro-gommage aux pépins de fruits secs, sous loupe binoculaire. Les zones pulvérulentes seront consolidées par une résine acrylique réversible en faible concentration. Les céramiques salées seront dessalées par bains successifs d’eau déminéralisée, avec suivi de la conductivité jusqu’à stabilisation, puis séchées lentement. Les remontages nécessaires à l’étude seront collés au Paraloid® B72.'
+    'La céramique prise en charge par le laboratoire est celle qui nécessite une intervention de conservation curative : pâtes peu cuites ou pulvérulentes, surfaces décorées fragiles, céramiques chargées en sels solubles (MINISTÈRE DE LA CULTURE 2022, fiche n° 8).',
+    'Les pâtes peu cuites ne seront pas lavées à l’eau : le sédiment sera retiré à sec ou par micro-gommage aux pépins de fruits secs, sous loupe binoculaire. Les zones pulvérulentes seront consolidées par une résine acrylique réversible en faible concentration. Les céramiques salées seront dessalées par bains successifs d’eau déminéralisée, avec suivi de la conductivité jusqu’à stabilisation, puis séchées lentement. Les remontages nécessaires à l’étude seront collés au Paraloid® B72 après essais à blanc.'
   ]});
   if (has('os') || has('parure')) out.push({t: 'Os travaillé, tabletterie et autres matériaux', r: ['mc'], p: [
     (has('os') ? 'L’os travaillé et la tabletterie seront nettoyés mécaniquement et à sec, avec des outils plus tendres que le matériau, afin de limiter tout apport d’humidité ; les zones fragilisées seront consolidées par une résine réversible très diluée, sans revêtement filmogène. ' : '') +
     (has('parure') ? 'Le lignite, le jais, le schiste et l’ambre seront nettoyés exclusivement à sec, l’eau et les solvants risquant de dissoudre ou de faire gonfler la matrice ; les zones clivées seront consolidées localement, et les objets conditionnés en atmosphère stable.' : '')
   ]});
-  if (has('mottes') || F.contexte === 'Funéraire' || num(F.terrain)) out.push({t: 'Prélèvements en motte et vestiges ostéologiques fragiles', r: ['mc', 'chavigner', 'delabaume', 'bayle19', 'bergeron', 'winckel26'], p: [
+  if (has('mottes') || num(F.terrain)) out.push({t: 'Prélèvements en motte' + (num(F.terrain) ? ' et interventions sur le terrain' : ''), r: ['mc', 'winckel26'].concat(num(F.terrain) ? ['chavigner', 'delabaume', 'bayle19', 'bergeron'] : []), p: [
     'Le prélèvement en motte est le premier acte de la mise en état d’étude : il conserve les connexions, les restes organiques et le sédiment de soutien, et permet une fouille fine différée au laboratoire (WINCKEL et al. 2026). Chaque motte sera documentée et enregistrée topographiquement avant extraction, puis fouillée au laboratoire sous loupe binoculaire ; les objets qui en sont extraits sont ensuite traités selon leur matériau.',
-    'La consolidation in situ des ossements ne sera appliquée qu’en ultime recours, pour sécuriser le prélèvement d’ossements extrêmement friables : imprégnation par une résine acrylique stable et réversible, en solution (type Paraloid® B72) pour les ossements secs (CHAVIGNER 1990 : 45) ou en dispersion aqueuse (type Primal® WS24) pour les ossements humides (DE LA BAUME 1990 : 260). L’imprégnation rendant les pièces impropres aux analyses biochimiques (radiocarbone, ADN, isotopes) (MINISTÈRE DE LA CULTURE 2022, fiche n° 10), un échantillonnage d’ossements non traités sera systématiquement isolé au préalable. La levée par soutien mécanique (motte ou coque de maintien) sera toujours privilégiée (BAYLE et al. 2019 : 66 ; BERGERON, RÉMILLARD 2021 : 101).'
+    num(F.terrain) ? 'Sur le terrain, la consolidation in situ des ossements ne sera appliquée qu’en ultime recours, pour sécuriser le prélèvement d’ossements extrêmement friables : imprégnation par une résine acrylique stable et réversible, en solution (type Paraloid® B72) pour les ossements secs (CHAVIGNER 1990 : 45) ou en dispersion aqueuse (type Primal® WS24) pour les ossements humides (DE LA BAUME 1990 : 260). L’imprégnation rendant les pièces impropres aux analyses biochimiques (radiocarbone, ADN, isotopes) (MINISTÈRE DE LA CULTURE 2022, fiche n° 10), un échantillonnage d’ossements non traités sera systématiquement isolé au préalable. La levée par soutien mécanique (motte ou coque de maintien) sera toujours privilégiée (BAYLE et al. 2019 : 66 ; BERGERON, RÉMILLARD 2021 : 101).' : ''
   ]});
-  if (has('humide') || has('lapid') || F.contexte === 'Subaquatique / milieu humide') out.push({t: 'Matériaux gorgés d’eau, lapidaire et milieu humide', r: ['mc', 'bergeron', 'pain'], p: [
-    'La règle est de conserver humide ce qui a été trouvé humide (BERGERON, RÉMILLARD 2021 : 39). Les bois, cuirs et textiles gorgés d’eau seront protégés du soleil et du vent dès leur exhumation, conditionnés en doubles sachets hermétiques avec l’eau du site, sans biocide, et stockés au froid (3 à 4 °C), jamais congelés (MINISTÈRE DE LA CULTURE 2022, fiches n° 1, 2 et 12). Les objets composites (bois et métal) ne seront jamais démontés sur le terrain : l’ensemble sera maintenu humide, le matériau le plus vulnérable dictant les conditions.',
-    'Le mobilier lapidaire sera manutentionné avec des élingues protégées, sans entassement, sur palettes imputrescibles interposées de mousses neutres (MINISTÈRE DE LA CULTURE 2022, fiche n° 4 ; PAÏN 2015). La stabilisation pérenne des matériaux gorgés d’eau (imprégnation, lyophilisation) et le traitement du lapidaire font l’objet d’un devis distinct.'
+  var humide = has('humide') || F.contexte === 'Subaquatique / milieu humide';
+  if (humide || has('lapid')) out.push({t: humide && has('lapid') ? 'Matériaux gorgés d’eau, milieu humide et lapidaire' : humide ? 'Matériaux gorgés d’eau et milieu humide' : 'Lapidaire', r: ['mc'].concat(humide ? ['bergeron'] : []).concat(has('lapid') ? ['pain'] : []), p: [
+    !humide ? '' : 'La règle est de conserver humide ce qui a été trouvé humide (BERGERON, RÉMILLARD 2021 : 39). Les bois, cuirs et textiles gorgés d’eau seront protégés du soleil et du vent dès leur exhumation, conditionnés en doubles sachets hermétiques avec l’eau du site, sans biocide, et stockés au froid (3 à 4 °C), jamais congelés (MINISTÈRE DE LA CULTURE 2022, fiches n° 1, 2 et 12). Les objets composites (bois et métal) ne seront jamais démontés sur le terrain : l’ensemble sera maintenu humide, le matériau le plus vulnérable dictant les conditions.',
+    has('lapid') ? 'Le mobilier lapidaire sera manutentionné avec des élingues protégées, sans entassement, sur palettes imputrescibles interposées de mousses neutres (MINISTÈRE DE LA CULTURE 2022, fiche n° 4 ; PAÏN 2015). Les sels seront extraits par compresses, sous contrôle de la conductivité.' : ''
   ]});
   return out;
 }
@@ -335,15 +739,15 @@ function odtContent(R) {
   var table = function(cols, head, rows, foot) {
     tn++;
     var s = '<table:table table:name="T' + tn + '" table:style-name="Tab">';
-    cols.forEach(function(w, i) { s += '<table:table-column table:style-name="Col' + w + '"/>'; });
-    var row = function(cells, st, pst) { return '<table:table-row table:style-name="Lig">' + cells.map(function(c, i) {
-      return '<table:table-cell table:style-name="' + st + '" office:value-type="string"><text:p text:style-name="' + (i > 0 && pst === 'TD' ? 'TDr' : pst) + '">' + X(c) + '</text:p></table:table-cell>'; }).join('') + '</table:table-row>'; };
+    cols.forEach(function(w) { s += '<table:table-column table:style-name="Col' + w + '"/>'; });
+    var row = function(cells, st, pst) { return '<table:table-row table:style-name="Lig">' + cells.map(function(c) {
+      return '<table:table-cell table:style-name="' + st + '" office:value-type="string"><text:p text:style-name="' + pst + '">' + X(c) + '</text:p></table:table-cell>'; }).join('') + '</table:table-row>'; };
     s += '<table:table-header-rows>' + row(head, 'CellH', 'TH') + '</table:table-header-rows>';
     rows.forEach(function(r) { s += row(r, 'Cell', 'TD'); });
     if (foot) s += row(foot, 'CellF', 'TF');
     return s + '</table:table>';
   };
-  var P = PARAMS, q = R.q, b = '';
+  var P = PARAMS, b = '';
   var ctxPhr = {'Rural / habitat': 'un contexte d’habitat rural', 'Urbain': 'un contexte urbain', 'Funéraire': 'un contexte funéraire', 'Subaquatique / milieu humide': 'un contexte subaquatique ou de milieu humide'}[F.contexte] || F.contexte;
 
   b += p('Projet scientifique et technique d’intervention', 'Surtitre');
@@ -352,7 +756,7 @@ function odtContent(R) {
   b += table(['A', 'B'], ['Opération', ''], [
     ['Responsable d’opération', F.ro || '—'], ['Arrêté de prescription', F.ref || '—'], ['Contexte', F.contexte],
     ['Délai de rendu prévu', num(F.delai) ? num(F.delai) + ' mois après la fouille' : '—'],
-    ['Rédaction', 'Pôle Conservation-Restauration, Éveha — ' + P.responsable], ['Date', aujourdhui() + ' (paramètres du laboratoire du ' + P.version + ')']]);
+    ['Établi à partir de', 'la grille de chiffrage du ' + TEXTES.signataire + (P.version ? ' (version du ' + P.version + ')' : '')], ['Date', aujourdhui()]]);
 
   b += h('1. Cadre de l’intervention', 1);
   b += p('Conformément à l’article R. 546-1 du Code du patrimoine, le responsable scientifique de l’opération assure la sécurité des biens archéologiques mobiliers, leur conservation préventive et, en tant que de besoin, leur mise en état pour étude, sous le contrôle scientifique et technique des services de l’État. Ce contrôle porte sur le respect des normes de sécurité et de conservation, sur la qualification du personnel et sur l’absence d’atteinte à l’intérêt scientifique des biens (art. R. 546-2). Le mobilier est remis par un versement unique de l’ensemble des données scientifiques, conforme au protocole de conservation du service régional de l’archéologie (art. R. 546-6 ; arrêté du 7 février 2022).');
@@ -360,44 +764,55 @@ function odtContent(R) {
   b += p('Les interventions sont réalisées ou encadrées par un conservateur-restaurateur diplômé, en lien avec le responsable d’opération, les spécialistes et le gestionnaire du mobilier.');
 
   b += h('2. Mobilier attendu', 1);
-  b += p('L’opération concerne ' + ctxPhr + '. Le mobilier nécessitant une intervention de conservation-restauration est estimé comme suit, d’après les données disponibles au stade de l’offre (rapport de diagnostic, estimation du responsable d’opération).');
-  var rows = MATS.filter(function(m) { return (q[m.k] > 0) || F.inc[m.k]; }).map(function(m) {
-    return [m.n, m.devis ? 'présence attendue' : q[m.k] > 0 ? q[m.k] + ' ' + m.u : 'probable, non estimé', m.devis ? 'sur devis' : q[m.k] > 0 ? 'grille' : 'provision sur devis']; });
-  b += table(['A', 'C', 'D'], ['Matériau', 'Quantité estimée', 'Prise en charge'], rows.length ? rows : [['—', '—', '—']]);
+  b += p('L’opération concerne ' + ctxPhr + '. Le mobilier nécessitant une intervention de conservation-restauration est estimé comme suit, par classe de taille (plus grande dimension conservée : S < 10 cm, M de 10 à 20 cm, L de 20 à 40 cm, XL de 40 à ' + (P.dimMax || 60) + ' cm), d’après les données disponibles au stade de l’offre.');
+  var rows = [];
+  MATS.forEach(function(m) {
+    var n = m.cls ? totalMat(m) : qte(m.k); if (!n) return;
+    rows.push([m.n].concat(m.cls ? C4.map(function(c) { return String(qte(m.k, c) || '—'); }) : ['', '', '', '']).concat([String(n)]));
+  });
+  b += table(['G', 'H', 'H', 'H', 'H', 'I'], ['Matériau', 'S', 'M', 'L', 'XL', 'Total'], rows);
   b += p('Ces quantités sont indicatives. Le classement définitif des objets (taille, niveau d’intervention) est établi par le conservateur-restaurateur lors du tri et du diagnostic post-fouille, sur radiographies.', 'Note');
 
   b += h('3. Organisation de la prise en charge', 1);
   b += p('La prise en charge est continue, du terrain à la remise du mobilier pour étude : premiers soins et prélèvements sur le terrain, conditionnement adapté à chaque matériau, transfert au laboratoire, tri et diagnostic, mise en état d’étude, stabilisation lorsqu’elle est prévue, conditionnement de conservation et remise avec la documentation.');
-  b += p(P.textes.tracabilite);
+  b += p(TEXTES.tracabilite);
 
   b += h('4. Protocoles par matériau', 1);
   var prot = protocoles(R), refs = {cpat: 1, arr22: 1, mc: 1, nf15898: 1, icom: 1};
   prot.forEach(function(x, i) { b += h('4.' + (i + 1) + '. ' + x.t, 2); x.p.forEach(function(t) { if (t) b += p(t); }); x.r.forEach(function(k) { refs[k] = 1; }); });
 
   b += h('5. Moyens du laboratoire', 1);
-  b += p(P.textes.moyens);
+  b += p(TEXTES.moyens);
 
   b += h('6. Estimation des moyens', 1);
-  b += p('Estimation en jours-hommes (1 JH = ' + P.jh + ' h), établie à partir de la grille de chiffrage du laboratoire.');
-  var fr = R.L.ferme.map(function(x) { return [x.l, fmt(x.jh)]; });
-  b += table(['E', 'F'], ['Tranche ferme', 'JH'], fr.length ? fr : [['—', '—']], ['Total tranche ferme', fmt(R.ferme)]);
-  if (R.L.option.length) b += table(['E', 'F'], ['Options', 'JH'], R.L.option.map(function(x) { return [x.l, x.jh == null ? x.d : fmt(x.jh)]; }), R.option ? ['Total des options chiffrées', fmt(R.option)] : null);
-  if (R.eClich + R.eSol > 0) b += p('Consommables et prestations associés : environ ' + fmtE(R.eClich + R.eSol) + ' HT (clichés radiographiques' + (R.eSol ? ', solution de déchloruration' : '') + ').');
-  b += h('Hors enveloppe : provisions sur devis', 2);
-  b += table(['E', 'F'], ['Poste', 'Remarque'], R.L.devis.map(function(x) { return [x.l, x.d || 'sur devis']; }));
+  b += p('Estimation en jours-hommes (1 JH = ' + P.jh + ' h), établie à partir des temps moyens par objet et par classe de taille de la grille de chiffrage du laboratoire.' +
+    (R.quotaTot ? ' Elle comprend un quota de ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' en traitement approfondi (dégagement de la surface d’origine ou équivalent, avec fiche individuelle), soit ' + pct(R.q) + ' du corpus.' : '') +
+    (R.majo > 0 ? ' Le temps de traitement des objets est majoré de ' + pct(R.majo) + ' au titre du contexte (' + F.contexte.toLowerCase() + ').' : ''));
+  b += table(['E', 'F'], ['Tranche ferme', 'JH'], R.L.ferme.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total tranche ferme', fmt(R.ferme)]);
+  if (R.L.option.length) b += table(['E', 'F'], ['Option : stabilisation', 'JH'], R.L.option.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total de l’option', fmt(R.option)]);
+  var e = R.eClich + R.eSol;
+  if (e > 0 || R.eSolOpt > 0) b += p('Consommables et prestations associés : environ ' + fmtE(e) + ' HT (clichés radiographiques' + (R.eSol ? ', solution de déchloruration' : '') + ')' + (R.eSolOpt > 0 ? ', plus ' + fmtE(R.eSolOpt) + ' HT de solution de déchloruration avec l’option' : '') + '.');
+  b += h('Provision', 2);
+  b += p('Découvertes exceptionnelles : en cas d’objet exceptionnel, hors normes, ou dans un état de conservation nécessitant une prise en charge exceptionnelle, nous proposerons de revoir la sélection ou le nombre d’objets à traiter avec le SRA dès la fin de l’opération, afin de rester dans le budget initial ; à défaut, un devis complémentaire sera établi.');
+  b += h('Hors périmètre de la présente estimation', 2);
+  var hp = ['Objets hors gabarit (plus de ' + (P.dimMax || 60) + ' cm, ou ne tenant pas dans les bacs du laboratoire) et objets composites : sur devis.',
+    'Étude des restes organiques minéralisés : ils sont préservés et signalés ; leur étude relève d’un spécialiste et fait l’objet d’une prestation complémentaire.',
+    'Analyses (composition, imagerie avancée, datation, contenus) : prestations complémentaires.',
+    'Restauration pour présentation au public : sur devis.'];
+  if (totalMat(MATS.filter(function(m) { return m.k === 'humide'; })[0])) hp.splice(1, 0, 'Stabilisation pérenne des matériaux gorgés d’eau (imprégnation, lyophilisation) : sur devis.');
+  hp.forEach(function(t) { b += p('– ' + t, 'Liste'); });
 
-  b += h('7. Conditions et limites de l’estimation', 1);
+  b += h('7. Conditions et réserves', 1);
   var c = [
-    'Le classement des objets (taille, niveau d’intervention) est réalisé par le conservateur-restaurateur lors du tri et du diagnostic post-fouille, sur radiographies. Au stade de l’offre, l’estimation repose sur une enveloppe par type de site.',
-    'La grille s’applique jusqu’à ' + P.seuilObjets + ' objets. Au-delà, les quantités supplémentaires font l’objet d’une tranche conditionnelle ou d’un devis.' + (R.nObj > P.seuilObjets ? ' Le corpus attendu (' + R.nObj + ' objets) dépasse ce seuil.' : ''),
+    'Le classement des objets (taille, niveau d’intervention) est réalisé par le conservateur-restaurateur lors du tri et du diagnostic post-fouille, sur radiographies. L’estimation repose sur les quantités et les classes de taille connues au stade de l’offre ; elle sera ajustée si le corpus réel diffère.',
+    'La grille s’applique dans la limite de son domaine de validité, fixé par matériau (fer : ' + P.seuilFer + ' objets). Au-delà, les quantités supplémentaires font l’objet d’une tranche conditionnelle ou d’un devis.' + (R.depasse.length ? ' Pour cette opération : ' + R.depasse.join(' ; ') + '.' : ''),
     'Le petit mobilier courant (clous, tiges, tôles) est traité par lot, avec une radiographie sélective ; la conservation sélective (fiches nationales) permet de ne pas tout conserver, en accord avec le SRA.',
-    'La stabilisation est ' + (R.stabWhere === 'ferme' ? 'comprise dans la tranche ferme' : 'proposée en option') + '. Elle est datée : un bain de déchloruration dure plusieurs mois. ' + (R.dureeStab && num(F.delai) && R.dureeStab > num(F.delai) ? 'Sa durée (environ ' + R.dureeStab + ' mois) dépassant le délai de rendu, elle sera achevée après le rendu ou sortira du périmètre de l’offre.' : 'Si le délai de rendu est plus court que le traitement, elle se poursuit après le rendu ou sort du périmètre de l’offre.'),
-    'Les objets composites, les objets hors gabarit (plus de 60 cm ou ne tenant pas dans les bacs du laboratoire), les matériaux organiques gorgés d’eau et le lapidaire sont hors grille : ils font l’objet d’une ligne distincte, sur devis.',
-    'Les restes organiques minéralisés observés sur les objets sont préservés et signalés, sans étude. Leur étude relève d’un spécialiste et fait l’objet d’une prestation complémentaire. La majoration du contexte funéraire couvre le temps de dégagement supplémentaire qu’ils imposent.',
-    'Le contexte de l’opération est déterminé par le conservateur-restaurateur ; pour un site mixte, le contexte dominant s’applique. La majoration correspondante (' + Math.round(R.majo * 100) + ' % ici) est fixée par le laboratoire et révisée chaque année avec la grille.',
-    'Chaque lot comprend un temps de suivi de projet et de coordination (échanges avec le responsable d’opération et les spécialistes, planification, traçabilité).',
-    'En cas de problématique particulière (objet exceptionnel, hors normes ou dans un état de conservation nécessitant une prise en charge exceptionnelle), nous proposerons de revoir la sélection ou le nombre d’objets à traiter avec le SRA dès la fin de l’opération, afin de rester dans le budget initial.'
+    'La stabilisation est ' + (R.stabFerme ? 'comprise dans la tranche ferme' : 'proposée en option') + '. Elle est datée : un bain de déchloruration dure plusieurs mois. ' + (R.boites && num(F.delai) && P.stab.ferMois > num(F.delai) ? 'Sa durée (environ ' + P.stab.ferMois + ' mois) dépassant le délai de rendu, elle sera achevée après le rendu ou sortira du périmètre de l’offre.' : 'Si le délai de rendu est plus court que le traitement, elle se poursuit après le rendu ou sort du périmètre de l’offre.'),
+    'Les restes organiques minéralisés observés sur les objets sont préservés et signalés, sans étude.' + (F.contexte === 'Funéraire' ? ' La majoration du contexte funéraire couvre le temps de dégagement supplémentaire qu’ils imposent.' : ''),
+    'Le contexte de l’opération est déterminé par le conservateur-restaurateur ; pour un site mixte, le contexte dominant s’applique. La majoration correspondante est fixée par le laboratoire et révisée chaque année avec la grille.',
+    'Le suivi de projet et la coordination (échanges avec le responsable d’opération et les spécialistes, planification, traçabilité) sont compris dans l’estimation.'
   ];
+  MATS.forEach(function(m) { if (RESERVES[m.k] && totalMat(m)) c.push(RESERVES[m.k]); });
   c.forEach(function(t, i) { b += p((i + 1) + '. ' + t, 'Liste'); });
 
   b += h('8. Références', 1);
@@ -405,16 +820,16 @@ function odtContent(R) {
   ['cpat', 'arr22', 'nf15898', 'icom'].forEach(function(k) { b += p(REFS[k], 'Biblio'); });
   b += p('Fiches méthodologiques du ministère de la Culture', 'Intertitre');
   b += p(REFS.mc, 'Biblio');
-  b += p('Bibliographie', 'Intertitre');
-  Object.keys(REFS).filter(function(k) { return refs[k] && ['cpat', 'arr22', 'nf15898', 'icom', 'mc'].indexOf(k) < 0; }).sort().forEach(function(k) { b += p(REFS[k], 'Biblio'); });
+  var bib = Object.keys(REFS).filter(function(k) { return refs[k] && ['cpat', 'arr22', 'nf15898', 'icom', 'mc'].indexOf(k) < 0; }).sort();
+  if (bib.length) { b += p('Bibliographie', 'Intertitre'); bib.forEach(function(k) { b += p(REFS[k], 'Biblio'); }); }
   return b;
 }
 
-function odtXml(body) {
+function odtXml(xmlBody) {
+  var X = function(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
   var ns = 'xmlns:office="urn:oasis:names:tc:opendocument:xmlns:office:1.0" xmlns:style="urn:oasis:names:tc:opendocument:xmlns:style:1.0" xmlns:text="urn:oasis:names:tc:opendocument:xmlns:text:1.0" xmlns:table="urn:oasis:names:tc:opendocument:xmlns:table:1.0" xmlns:fo="urn:oasis:names:tc:opendocument:xmlns:xsl-fo-compatible:1.0" xmlns:svg="urn:oasis:names:tc:opendocument:xmlns:svg-compatible:1.0" xmlns:meta="urn:oasis:names:tc:opendocument:xmlns:meta:1.0" xmlns:dc="http://purl.org/dc/elements/1.1/"';
   var OL = '#3F4826', OLl = '#EEF0E3', LINE = '0.5pt solid #B9BCA8';
-  var para = function(name, o) { return '<style:style style:name="' + name + '" style:family="paragraph" style:parent-style-name="Standard"' + (o.cls ? ' style:class="' + o.cls + '"' : '') + (o.ol ? ' style:default-outline-level="' + o.ol + '"' : '') + '>' +
-    '<style:paragraph-properties' + (o.pp || '') + '/><style:text-properties' + (o.tp || '') + '/></style:style>'; };
+  var para = function(name, o) { return '<style:style style:name="' + name + '" style:family="paragraph" style:parent-style-name="Standard"' + (o.ol ? ' style:default-outline-level="' + o.ol + '"' : '') + '><style:paragraph-properties' + (o.pp || '') + '/><style:text-properties' + (o.tp || '') + '/></style:style>'; };
   var styles = '<?xml version="1.0" encoding="UTF-8"?><office:document-styles ' + ns + ' office:version="1.2">' +
     '<office:font-face-decls><style:font-face style:name="Arial" svg:font-family="Arial" style:font-family-generic="swiss"/></office:font-face-decls>' +
     '<office:styles><style:default-style style:family="paragraph"><style:text-properties style:font-name="Arial" fo:font-size="10pt" fo:language="fr" fo:country="FR"/></style:default-style>' +
@@ -425,38 +840,33 @@ function odtXml(body) {
     para('Biblio', {pp: ' fo:margin-bottom="0.12cm" fo:margin-left="0.6cm" fo:text-indent="-0.6cm"', tp: ' fo:font-size="8.5pt"'}) +
     para('Intertitre', {pp: ' fo:margin-top="0.25cm" fo:margin-bottom="0.12cm"', tp: ' fo:font-weight="bold" fo:font-size="9.5pt" fo:color="' + OL + '"'}) +
     para('Surtitre', {pp: ' fo:margin-bottom="0.1cm"', tp: ' fo:font-size="9pt" fo:color="#6E7063" fo:text-transform="uppercase" fo:letter-spacing="0.03cm"'}) +
-    para('Titre', {cls: 'chapter', pp: ' fo:margin-bottom="0.1cm"', tp: ' fo:font-size="20pt" fo:font-weight="bold" fo:color="' + OL + '"'}) +
+    para('Titre', {pp: ' fo:margin-bottom="0.1cm"', tp: ' fo:font-size="20pt" fo:font-weight="bold" fo:color="' + OL + '"'}) +
     para('SousTitre', {pp: ' fo:margin-bottom="0.4cm"', tp: ' fo:font-size="13pt" fo:color="#5A6636"'}) +
-    para('Titre1', {cls: 'text', ol: 1, pp: ' fo:margin-top="0.5cm" fo:margin-bottom="0.2cm" fo:keep-with-next="always" fo:border-bottom="0.75pt solid #79874C" fo:padding-bottom="0.05cm"', tp: ' fo:font-size="13pt" fo:font-weight="bold" fo:color="' + OL + '"'}) +
-    para('Titre2', {cls: 'text', ol: 2, pp: ' fo:margin-top="0.3cm" fo:margin-bottom="0.15cm" fo:keep-with-next="always"', tp: ' fo:font-size="11pt" fo:font-weight="bold" fo:color="#5A6636"'}) +
-    para('TH', {tp: ' fo:font-size="9pt" fo:font-weight="bold" fo:color="#FFFFFF"'}) +
-    para('TD', {tp: ' fo:font-size="9pt"'}) + para('TDr', {tp: ' fo:font-size="9pt"'}) +
-    para('TF', {tp: ' fo:font-size="9pt" fo:font-weight="bold"'}) +
+    para('Titre1', {ol: 1, pp: ' fo:margin-top="0.5cm" fo:margin-bottom="0.2cm" fo:keep-with-next="always" fo:border-bottom="0.75pt solid #79874C" fo:padding-bottom="0.05cm"', tp: ' fo:font-size="13pt" fo:font-weight="bold" fo:color="' + OL + '"'}) +
+    para('Titre2', {ol: 2, pp: ' fo:margin-top="0.3cm" fo:margin-bottom="0.15cm" fo:keep-with-next="always"', tp: ' fo:font-size="11pt" fo:font-weight="bold" fo:color="#5A6636"'}) +
+    para('TH', {tp: ' fo:font-size="9pt" fo:font-weight="bold" fo:color="#FFFFFF"'}) + para('TD', {tp: ' fo:font-size="9pt"'}) + para('TF', {tp: ' fo:font-size="9pt" fo:font-weight="bold"'}) +
     para('Pied', {pp: ' fo:text-align="center"', tp: ' fo:font-size="8pt" fo:color="#6E7063"'}) +
     '</office:styles><office:automatic-styles><style:page-layout style:name="pm1"><style:page-layout-properties fo:page-width="21cm" fo:page-height="29.7cm" style:print-orientation="portrait" fo:margin-top="1.8cm" fo:margin-bottom="1.5cm" fo:margin-left="2cm" fo:margin-right="2cm"/>' +
     '<style:footer-style><style:header-footer-properties fo:min-height="0.6cm" fo:margin-top="0.3cm"/></style:footer-style></style:page-layout></office:automatic-styles>' +
-    '<office:master-styles><style:master-page style:name="Standard" style:page-layout-name="pm1"><style:footer><text:p text:style-name="Pied">Volet conservation-restauration — ' + body.esc(F.op || '') + ' — Éveha · page <text:page-number text:select-page="current">1</text:page-number></text:p></style:footer></style:master-page></office:master-styles></office:document-styles>';
+    '<office:master-styles><style:master-page style:name="Standard" style:page-layout-name="pm1"><style:footer><text:p text:style-name="Pied">Volet conservation-restauration — ' + X(F.op || '') + ' — Éveha · page <text:page-number text:select-page="current">1</text:page-number></text:p></style:footer></style:master-page></office:master-styles></office:document-styles>';
   var cell = function(n, bg) { return '<style:style style:name="' + n + '" style:family="table-cell"><style:table-cell-properties fo:padding="0.12cm" fo:border="' + LINE + '"' + (bg ? ' fo:background-color="' + bg + '"' : '') + '/></style:style>'; };
   var col = function(n, w) { return '<style:style style:name="Col' + n + '" style:family="table-column"><style:table-column-properties style:column-width="' + w + '"/></style:style>'; };
   var content = '<?xml version="1.0" encoding="UTF-8"?><office:document-content ' + ns + ' office:version="1.2"><office:automatic-styles>' +
     '<style:style style:name="Tab" style:family="table"><style:table-properties style:width="17cm" table:align="left" fo:margin-top="0.15cm" fo:margin-bottom="0.3cm"/></style:style>' +
     '<style:style style:name="Lig" style:family="table-row"><style:table-row-properties fo:keep-together="always"/></style:style>' +
-    col('A', '5.5cm') + col('B', '11.5cm') + col('C', '5.5cm') + col('D', '6cm') + col('E', '13.5cm') + col('F', '3.5cm') +
+    col('A', '5.5cm') + col('B', '11.5cm') + col('E', '13.5cm') + col('F', '3.5cm') + col('G', '7cm') + col('H', '2cm') + col('I', '2cm') +
     cell('CellH', OL) + cell('Cell', '') + cell('CellF', OLl) +
-    '</office:automatic-styles><office:body><office:text>' + body.xml + '</office:text></office:body></office:document-content>';
-  var meta = '<?xml version="1.0" encoding="UTF-8"?><office:document-meta ' + ns + ' office:version="1.2"><office:meta><dc:title>Volet conservation-restauration — ' + body.esc(F.op || '') + '</dc:title><meta:generator>Éveha — outil volet conservation PSTI</meta:generator></office:meta></office:document-meta>';
+    '</office:automatic-styles><office:body><office:text>' + xmlBody + '</office:text></office:body></office:document-content>';
+  var meta = '<?xml version="1.0" encoding="UTF-8"?><office:document-meta ' + ns + ' office:version="1.2"><office:meta><dc:title>Volet conservation-restauration — ' + X(F.op || '') + '</dc:title><meta:generator>Éveha — outil volet conservation PSTI</meta:generator></office:meta></office:document-meta>';
   var manifest = '<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">' +
     '<manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text" manifest:version="1.2"/>' +
     '<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/><manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>' +
     '<manifest:file-entry manifest:full-path="meta.xml" manifest:media-type="text/xml"/></manifest:manifest>';
   return {styles: styles, content: content, meta: meta, manifest: manifest};
 }
-
 function telecharger() {
-  var R = calcul();
-  var X = function(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); };
-  var x = odtXml({xml: odtContent(R), esc: X});
-  var z = new JSZip();
+  var R = calcul(); if (R.manque.length) return Promise.reject(new Error('valeur manquante'));
+  var x = odtXml(odtContent(R)), z = new JSZip();
   z.file('mimetype', 'application/vnd.oasis.opendocument.text', {compression: 'STORE'});
   z.file('META-INF/manifest.xml', x.manifest); z.file('content.xml', x.content); z.file('styles.xml', x.styles); z.file('meta.xml', x.meta);
   return z.generateAsync({type: 'blob', mimeType: 'application/vnd.oasis.opendocument.text', compression: 'DEFLATE'}).then(function(blob) {
@@ -468,42 +878,89 @@ function telecharger() {
 }
 
 /* =====================================================================
-   PARAMÈTRES (page ?admin) : réglage des valeurs, puis téléchargement
-   de la page mise à jour à déposer sur GitHub à la place de l'ancienne
+   PARAMÈTRES (?admin) : lecture du classeur de la grille, par libellé
    ===================================================================== */
+function lireGrille(wb) {
+  var lignes = function(nom) { var ws = wb.Sheets[nom]; if (!ws) throw new Error('onglet « ' + nom + ' » introuvable'); return XLSX.utils.sheet_to_json(ws, {header: 1, raw: true, defval: null}); };
+  var H = lignes('Hypothèses'), A = lignes('Autres matériaux');
+  var n = function(v) { return typeof v === 'number' && isFinite(v) ? v : null; };
+  var norm = function(s) { return String(s || '').toLowerCase().replace(/[’']/g, '\'').trim(); };
+  var trouve = function(rows, re, from, to) { for (var i = from || 0; i < (to || rows.length); i++) if (rows[i] && re.test(norm(rows[i][0]))) return i; return -1; };
+  var row4 = function(r) { return {S: n(r[1]), M: n(r[2]), L: n(r[3]), XL: n(r[4])}; };
+  var VIDE4 = {S: null, M: null, L: null, XL: null};
+  var h4 = function(re, from) { var i = trouve(H, re, from); return i < 0 ? Object.assign({}, VIDE4) : row4(H[i]); };
+  var h1 = function(re, from) { var i = trouve(H, re, from); return i < 0 ? null : n(H[i][1]); };
+  var iNet = trouve(H, /^nettoyage pour étude/);
+  var P = {version: new Date().toISOString().slice(0, 10), jh: h1(/^durée d'une journée/), seuilFer: h1(/^seuil du domaine de validité/), dimMax: h1(/^plus grande dimension traitable/)};
+  var ie = trouve(H, /^exemples/), ex = ie < 0 ? [] : H[ie];
+  P.exemples = {S: ex[1] || '', M: ex[2] || '', L: ex[3] || '', XL: ex[4] || ''};
+  P.dims = {S: '< 10 cm', M: '10 à < 20 cm', L: '20 à < 40 cm', XL: '≥ 40 cm'};
+  P.fer = {sed: h4(/^dégagement sédiment/, iNet), surf: h4(/^dégagement surface d'origine/, iNet), consol: h4(/^consolidation des objets/), postbain: h4(/^temps post-bain/),
+    fiche: h4(/^fiche individuelle/), poids: h4(/^poids moyen d'un objet/), clicheE: h4(/^coût d'un cliché/), objCliche: h4(/^nombre moyen d'objets par cliché/)};
+  P.motte = h4(/^fouille d'une motte/);
+  P.stab = {ferLKg: h1(/litres de solution par kg/), ferEL: h1(/^coût d'un litre/), ferHBoite: h1(/^temps opérateur par boîte/), ferMois: h1(/^durée moyenne du traitement/)};
+  P.ficheLot = h1(/^fiche de lot/);
+  P.coord = {base: h1(/^base par lot/), palier: h1(/^taille d'un palier/), ajout: h1(/^temps ajouté par palier/)};
+  P.ctx = {};
+  var ic = trouve(H, /^majoration selon le contexte/);
+  for (var i = ic + 1; ic >= 0 && i < H.length && H[i] && H[i][0] && typeof H[i][1] === 'number'; i++) P.ctx[String(H[i][0]).trim()] = {majo: n(H[i][1]), quota: n(H[i][2]), consol: n(H[i][3])};
+  // Autres matériaux : un bloc par en-tête « … — temps moyen », lignes repérées par leur libellé
+  var bloc = function(re) { var i = trouve(A, re); if (i < 0) return null; var j = i + 1; while (j < A.length && A[j] && A[j][0] && !/temps moyen|paramètres communs|seuil du domaine/.test(norm(A[j][0]))) j++; return [i + 1, j]; };
+  var b4 = function(bl, re) { if (!bl) return Object.assign({}, VIDE4); var i = trouve(A, re, bl[0], bl[1]); return i < 0 ? Object.assign({}, VIDE4) : row4(A[i]); };
+  var b1 = function(bl, re) { if (!bl) return null; var i = trouve(A, re, bl[0], bl[1]); return i < 0 ? null : n(A[i][1]); };
+  var B;
+  P.mats = {fer: {sed: P.fer.sed, surf: P.fer.surf, consol: P.fer.consol, postbain: P.fer.postbain, fiche: P.fer.fiche}};
+  B = bloc(/^alliages cuivreux/); P.mats.cu = {sed: b4(B, /^dégagement sédiment/), surf: b4(B, /^dégagement surface/), consol: b4(B, /^consolidation/), stab: b4(B, /^stabilisation/), fiche: b4(B, /^fiche individuelle/)};
+  B = bloc(/^monnaies/); P.mats.monnaies = {deg: b1(B, /^dégagement/), stab: b1(B, /^stabilisation/), fiche: b1(B, /^fiche individuelle/), parCliche: b1(B, /^nombre de monnaies par cliché/)};
+  B = bloc(/^plomb/); P.mats.plomb = {net: b4(B, /^nettoyage/), consol: b4(B, /^consolidation/), fiche: b4(B, /^fiche individuelle/)};
+  B = bloc(/^argent/); P.mats.precieux = {net: b4(B, /^nettoyage/), stab: b4(B, /^stabilisation/), fiche: b4(B, /^fiche individuelle/)};
+  B = bloc(/^verre/); P.mats.verre = {sed: b4(B, /^nettoyage des sédiments/), appro: b4(B, /^nettoyage à sec/), remontage: b4(B, /^remontage/), fiche: b4(B, /^fiche individuelle/)};
+  B = bloc(/^céramique/); P.mats.ceram = {sed: b4(B, /^nettoyage des sédiments/), appro: b4(B, /^dégagement à sec/), consol: b4(B, /^consolidation/), dessal: b4(B, /^dessalement/), remontage: b4(B, /^remontage/), fiche: b4(B, /^fiche individuelle/)};
+  B = bloc(/^os travaillé/); P.mats.os = {net: b4(B, /^nettoyage/), consol: b4(B, /^consolidation/), fiche: b4(B, /^fiche individuelle/)};
+  B = bloc(/^lignite/); P.mats.parure = {net: b4(B, /^nettoyage/), consol: b4(B, /^consolidation/), fiche: b4(B, /^fiche individuelle/)};
+  B = bloc(/^bois, cuir/); P.mats.humide = {pec: b4(B, /^prise en charge/), fiche: b4(B, /^fiche individuelle/)};
+  B = bloc(/^lapidaire/); P.mats.lapid = {net: b4(B, /^nettoyage/), consol: b4(B, /^consolidation/), dessal: b4(B, /^dessalement/), fiche: b4(B, /^fiche individuelle/)};
+  var ip = trouve(A, /^paramètres communs/), iS = trouve(A, /^seuil du domaine de validité/), PC = [ip + 1, iS < 0 ? A.length : iS];
+  P.radio = {hLot: b1(PC, /^radiographie/), objLot: b1(PC, /^nombre moyen d'objets par lot/)};
+  var fl = b1(PC, /^fiche de lot/); if (fl != null) P.ficheLot = fl;
+  P.clousMin = b1(PC, /^clous/);
+  P.seuils = {};
+  var noms = {cu: /^alliages cuivreux/, monnaies: /^monnaies/, plomb: /^plomb/, precieux: /^argent/, verre: /^verre/, ceram: /^céramique/, os: /^os travaillé/, parure: /^lignite/, humide: /^bois, cuir/, lapid: /^lapidaire/};
+  Object.keys(noms).forEach(function(k) { P.seuils[k] = iS < 0 ? null : b1([iS + 1, A.length], noms[k]); });
+  return P;
+}
+function manquesParams(P) {
+  var out = [], walk = function(o, path) { Object.keys(o).forEach(function(k) { var v = o[k], p = path ? path + ' › ' + k : k; if (v === null) out.push(p); else if (v && typeof v === 'object') walk(v, p); }); };
+  walk({fer: P.fer, motte: P.motte, stab: P.stab, coordination: P.coord, contextes: P.ctx, 'autres matériaux': P.mats, radiographie: P.radio, seuils: P.seuils, clous: {min: P.clousMin}}, '');
+  return out;
+}
 function adminHtml() {
-  var P = PARAMS, f = P.fer, C = ['S','M','L','XL'], av = function(k) { return P.aValider.indexOf(k) >= 0 ? ' <span class="flag" title="Valeur de départ, à valider">●</span>' : ''; };
-  var one = function(path, lab, k) { return '<div class="row"><span>' + lab + av(k || path) + '</span><input data-p="' + path + '" value="' + esc(get(path)) + '"></div>'; };
-  var four = function(path, lab) { return '<div class="row k4"><span>' + lab + '</span>' + C.map(function(c) { return '<input data-p="' + path + '.' + c + '" value="' + esc(get(path + '.' + c)) + '" aria-label="' + lab + ' ' + c + '">'; }).join('') + '</div>'; };
-  var h = '<section class="card adm"><h2>Paramètres du laboratoire (responsable C-R)</h2><p class="hint">Les valeurs marquées <span class="flag">●</span> sont des valeurs de départ, à valider. Après modification, téléchargez la page mise à jour et remplacez <b>conservation_psti.html</b> sur GitHub.</p>';
-  h += '<h3>Fer — temps par objet (min) et classes de taille</h3><div class="row k4"><b>Classe</b>' + C.map(function(c) { return '<b style="text-align:center">' + c + '</b>'; }).join('') + '</div>' +
-    four('fer.mix', 'Répartition du corpus (part de chaque classe)') + four('fer.sediment', 'Dégagement sédiment') + four('fer.surface', 'Dégagement surface d’origine') +
-    four('fer.consolidation', 'Consolidation') + four('fer.postbain', 'Post-bain (stabilisation)') + four('fer.fiche', 'Fiche individuelle') + four('fer.poids', 'Poids moyen (g)') + four('fer.objetsParCliche', 'Objets par cliché');
-  h += '<h3>Hypothèses de corpus</h3>' + one('quotaSurface', 'Part des objets avec dégagement de la surface d’origine (0,10 = 10 %)') + one('partConsolidation', 'Part des objets consolidés') +
-    one('radioMinObjet', 'Radiographie : préparation et lecture (min par objet métallique)') + one('clousMinReste', 'Clous, tiges, tôles (min par reste)') + one('motteMin', 'Fouille d’une motte (min, valeur moyenne)') +
-    one('ficheLotMin', 'Fiche de lot (min par matériau)') + one('fer.clicheEuros', 'Coût d’un cliché (€)') + one('seuilObjets', 'Domaine de validité (objets)') + one('jh', 'Durée d’un jour-homme (h)');
-  h += '<h3>Autres matériaux : coefficient par rapport au fer</h3>' + Object.keys(P.coef).map(function(k) { var m = MATS.filter(function(x) { return x.k === k; })[0]; return one('coef.' + k, m ? m.n : k, 'coef'); }).join('');
-  h += '<h3>Stabilisation</h3>' + one('stab.ferHeuresBoite', 'Fer : suivi par boîte de bain (h)') + one('stab.ferObjetsBoite', 'Fer : objets par boîte', 'ferObjetsBoite') +
-    one('stab.ferLitresKg', 'Fer : litres de solution par kg') + one('stab.ferEurosLitre', 'Fer : coût d’un litre (€)') + one('stab.ferDureeMois', 'Fer : durée du traitement (mois)') +
-    one('stab.cuMinObjet', 'Alliages cuivreux : min par objet', 'cuMinObjet') + one('stab.cuDureeMois', 'Alliages cuivreux : durée (mois)', 'cuDureeMois') +
-    one('stab.ceramMinObjet', 'Céramique : dessalement, min par objet', 'ceramMinObjet') + one('stab.ceramDureeMois', 'Céramique : durée (mois)', 'ceramDureeMois');
-  h += '<h3>Coordination</h3>' + one('coordBase', 'Base (JH)') + one('coordPalier', 'Taille d’un palier (objets)') + one('coordAjout', 'Ajout par palier (JH)');
-  h += '<h3>Majoration selon le contexte</h3>' + Object.keys(P.contextes).map(function(k) { return '<div class="row"><span>' + esc(k) + '</span><input data-pc="' + esc(k) + '" value="' + P.contextes[k] + '"></div>'; }).join('');
-  h += '<h3>Textes du document</h3><label>Signataire</label><input data-pt="responsable" value="' + esc(P.responsable) + '">' +
-    '<label style="margin-top:8px">Moyens du laboratoire</label><textarea data-pt="textes.moyens">' + esc(P.textes.moyens) + '</textarea>' +
-    '<label style="margin-top:8px">Traçabilité</label><textarea data-pt="textes.tracabilite">' + esc(P.textes.tracabilite) + '</textarea>';
-  h += '<button class="btn" id="admdl">Télécharger la page avec ces paramètres</button><p class="hint" id="admmsg" style="margin-top:8px"></p></section>';
+  var h = '<section class="card adm"><h2>Paramètres du laboratoire (responsable C-R)</h2>' +
+    '<p class="hint">1. Chargez la grille de chiffrage à jour (<b>Grille_traitement_mobilier.xlsx</b>) : les valeurs sont lues dans les onglets Hypothèses et Autres matériaux, d’après les libellés des lignes. 2. Vérifiez les valeurs manquantes. 3. Téléchargez la page mise à jour et remplacez <b>conservation_psti.html</b> sur GitHub.</p>' +
+    '<input type="file" id="xl" accept=".xlsx,.xls,.ods"><div id="xlmsg" class="hint" style="margin-top:8px"></div>';
+  if (PARAMS) { var m = manquesParams(PARAMS); h += '<p class="hint">Grille lue le ' + esc(PARAMS.version) + '. ' + (m.length ? '<span class="ko">' + m.length + ' valeur(s) manquante(s)</span> :</p><table>' + m.map(function(x) { return '<tr><td>' + esc(x) + '</td></tr>'; }).join('') + '</table>' : 'Aucune valeur manquante.</p>'); }
+  h += '<label style="margin-top:12px">« Établi à partir de la grille de chiffrage du… »</label><input data-t="signataire" value="' + esc(TEXTES.signataire) + '">' +
+    '<label style="margin-top:8px">Moyens du laboratoire</label><textarea data-t="moyens">' + esc(TEXTES.moyens) + '</textarea>' +
+    '<label style="margin-top:8px">Traçabilité</label><textarea data-t="tracabilite">' + esc(TEXTES.tracabilite) + '</textarea>' +
+    '<button class="btn" id="admdl">Télécharger la page avec ces paramètres</button><p class="hint" id="admmsg" style="margin-top:8px"></p></section>';
   return h;
 }
-function get(path) { return path.split('.').reduce(function(o, k) { return o == null ? o : o[k]; }, PARAMS); }
-function set(path, v) { var ks = path.split('.'), o = PARAMS; ks.slice(0, -1).forEach(function(k) { o = o[k]; }); o[ks[ks.length - 1]] = v; }
+function chargerXLSX() { return window.XLSX ? Promise.resolve() : new Promise(function(ok, ko) { var s = document.createElement('script'); s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js'; s.onload = ok; s.onerror = function() { ko(new Error('bibliothèque de lecture Excel inaccessible')); }; document.head.appendChild(s); }); }
+function importer(file) {
+  var msg = document.getElementById('xlmsg'); msg.textContent = 'Lecture…';
+  chargerXLSX().then(function() { return file.arrayBuffer(); }).then(function(buf) {
+    PARAMS = lireGrille(XLSX.read(buf, {type: 'array'}));
+    renderForm(); renderRes();
+    var m = manquesParams(PARAMS);
+    document.getElementById('xlmsg').innerHTML = 'Grille lue. ' + (m.length ? '<span class="ko">' + m.length + ' valeur(s) manquante(s)</span> (liste ci-dessous).' : 'Toutes les valeurs sont présentes.');
+  }).catch(function(e) { msg.innerHTML = '<span class="ko">Lecture impossible : ' + esc(e.message) + '</span>'; });
+}
 function telechargerPage() {
   var msg = document.getElementById('admmsg');
-  PARAMS.version = new Date().toISOString().slice(0, 10);
   fetch(location.href.replace(/[?#].*$/, ''), {cache: 'no-store'}).then(function(r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.text(); }).then(function(src) {
-    var i = src.indexOf('/*PARAMS-DEBUT*/'), j = src.indexOf('/*PARAMS-FIN*/');
-    if (i < 0 || j < 0) throw new Error('bloc de paramètres introuvable');
-    var out = src.slice(0, i) + '/*PARAMS-DEBUT*/\nvar PARAMS = ' + JSON.stringify(PARAMS, null, 2) + ';\n' + src.slice(j);
+    var rep = function(s, a, b, v) { var i = s.indexOf(a), j = s.indexOf(b); if (i < 0 || j < 0) throw new Error('bloc ' + a + ' introuvable'); return s.slice(0, i) + a + '\n' + v + '\n' + s.slice(j); };
+    var out = rep(src, '/*PARAMS-DEBUT*/', '/*PARAMS-FIN*/', 'var PARAMS = ' + JSON.stringify(PARAMS, null, 1) + ';');
+    out = rep(out, '/*TEXTES-DEBUT*/', '/*TEXTES-FIN*/', 'var TEXTES = ' + JSON.stringify(TEXTES, null, 2) + ';');
     var a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([out], {type: 'text/html'})); a.download = 'conservation_psti.html'; document.body.appendChild(a); a.click(); a.remove();
     msg.textContent = 'Page téléchargée : remplacez conservation_psti.html sur GitHub (même nom).';
   }).catch(function(e) { msg.textContent = 'Téléchargement impossible (' + e.message + ') : ouvrez la page depuis GitHub Pages.'; });
@@ -514,25 +971,23 @@ function telechargerPage() {
    ===================================================================== */
 document.addEventListener('input', function(e) {
   var t = e.target, d = t.dataset;
-  if (d.f) { F[d.f] = t.value; }
-  else if (d.q) { F.q[d.q] = t.value; }
-  else if (d.p) { var v = parseFloat(String(t.value).replace(',', '.')); if (isFinite(v)) set(d.p, v); }
-  else if (d.pc) { var w = parseFloat(String(t.value).replace(',', '.')); if (isFinite(w)) PARAMS.contextes[d.pc] = w; }
-  else if (d.pt) { set(d.pt, t.value); }
+  if (d.f) F[d.f] = t.value;
+  else if (d.q) { F.q[d.q] = F.q[d.q] || {}; F.q[d.q][d.c || 'n'] = t.value; }
+  else if (d.t) TEXTES[d.t] = t.value;
   else return;
   save(); renderRes();
 });
-document.addEventListener('change', function(e) { var d = e.target.dataset; if (d.inc) { F.inc[d.inc] = e.target.checked; save(); renderRes(); } });
+document.addEventListener('change', function(e) { if (e.target.id === 'xl' && e.target.files[0]) importer(e.target.files[0]); });
 document.addEventListener('click', function(e) {
   var b = e.target.closest('button'); if (!b) return;
   var sg = b.closest('[data-seg]');
   if (sg) { F[sg.dataset.seg] = b.dataset.v; sg.querySelectorAll('button').forEach(function(x) { x.setAttribute('aria-pressed', x === b); }); save(); renderRes(); return; }
   if (b.id === 'dl') { b.disabled = true; telecharger().then(function() { b.disabled = false; }).catch(function(err) { b.disabled = false; alert('Erreur : ' + err.message); }); }
   if (b.id === 'cp') { var t = document.getElementById('pst').textContent; (navigator.clipboard ? navigator.clipboard.writeText(t) : Promise.reject()).then(function() { b.textContent = 'Copié'; setTimeout(function() { b.textContent = 'Copier la ligne'; }, 1500); }).catch(function() {}); }
-  if (b.id === 'raz' && confirm('Vider le formulaire pour une nouvelle opération ?')) { F = {op:'', commune:'', ro:'', cp:'', ref:'', contexte:'Rural / habitat', delai:'', stab:'oui', terrain:'', q:{}, inc:{}}; save(); renderForm(); renderRes(); }
+  if (b.id === 'raz' && confirm('Vider le formulaire pour une nouvelle opération ?')) { F = vide(); save(); renderForm(); renderRes(); }
   if (b.id === 'admdl') telechargerPage();
 });
-document.getElementById('foot').textContent = 'Paramètres du laboratoire du ' + PARAMS.version + (ADMIN ? ' · mode Paramètres' : '');
+document.getElementById('foot').textContent = (PARAMS ? 'Grille du laboratoire lue le ' + PARAMS.version : 'Grille non chargée') + (ADMIN ? ' · mode Paramètres' : '');
 renderForm(); renderRes();
 </script>
 </body>
