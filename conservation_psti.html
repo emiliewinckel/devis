@@ -611,7 +611,7 @@ function calcul() {
   var postes = {
     rx: {l: 'Radiographie (RX)', jh: jhRadio + eJH(eClich), w: 'ferme'},
     sed: {l: 'Retrait du sédiment (ensemble du mobilier)', jh: (minSed + minClous) / H * (1 + majo), w: 'ferme'},
-    net: {l: 'Nettoyage pour étude (' + nNet + ' objet' + (nNet > 1 ? 's' : '') + ')', jh: minNet / H * (1 + majo), w: 'ferme'},
+    net: {l: 'Nettoyage pour étude', jh: minNet / H * (1 + majo), w: 'ferme'},
     cur: {l: 'Conservation curative' + (curLib.length ? ' (' + curLib.join(', ') + ')' : ''), jh: minStab / H * (1 + majo) + jhBains + eJH(eSol), w: stabFerme ? 'ferme' : 'option'},
     motte: {l: 'Fouille des prélèvements en motte', jh: minMottes / H * (1 + majo), w: 'ferme'}
   };
@@ -632,7 +632,7 @@ function calcul() {
   if (depasse.length) alertes.push('Au-delà du domaine de validité de la grille — ' + depasse.join(' ; ') + ' : tranche conditionnelle ou devis pour les quantités supplémentaires.');
   var vide_ = !nObj && !nClous && !nMottes;
   return {L: L, ferme: sum(L.ferme), option: sum(L.option), eClich: eClich, eSol: stabFerme ? eSol : 0, eSolOpt: stabFerme ? 0 : eSol,
-    alertes: alertes, manque: manque, vide: vide_, nObj: nObj, nMottes: nMottes, nClous: nClous, quotaTot: quotaTot, fStab: fStab, q: q, k: k, majo: majo, boites: boites, depasse: depasse, stabFerme: stabFerme};
+    alertes: alertes, manque: manque, vide: vide_, nObj: nObj, nMottes: nMottes, nClous: nClous, quotaTot: quotaTot, fStab: fStab, q: q, k: k, majo: majo, boites: boites, depasse: depasse, stabFerme: stabFerme, nMet: nMet, hasCur: postes.cur.jh > 0, nMon: qtot('monnaies')};
 }
 
 /* =====================================================================
@@ -662,7 +662,7 @@ function renderForm() {
     '<details class="cls"><summary>Exemples par classe (mobilier métallique)</summary><ul>' + C4.map(function(c) { return '<li><b>' + c + '</b> (' + esc(P.dims[c] || '') + ') : ' + esc(P.exemples[c] || '') + '</li>'; }).join('') +
     '<li>Au-delà de ' + (P.dimMax || 60) + ' cm, ou objet qui ne tient pas dans les bacs : hors gabarit, sur devis.</li></ul></details>' +
     '</section>';
-  h += '<section class="card"><h2>4. Ce que demande le cahier des charges</h2><p class="hint">Deux questions, pour l’ensemble du mobilier saisi ci-dessus. Tous les objets sont radiographiés et débarrassés du sédiment ; ces questions portent sur ce qui vient en plus.</p>' +
+  h += '<section class="card"><h2>4. Ce que demande le cahier des charges</h2><p class="hint">Deux questions, pour l’ensemble du mobilier saisi ci-dessus. Tous les objets sont débarrassés du sédiment et le mobilier métallique est radiographié ; ces questions portent sur ce qui vient en plus.</p>' +
     '<label>Stabilisation (déchloruration, dessalement…)</label>' + seg('stab', STAB_OPT, F.stab) +
     (F.stab === 'Une partie' ? '<div class="grid" style="margin-top:8px"><div><label for="f-stabPct">Part du mobilier à stabiliser (%)</label><input id="f-stabPct" data-f="stabPct" type="number" min="0" max="100" inputmode="decimal" value="' + esc(F.stabPct) + '"></div></div>' : '') +
     (F.stab === 'Non demandée' ? '<p class="hint" style="margin:6px 0 0">La stabilisation sera proposée en option.</p>' : '') +
@@ -749,7 +749,7 @@ function protocoles(R) {
   if (metal) out.push({t: 'Mobilier métallique', r: ['cpat', 'mc', 'winckel23', 'winckel26'], p: [
     'Conformément aux articles R. 546-1 et R. 546-2 du Code du patrimoine, la prise en charge du mobilier métallique archéologique inclut sa conservation préventive ainsi que sa mise en état d’étude, conduite sous le contrôle scientifique et technique de l’État. Cette dernière notion recouvre un large spectre d’interventions : du simple retrait des terres jusqu’aux dégagements mécaniques profonds, certaines de ces opérations s’apparentent en réalité à de la conservation curative, voire à de la restauration (WINCKEL 2023). Notre protocole tient compte de cette réalité en proposant une stratégie graduée.',
     'Pour l’ensemble du corpus, la mise en état d’étude débutera par l’imagerie radiographique, outil non invasif permettant au spécialiste d’accéder à la morphologie sous-jacente, aux éventuels décors et aux restes organiques minéralisés sans toucher à la stratigraphie des produits de corrosion (WINCKEL et al. 2026). Ce premier niveau sera complété par un nettoyage mécanique superficiel limité à l’élimination des sédiments meubles, garantissant la lisibilité et la manipulation sécurisée des objets, avant leur conditionnement en atmosphère contrôlée au titre de la conservation préventive (MINISTÈRE DE LA CULTURE 2022, fiche n° 6).',
-    'Certains questionnements scientifiques (lecture de détails micrométriques, identification de damasquinures, restes organiques minéralisés…) peuvent requérir un dégagement plus poussé des couches de corrosion jusqu’à la limite de la surface d’origine. ' + (R.quotaTot ? 'Le nettoyage pour étude de ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ', demandé par le cahier des charges, comprend ce dégagement, chaque objet faisant l’objet d’une fiche individuelle. Leur sélection sera décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA.' : 'Le cahier des charges ne demandant pas de nettoyage pour étude, ce dégagement n’est pas compris dans la présente offre ; s’il s’avérait nécessaire, il ferait l’objet d’un devis complémentaire, la sélection des objets étant alors décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA.') + ' Le laboratoire ne pratique pas de nettoyage partiel « en fenêtres », qui crée un déséquilibre et des altérations après traitement.',
+    'Certains questionnements scientifiques (lecture de détails micrométriques, identification de damasquinures, restes organiques minéralisés…) peuvent requérir un dégagement plus poussé des couches de corrosion jusqu’à la limite de la surface d’origine. ' + (R.quotaTot ? 'Le nettoyage pour étude demandé par le cahier des charges comprend ce dégagement, pour les objets dont l’étude le justifie, chacun faisant l’objet d’une fiche individuelle. Leur sélection sera décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA.' : 'Le cahier des charges ne demandant pas de nettoyage pour étude, ce dégagement n’est pas compris dans la présente offre ; s’il s’avérait nécessaire, il ferait l’objet d’un devis complémentaire, la sélection des objets étant alors décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA.') + ' Le laboratoire ne pratique pas de nettoyage partiel « en fenêtres », qui crée un déséquilibre et des altérations après traitement.',
     has('clous') ? 'Les clous, tiges et tôles sont traités par lot, avec une radiographie sélective ; la conservation sélective prévue par les fiches nationales permet de ne pas conserver l’intégralité de ce mobilier courant, en accord avec le SRA.' : '',
     (has('fer') ? 'Stabilisation des métaux ferreux : déchloruration par bains alcalins successifs en boîtes hermétiques adaptées au volume des objets, avec suivi de l’extraction des chlorures par titrage, puis rinçages, séchage, passivation à l’acide tannique et protection réversible (Paraloid® B72). Un bain dure plusieurs mois. ' : '') +
     ((has('cu') || has('monnaies')) ? 'Stabilisation des alliages cuivreux : dégagement mécanique sous loupe binoculaire préservant les patines stables, puis traitement à la L-cystéine, alternative non toxique au benzotriazole (BTA), et protection réversible (Paraloid® B72). ' : '') +
@@ -810,7 +810,7 @@ function odtContent(R) {
   b += table(['A', 'B'], ['Opération', ''], [
     ['Responsable d’opération', F.ro || '—'], ['Arrêté de prescription', F.ref || '—'], ['Contexte', F.contexte],
     ['Délai de rendu prévu', num(F.delai) ? num(F.delai) + ' mois après la fouille' : '—'],
-    ['Établi à partir de', 'la grille de chiffrage du ' + TEXTES.signataire + (P.version ? ' (version du ' + P.version + ')' : '')], ['Date', aujourdhui()]]);
+    ['Établi à partir de', 'la grille de chiffrage du ' + TEXTES.signataire + (P.version ? ' (version du ' + P.version.split('-').reverse().join('/') + ')' : '')], ['Date', aujourdhui()]]);
 
   b += h('1. Cadre de l’intervention', 1);
   b += p('Conformément à l’article R. 546-1 du Code du patrimoine, le responsable scientifique de l’opération assure la sécurité des biens archéologiques mobiliers, leur conservation préventive et, en tant que de besoin, leur mise en état pour étude, sous le contrôle scientifique et technique des services de l’État. Ce contrôle porte sur le respect des normes de sécurité et de conservation, sur la qualification du personnel et sur l’absence d’atteinte à l’intérêt scientifique des biens (art. R. 546-2). Le mobilier est remis par un versement unique de l’ensemble des données scientifiques, conforme au protocole de conservation du service régional de l’archéologie (art. R. 546-6 ; arrêté du 7 février 2022).');
@@ -825,7 +825,7 @@ function odtContent(R) {
     rows.push([m.n].concat(m.cls ? C4.map(function(c) { return String(qte(m.k, c) || '—'); }) : ['', '', '', '']).concat([String(n)]));
   });
   b += table(['G', 'H', 'H', 'H', 'H', 'I'], ['Matériau', 'S', 'M', 'L', 'XL', 'Total'], rows);
-  b += p('Ces quantités sont indicatives. Le classement définitif des objets (taille, niveau d’intervention) est établi par le conservateur-restaurateur lors du tri et du diagnostic post-fouille, sur radiographies.', 'Note');
+  b += p('Ces quantités sont indicatives. Le classement définitif des objets (taille, niveau d’intervention) est établi par le conservateur-restaurateur lors du tri et du diagnostic post-fouille' + (R.nMet ? ', sur radiographies' : '') + '.', 'Note');
 
   b += h('3. Organisation de la prise en charge', 1);
   b += p('La prise en charge est continue, du terrain à la remise du mobilier pour étude : premiers soins et prélèvements sur le terrain, conditionnement adapté à chaque matériau, transfert au laboratoire, tri et diagnostic, mise en état d’étude, stabilisation lorsqu’elle est prévue, conditionnement de conservation et remise avec la documentation.');
@@ -840,10 +840,12 @@ function odtContent(R) {
 
   b += h('6. Estimation des moyens', 1);
   b += p('Estimation en jours-hommes (1 JH = ' + P.jh + ' h), établie à partir des temps moyens par objet et par classe de taille de la grille de chiffrage du laboratoire.' +
-    ' Hypothèses retenues : radiographie et retrait du sédiment pour l’ensemble du mobilier ; ' +
-    (R.quotaTot ? 'nettoyage pour étude de ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' (dégagement de la surface d’origine ou équivalent, avec fiche individuelle)' : 'pas de nettoyage pour étude') + ' ; ' +
-    (F.stab === 'Non demandée' ? 'stabilisation proposée en option' : 'stabilisation de ' + (R.fStab < 1 ? 'la part du mobilier qui le nécessite (environ ' + pct(R.fStab) + ')' : 'l’ensemble du mobilier qui le nécessite')) +
-    '. Ces quantités traduisent le cahier des charges ; elles seront précisées avec le SRA à l’issue de la fouille, au vu du mobilier réellement mis au jour.' +
+    ' Hypothèses retenues : ' + [R.nMet ? 'radiographie du mobilier métallique' : '', F.etude === 'Tout le mobilier' ? '' : 'retrait du sédiment pour l’ensemble du mobilier',
+      F.etude === 'Tout le mobilier' ? 'nettoyage pour étude de l’ensemble du mobilier (dégagement de la surface d’origine ou équivalent, avec fiche individuelle)'
+        : R.quotaTot ? 'nettoyage pour étude d’une partie du mobilier, selon le cahier des charges (dégagement de la surface d’origine ou équivalent, avec fiche individuelle)' : 'pas de nettoyage pour étude',
+      R.nMon ? 'nettoyage des monnaies une à une, avec fiche individuelle' : '',
+      !R.hasCur ? '' : F.stab === 'Non demandée' ? 'stabilisation proposée en option' : F.stab === 'Une partie' ? 'stabilisation d’une partie du mobilier, selon le cahier des charges' : 'stabilisation de l’ensemble du mobilier qui le nécessite'
+    ].filter(Boolean).join('\u00a0; ') + '. Ces hypothèses traduisent le cahier des charges ; les quantités seront précisées avec le SRA à l’issue de la fouille, au vu du mobilier réellement mis au jour.' +
     ' Chaque poste comprend la documentation (fiches, photographies), les consommables et le suivi de projet.');
   b += table(['E', 'F'], ['Tranche ferme', 'JH'], R.L.ferme.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total tranche ferme', fmt(R.ferme)]);
   if (R.L.option.length) b += table(['E', 'F'], ['Option', 'JH'], R.L.option.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total de l’option', fmt(R.option)]);
@@ -859,17 +861,17 @@ function odtContent(R) {
 
   b += h('7. Conditions et réserves', 1);
   var c = [
-    'Le classement des objets (taille, niveau d’intervention) est réalisé par le conservateur-restaurateur lors du tri et du diagnostic post-fouille, sur radiographies. L’estimation repose sur les quantités et les classes de taille connues au stade de l’offre ; elle sera ajustée si le corpus réel diffère.',
-    'La grille s’applique dans la limite de son domaine de validité, fixé par matériau (fer : ' + P.seuilFer + ' objets). Au-delà, les quantités supplémentaires font l’objet d’une tranche conditionnelle ou d’un devis.' + (R.depasse.length ? ' Pour cette opération : ' + R.depasse.join(' ; ') + '.' : ''),
-    'Les consolidations d’objets fragilisés ne sont pas chiffrées au stade de l’offre : elles seront établies lors du diagnostic post-fouille et, si nécessaire, feront l’objet d’un devis complémentaire.',
-    'Le petit mobilier courant (clous, tiges, tôles) est traité par lot, avec une radiographie sélective ; la conservation sélective (fiches nationales) permet de ne pas tout conserver, en accord avec le SRA.',
-    'La conservation curative (stabilisation) est ' + (R.stabFerme ? 'comprise dans la tranche ferme' : 'proposée en option') + '. Elle est datée : un bain de déchloruration dure plusieurs mois. ' + (R.boites && num(F.delai) && P.stab.ferMois > num(F.delai) ? 'Sa durée (environ ' + P.stab.ferMois + ' mois) dépassant le délai de rendu, elle sera achevée après le rendu ou sortira du périmètre de l’offre.' : 'Si le délai de rendu est plus court que le traitement, elle se poursuit après le rendu ou sort du périmètre de l’offre.'),
+    'Le classement des objets (taille, niveau d’intervention) est réalisé par le conservateur-restaurateur lors du tri et du diagnostic post-fouille' + (R.nMet ? ', sur radiographies' : '') + '. L’estimation repose sur les quantités et les classes de taille connues au stade de l’offre ; elle sera ajustée si le corpus réel diffère.',
+    'La grille s’applique dans la limite de son domaine de validité, fixé par matériau' + (qte('fer', 'S') + qte('fer', 'M') + qte('fer', 'L') + qte('fer', 'XL') ? ' (fer : ' + P.seuilFer + ' objets)' : '') + '. Au-delà, les quantités supplémentaires font l’objet d’une tranche conditionnelle ou d’un devis.' + (R.depasse.length ? ' Pour cette opération : ' + R.depasse.join(' ; ') + '.' : ''),
+    'Les consolidations d’objets fragilisés décrites dans les protocoles ne sont pas chiffrées au stade de l’offre : leur nécessité sera établie lors du diagnostic post-fouille et, le cas échéant, elles feront l’objet d’un devis complémentaire.',
+    !R.nClous ? '' : 'Le petit mobilier courant (clous, tiges, tôles) est traité par lot, avec une radiographie sélective ; la conservation sélective (fiches nationales) permet de ne pas tout conserver, en accord avec le SRA.',
+    !R.hasCur ? '' : 'La conservation curative (stabilisation) est ' + (R.stabFerme ? 'comprise dans la tranche ferme' : 'proposée en option') + '.' + (!R.boites ? '' : ' Elle s’inscrit dans la durée : un bain de déchloruration dure plusieurs mois. ' + (num(F.delai) && P.stab.ferMois > num(F.delai) ? 'Sa durée (environ ' + P.stab.ferMois + ' mois) dépassant le délai de rendu, elle sera achevée après le rendu ou sortira du périmètre de l’offre.' : 'Si le délai de rendu est plus court que le traitement, elle se poursuit après le rendu ou sort du périmètre de l’offre.')),
     'Les restes organiques minéralisés observés sur les objets sont préservés et signalés, sans étude.',
     'Le contexte de l’opération (' + F.contexte.toLowerCase() + ') est pris en compte dans l’estimation ; pour un site mixte, le contexte dominant s’applique.',
     'Le suivi de projet et la coordination (échanges avec le responsable d’opération et les spécialistes, planification, traçabilité) sont compris dans l’estimation.'
   ];
   MATS.forEach(function(m) { if (RESERVES[m.k] && totalMat(m)) c.push(RESERVES[m.k]); });
-  c.forEach(function(t, i) { b += p((i + 1) + '. ' + t, 'Liste'); });
+  c.filter(Boolean).forEach(function(t, i) { b += p((i + 1) + '. ' + t, 'Liste'); });
 
   b += h('8. Références', 1);
   b += p('Textes réglementaires et normes', 'Intertitre');
