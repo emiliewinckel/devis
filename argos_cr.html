@@ -249,6 +249,7 @@ body.compact .brand .ico{display:block;height:38px;width:38px}
 .tally b{font-size:28px;font-weight:800;color:var(--navy);letter-spacing:0;font-variant-numeric:tabular-nums}
 .tally .t2 b{background:var(--sky);border-radius:10px;padding:0 10px;margin-bottom:3px}
 /* Bandeau des bains (KORE / KERA) : échéances écrites par les deux applications dans Notion */
+div.bains{cursor:default}
 .bains{width:100%;display:flex;align-items:center;gap:10px;background:var(--sky-l);border:1px solid var(--sky);border-radius:12px;padding:10px 14px;font:inherit;color:var(--navy);text-align:left;cursor:pointer}
 .bains .t{flex:1;min-width:0;font-size:14px;line-height:1.35}.bains .t b{font-weight:800}.bains .late{font-weight:700;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
 .bains .chev{flex:none;transition:transform .15s}.bains[aria-expanded="true"] .chev{transform:rotate(180deg)}
@@ -405,11 +406,11 @@ const Notion={
     return (j.results||[]).map(pg=>({id:pg.id,int:pv(pg.properties[B.title]),ref:pv(pg.properties['Référence']),statut:pv(pg.properties['Statut']),kid:pv(pg.properties[B.nom+' ID'])}))
       .filter(l=>!/termin/i.test(l.statut||''))},
   // Prochaines actions des bains KORE et des lots KERA (champs écrits par les deux applications)
-  async echeances(){const lim=addJ(iso(),7),out=[];
+  async echeances(){const out=[];out.lus=0;out.err=[];
     for(const app of APPS){const B=BATH[app];try{
-      const j=await nfetch('/databases/'+DB[app]+'/query','POST',{page_size:60,filter:{property:'Échéance',date:{on_or_before:lim}},sorts:[{property:'Échéance',direction:'ascending'}]});
-      (j.results||[]).forEach(pg=>{const P=pg.properties;if(/termin/i.test(pv(P['Statut'])||''))return;
-        out.push({app,id:pg.id,ref:pv(P['Référence']),int:pv(P[B.title]),act:pv(P['Prochaine action']),due:pv(P['Échéance']),kid:pv(P[B.nom+' ID'])})})}catch(e){}}
+      const j=await nfetch('/databases/'+DB[app]+'/query','POST',{page_size:100,filter:{property:'Prochaine action',rich_text:{is_not_empty:true}},sorts:[{property:'Échéance',direction:'ascending'}]});
+      (j.results||[]).forEach(pg=>{const P=pg.properties;out.lus++;if(/termin/i.test(pv(P['Statut'])||''))return;
+        out.push({app,id:pg.id,ref:pv(P['Référence']),int:pv(P[B.title]),act:pv(P['Prochaine action']),due:pv(P['Échéance']),kid:pv(P[B.nom+' ID'])})})}catch(e){out.err.push(B.nom)}}
     return out},
   setRetour(d,date){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Date de retour':{date:date?{start:date}:null}}})},
   async creerObjet(d,x){const P={'Nom':{title:[{text:{content:x.id+(x.inv?' · '+x.inv:'')}}]},'ID objet':{rich_text:[{text:{content:x.id}}]},
@@ -457,7 +458,7 @@ const Demo={
   async bainLots(app){return DEMO[app]||[]},
   async echeances(){const t=iso();return [{app:'kore',id:'demo-k1',ref:'2026_8249-8 lot fer 1',int:'Witry-lès-Reims - Les Cabouzets',act:'Titrage du bain 2',due:addJ(t,-1),kid:''},
     {app:'kera',id:'demo-c1',ref:'2026_8870-01 céramiques',int:'Saint-Léonard - Centre Bourg',act:'Relevé du bain 3 et changement d’eau',due:t,kid:''},
-    {app:'kore',id:'demo-k2',ref:'2026-8870-01 lot 2',int:'Saint-Léonard - Centre Bourg',act:'Titrage du bain 1',due:addJ(t,4),kid:''}]},
+    {app:'kore',id:'demo-k2',ref:'2026-8870-01 lot 2',int:'Saint-Léonard - Centre Bourg',act:'Titrage du bain 1',due:addJ(t,4),kid:''}].map((x,i,a)=>(a.lus=3,a.err=[],x))},
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
   async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,t:x.trait||'',na:[],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
     STEPS.forEach(st=>o.steps[st.k]='');DEMO.objets.push(o);const dd=DEMO.dossiers.find(y=>y.id===d.id);if(dd)dd.nObj=(dd.nObj||0)+1;dsave();return JSON.parse(JSON.stringify(o))},
@@ -491,8 +492,15 @@ function dcard(d){return `<button class="dcard ${d.etat==='à faire'?'todo':''}"
   </button>`}
 // Bandeau des bains : une ligne, la liste s'ouvre au toucher ; rien quand il n'y a rien à faire
 function bainsV(){
-  const L=(S.ech||[]).filter(x=>x.due);if(!L.length)return '';
-  const t=iso(),auj=L.filter(x=>x.due<=t),ret=L.filter(x=>x.due<t),sem=L.filter(x=>x.due>t);
+  const E=S.ech,t=iso(),lim=addJ(t,7);
+  const info=m=>`<div class="bains" role="status"><span class="t">${m}</span></div>`;
+  if(!E)return info('Bains : planning KORE / KERA inaccessible pour le moment.');
+  const L=E.filter(x=>x.due&&x.due<=lim);
+  if(!L.length){
+    if(E.err&&E.err.length)return info(`Bains : planning ${E.err.join(' et ')} inaccessible (clé ou connexion).`);
+    if(!E.lus)return info('Bains : pas encore de planning. Ouvrez KORE et KERA une fois pour l’afficher ici.');
+    return info('Bains : rien à faire aujourd’hui ni dans les 7 jours.');}
+  const auj=L.filter(x=>x.due<=t),ret=L.filter(x=>x.due<t),sem=L.filter(x=>x.due>t);
   const parts=[];
   if(auj.length)parts.push(`<b>${auj.length}</b> aujourd’hui${ret.length?` (<span class="late">dont ${ret.length} en retard</span>)`:''}`);
   if(sem.length)parts.push(`<b>${sem.length}</b> dans les 7 jours`);
