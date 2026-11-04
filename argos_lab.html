@@ -248,6 +248,15 @@ body.compact .brand .ico{display:block;height:38px;width:38px}
 .tally span{display:flex;flex-direction:column;align-items:flex-end;font-size:10.5px;font-weight:600;letter-spacing:.6px;text-transform:uppercase;color:var(--txt2);line-height:1.1}
 .tally b{font-size:28px;font-weight:800;color:var(--navy);letter-spacing:0;font-variant-numeric:tabular-nums}
 .tally .t2 b{background:var(--sky);border-radius:10px;padding:0 10px;margin-bottom:3px}
+/* Bandeau des bains (KORE / KERA) : échéances écrites par les deux applications dans Notion */
+.bains{width:100%;display:flex;align-items:center;gap:10px;background:var(--sky-l);border:1px solid var(--sky);border-radius:12px;padding:10px 14px;font:inherit;color:var(--navy);text-align:left;cursor:pointer}
+.bains .t{flex:1;min-width:0;font-size:14px;line-height:1.35}.bains .t b{font-weight:800}.bains .late{font-weight:700;text-decoration:underline;text-decoration-thickness:2px;text-underline-offset:3px}
+.bains .chev{flex:none;transition:transform .15s}.bains[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.blist{display:flex;flex-direction:column;gap:6px;margin-top:-4px}
+.blist a{display:flex;align-items:center;gap:10px;background:#fff;border-radius:10px;padding:9px 12px;text-decoration:none;color:var(--ink);box-shadow:0 1px 2px rgba(46,49,146,.08)}
+.blist .dot{width:10px;height:10px;border-radius:50%;flex:none}.blist .kore .dot{background:#8B3A2A}.blist .kera .dot{background:#7FC4E8}
+.blist .m{flex:1;min-width:0}.blist .m b{display:block;font-size:13.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.blist .m span{font-size:12px;color:var(--txt2)}
+.blist .q{flex:none;font-size:12px;font-weight:700;color:var(--navy);text-align:right}.blist .q.late{text-decoration:underline;text-decoration-thickness:2px}
 .sec{display:flex;align-items:baseline;justify-content:space-between;margin-top:8px}
 .sec h2{margin:0;font-size:15px;font-weight:800;color:var(--navy);letter-spacing:.3px}
 .sec .count{font-size:15px;font-weight:800;color:var(--navy);background:var(--sky-l);border-radius:20px;padding:1px 10px;font-variant-numeric:tabular-nums}
@@ -310,6 +319,7 @@ const $=s=>document.querySelector(s);
 const LS={get(k,d){try{const v=localStorage.getItem(k);return v==null?d:JSON.parse(v)}catch(e){return d}},
   set(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}};
 function esc(s){return String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+const addJ=(d,n)=>{const x=new Date(d+'T12:00:00');x.setDate(x.getDate()+n);return x.getFullYear()+'-'+String(x.getMonth()+1).padStart(2,'0')+'-'+String(x.getDate()).padStart(2,'0')};
 const iso=()=>{const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')};
 const fr=s=>s?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4):'';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -394,6 +404,13 @@ const Notion={
     sorts:[{property:'Date début',direction:'descending'}]});
     return (j.results||[]).map(pg=>({id:pg.id,int:pv(pg.properties[B.title]),ref:pv(pg.properties['Référence']),statut:pv(pg.properties['Statut']),kid:pv(pg.properties[B.nom+' ID'])}))
       .filter(l=>!/termin/i.test(l.statut||''))},
+  // Prochaines actions des bains KORE et des lots KERA (champs écrits par les deux applications)
+  async echeances(){const lim=addJ(iso(),7),out=[];
+    for(const app of APPS){const B=BATH[app];try{
+      const j=await nfetch('/databases/'+DB[app]+'/query','POST',{page_size:60,filter:{property:'Échéance',date:{on_or_before:lim}},sorts:[{property:'Échéance',direction:'ascending'}]});
+      (j.results||[]).forEach(pg=>{const P=pg.properties;if(/termin/i.test(pv(P['Statut'])||''))return;
+        out.push({app,id:pg.id,ref:pv(P['Référence']),int:pv(P[B.title]),act:pv(P['Prochaine action']),due:pv(P['Échéance']),kid:pv(P[B.nom+' ID'])})})}catch(e){}}
+    return out},
   setRetour(d,date){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Date de retour':{date:date?{start:date}:null}}})},
   async creerObjet(d,x){const P={'Nom':{title:[{text:{content:x.id+(x.inv?' · '+x.inv:'')}}]},'ID objet':{rich_text:[{text:{content:x.id}}]},
       'Dossier':{relation:[{id:d.id}]}};
@@ -438,6 +455,9 @@ const Demo={
   async setNA(o,na){this._sync(o);dsave()},
   async setBain(o,app,kid){this._sync(o);dsave()},
   async bainLots(app){return DEMO[app]||[]},
+  async echeances(){const t=iso();return [{app:'kore',id:'demo-k1',ref:'2026_8249-8 lot fer 1',int:'Witry-lès-Reims - Les Cabouzets',act:'Titrage du bain 2',due:addJ(t,-1),kid:''},
+    {app:'kera',id:'demo-c1',ref:'2026_8870-01 céramiques',int:'Saint-Léonard - Centre Bourg',act:'Relevé du bain 3 et changement d’eau',due:t,kid:''},
+    {app:'kore',id:'demo-k2',ref:'2026-8870-01 lot 2',int:'Saint-Léonard - Centre Bourg',act:'Titrage du bain 1',due:addJ(t,4),kid:''}]},
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
   async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,t:x.trait||'',na:[],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
     STEPS.forEach(st=>o.steps[st.k]='');DEMO.objets.push(o);const dd=DEMO.dossiers.find(y=>y.id===d.id);if(dd)dd.nObj=(dd.nObj||0)+1;dsave();return JSON.parse(JSON.stringify(o))},
@@ -446,7 +466,7 @@ const Demo={
 };
 
 /* ---------- état ---------- */
-const S={mode:null,dossiers:[],d:null,objs:[],journal:[],lots:{},loading:''};
+const S={mode:null,dossiers:[],d:null,objs:[],journal:[],lots:{},ech:null,loading:''};
 let view={v:'home',q:'',filter:'all',oid:null,step:null,sel:new Set(),lotProto:new Set(),lotSt:'terminé'};
 let undo=null,toastT=null,busy=false;
 const API=()=>S.mode==='demo'?Demo:Notion;
@@ -469,6 +489,21 @@ function dcard(d){return `<button class="dcard ${d.etat==='à faire'?'todo':''}"
     <span class="dc-m"><b>${Math.round(d.av*100)} %</b> des étapes · ${d.fin} / ${d.nObj} terminés</span>`:''}
     ${d.types.length?`<span class="dc-tags">${d.types.slice(0,4).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</span>`:''}
   </button>`}
+// Bandeau des bains : une ligne, la liste s'ouvre au toucher ; rien quand il n'y a rien à faire
+function bainsV(){
+  const L=(S.ech||[]).filter(x=>x.due);if(!L.length)return '';
+  const t=iso(),auj=L.filter(x=>x.due<=t),ret=L.filter(x=>x.due<t),sem=L.filter(x=>x.due>t);
+  const parts=[];
+  if(auj.length)parts.push(`<b>${auj.length}</b> aujourd’hui${ret.length?` (<span class="late">dont ${ret.length} en retard</span>)`:''}`);
+  if(sem.length)parts.push(`<b>${sem.length}</b> dans les 7 jours`);
+  const quand=x=>{if(x.due<t){const n=Math.round((new Date(t)-new Date(x.due))/864e5);return `<span class="q late">en retard de ${n} j</span>`}
+    if(x.due===t)return '<span class="q">aujourd’hui</span>';return `<span class="q">${fr(x.due)}</span>`};
+  const lien=x=>(x.app==='kore'?URLS.kore:URLS.kera)+(x.kid?'?lot='+encodeURIComponent(x.kid):'');
+  return `<button class="bains" data-a="bains" aria-expanded="${!!view.bains}"><span class="t">Bains : ${parts.join(' · ')}</span>
+    <svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>
+  ${view.bains?`<div class="blist">${L.map(x=>`<a class="${x.app}" href="${lien(x)}" target="_blank" rel="noopener"><span class="dot"></span>
+    <span class="m"><b>${esc(x.ref||x.int)}</b><span>${BATH[x.app].nom} · ${esc(x.act||'')}</span></span>${quand(x)}</a>`).join('')}</div>`:''}`;
+}
 function home(){
   const q=view.q.trim().toLowerCase();
   const list=S.dossiers.filter(d=>!q||[d.num,d.commune,d.site,d.ro].join(' ').toLowerCase().includes(q));
@@ -477,6 +512,7 @@ function home(){
   return `${topInfo()}
   <div class="hello"><div><div class="label">Labo CR · ${esc(op())}</div><h1>Dossiers</h1></div>
     <div class="tally"><span><b>${nEnc}</b>en cours</span><span class="t2"><b>${nTodo}</b>à faire</span></div></div>
+  ${bainsV()}
   <button class="big primary" data-a="scan">${ICON.scan}Scanner un objet</button>
   <label class="search">${ICON.search}<input id="q" type="search" placeholder="N° labo, commune, RO…" value="${esc(view.q)}" autocomplete="off"></label>
   <div class="sec"><h2>En cours</h2><span class="count">${nEnc}</span></div>
@@ -620,7 +656,8 @@ function sheet(html,k){closeSheet();const l=document.createElement('div');l.clas
 
 /* ---------- navigation / chargements ---------- */
 async function loadHome(){S.loading='Chargement des dossiers en cours…';render();
-  try{S.dossiers=await API().dossiers()}catch(e){fail(e)}S.loading='';view={...view,v:'home'};render()}
+  const ech=API().echeances().catch(()=>null);
+  try{S.dossiers=await API().dossiers()}catch(e){fail(e)}S.ech=await ech;S.loading='';view={...view,v:'home'};render()}
 async function openDossier(id,thenObj){
   S.loading='Chargement du dossier…';render();
   try{S.d=S.dossiers.find(d=>d.id===id)||await API().dossier(id);S.objs=await API().objets(id);
@@ -759,6 +796,7 @@ document.addEventListener('click',async e=>{
     if(objs.length)linkBain(objs,d.klink,app);return}
   if(d.opn){LS.set('argoslab:op',d.opn);closeSheet();render();return}
   switch(d.a){
+    case 'bains':view.bains=!view.bains;render();break;
     case 'home':setUrl({});if(!S.dossiers.length)return loadHome();view={...view,v:'home',sel:new Set()};render();scrollTo(0,0);break;
     case 'dossier':view={...view,v:'dossier',sel:new Set()};setUrl({dossier:hex(S.d.id)});render();scrollTo(0,0);break;
     case 'scan':scan();break;
