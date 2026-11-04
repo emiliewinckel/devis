@@ -478,8 +478,9 @@ var MATS = [
   {k: 'ceram', n: 'Céramique fragile', d: 'pâtes peu cuites, pulvérulentes, salées ; classe du vase ou du lot', cls: true, simple: ['sed'], appro: ['appro', 'remontage', 'fiche'], conso: ['consol'], stab: ['dessal']},
   {k: 'os', n: 'Os travaillé, tabletterie', d: '', cls: true, tous: ['net'], appro: ['fiche'], conso: ['consol']},
   {k: 'parure', n: 'Lignite, jais, ambre, autres', d: '', cls: true, tous: ['net'], appro: ['fiche'], conso: ['consol']},
-  {k: 'humide', n: 'Bois, cuir, textile gorgés d’eau', d: 'stabilisation pérenne sur devis', cls: true, tous: ['pec'], appro: ['fiche']},
-  {k: 'lapid', n: 'Lapidaire, enduits peints, mosaïque', d: '', cls: true, tous: ['net'], appro: ['fiche'], conso: ['consol'], stab: ['dessal']},
+  {k: 'humide', n: 'Bois, cuir, textile gorgés d’eau', d: 'conservation en milieu humide ; pas de stabilisation au laboratoire', cls: true, tous: ['pec'], appro: ['fiche']},
+  {k: 'lapid', n: 'Lapidaire, mosaïque', d: '', cls: true, tous: ['net'], appro: ['fiche'], conso: ['consol'], stab: ['dessal']},
+  {k: 'enduits', src: 'lapid', n: 'Enduits peints', d: 'mise en état d’étude seule ; conservation curative sur devis (CEPMR, Soissons)', cls: true, tous: ['net'], appro: ['fiche']},
   {k: 'mottes', n: 'Prélèvements en motte', d: 'classe = plus grande dimension de la motte', cls: true}
 ];
 var LIB = {sed: 'dégagement du sédiment', surf: 'dégagement de la surface d’origine', fiche: 'fiche individuelle', consol: 'consolidation', postbain: 'post-bain (stabilisation)',
@@ -541,7 +542,7 @@ function calcul() {
   if (F.stab === 'Une partie' && !fStab) miss('part du mobilier à stabiliser, en % (à saisir)');
   if (F.etude === 'Une partie' && !num(F.quota)) miss('nombre ou part des objets à nettoyer pour étude (à saisir)');
   var lignesMat = [], quotaTot = 0, nObj = 0, minEtude = 0, minStab = 0, depasse = [];
-  var row = function(m, r, c) { var t = P.mats[m.k] && P.mats[m.k][r]; var v = t && typeof t === 'object' ? t[c] : t; return val(v, m.n + ' — ' + LIB[r] + (c ? ' ' + c : '') + ' (grille)'); };
+  var row = function(m, r, c) { var t = P.mats[m.src || m.k] && P.mats[m.src || m.k][r]; var v = t && typeof t === 'object' ? t[c] : t; return val(v, m.n + ' — ' + LIB[r] + (c ? ' ' + c : '') + ' (grille)'); };
   MATS.forEach(function(m) {
     if (m.k === 'clous' || m.k === 'mottes') return;
     var n = totalMat(m); if (!n) return;
@@ -557,7 +558,7 @@ function calcul() {
       (m.stab || []).forEach(function(r) { st += nc * row(m, r, c); });
     });
     quotaTot += nq;
-    var seuil = m.k === 'fer' ? P.seuilFer : P.seuils[m.k];
+    var seuil = m.k === 'fer' ? P.seuilFer : P.seuils[m.src || m.k];
     if (seuil != null && n > seuil) depasse.push(m.n + ' : ' + n + ' (seuil ' + seuil + ')');
     st *= fStab; minEtude += et; minStab += st;
     lignesMat.push({m: m, n: n, nq: nq, et: et, st: st});
@@ -724,8 +725,9 @@ var RESERVES = {
   ceram: 'Céramique : le coût final dépendra du nombre réel de fragments, de la salinité et du degré de remontage attendu.',
   os: 'Os travaillé, tabletterie : une réserve est posée si l’identification du matériau ou la présence de sels impose des tests complémentaires.',
   parure: 'Lignite, jais, ambre : la proposition est émise sous réserve de compatibilité aux solvants et à l’eau, à valider par des tests préalables.',
-  humide: 'Matériaux gorgés d’eau : la prise en charge chiffrée couvre le lavage, le conditionnement en eau et le suivi ; la stabilisation pérenne (imprégnation, lyophilisation) fait l’objet d’un devis distinct, et ne pourra être arrêtée qu’après validation des paramètres de stabilité et de séchage.',
-  lapid: 'Lapidaire, enduits peints : le chiffrage est tributaire du poids, de la nature de la pierre, de la profondeur des sels et des anciens montages à déposer ; il sera ajusté après une campagne de tests.'
+  humide: 'Matériaux gorgés d’eau : la prise en charge chiffrée couvre le lavage, le conditionnement en eau et le suivi ; la stabilisation pérenne (imprégnation, lyophilisation) n’est pas réalisée par le laboratoire, qui ne dispose pas de lyophilisateur : elle sera confiée, sur devis, à un laboratoire spécialisé, et ne pourra être arrêtée qu’après validation des paramètres de stabilité et de séchage.',
+  enduits: 'Enduits peints : le laboratoire en assure le conditionnement et la mise en état d’étude, sans consolidation ni stabilisation ; si une conservation curative s’avère nécessaire, elle sera confiée, sur devis, au Centre d’étude des peintures murales romaines (CEPMR, Soissons).',
+  lapid: 'Lapidaire, mosaïque : le chiffrage est tributaire du poids, de la nature de la pierre, de la profondeur des sels et des anciens montages à déposer ; il sera ajusté après une campagne de tests.'
 };
 function protocoles(R) {
   var has = function(k) { return k === 'clous' || k === 'monnaies' ? qte(k) > 0 : totalMat(MATS.filter(function(m) { return m.k === k; })[0]) > 0; };
@@ -761,9 +763,11 @@ function protocoles(R) {
     num(F.terrain) ? 'Sur le terrain, la consolidation in situ des ossements ne sera appliquée qu’en ultime recours, pour sécuriser le prélèvement d’ossements extrêmement friables : imprégnation par une résine acrylique stable et réversible, en solution (type Paraloid® B72) pour les ossements secs (CHAVIGNER 1990 : 45) ou en dispersion aqueuse (type Primal® WS24) pour les ossements humides (DE LA BAUME 1990 : 260). L’imprégnation rendant les pièces impropres aux analyses biochimiques (radiocarbone, ADN, isotopes) (MINISTÈRE DE LA CULTURE 2022, fiche n° 10), un échantillonnage d’ossements non traités sera systématiquement isolé au préalable. La levée par soutien mécanique (motte ou coque de maintien) sera toujours privilégiée (BAYLE et al. 2019 : 66 ; BERGERON, RÉMILLARD 2021 : 101).' : ''
   ]});
   var humide = has('humide') || F.contexte === 'Subaquatique / milieu humide';
-  if (humide || has('lapid')) out.push({t: humide && has('lapid') ? 'Matériaux gorgés d’eau, milieu humide et lapidaire' : humide ? 'Matériaux gorgés d’eau et milieu humide' : 'Lapidaire', r: ['mc'].concat(humide ? ['bergeron'] : []).concat(has('lapid') ? ['pain'] : []), p: [
-    !humide ? '' : 'La règle est de conserver humide ce qui a été trouvé humide (BERGERON, RÉMILLARD 2021 : 39). Les bois, cuirs et textiles gorgés d’eau seront protégés du soleil et du vent dès leur exhumation, conditionnés en doubles sachets hermétiques avec l’eau du site, sans biocide, et stockés au froid (3 à 4 °C), jamais congelés (MINISTÈRE DE LA CULTURE 2022, fiches n° 1, 2 et 12). Les objets composites (bois et métal) ne seront jamais démontés sur le terrain : l’ensemble sera maintenu humide, le matériau le plus vulnérable dictant les conditions.',
-    has('lapid') ? 'Le mobilier lapidaire sera manutentionné avec des élingues protégées, sans entassement, sur palettes imputrescibles interposées de mousses neutres (MINISTÈRE DE LA CULTURE 2022, fiche n° 4 ; PAÏN 2015). Les sels seront extraits par compresses, sous contrôle de la conductivité.' : ''
+  var tt = [humide ? 'matériaux gorgés d’eau, milieu humide' : '', has('lapid') ? 'lapidaire' : '', has('enduits') ? 'enduits peints' : ''].filter(Boolean).join(', ').replace(/, ([^,]*)$/, ' et $1');
+  if (humide || has('lapid') || has('enduits')) out.push({t: tt.charAt(0).toUpperCase() + tt.slice(1), r: ['mc'].concat(humide ? ['bergeron'] : []).concat(has('lapid') ? ['pain'] : []), p: [
+    !humide ? '' : 'La règle est de conserver humide ce qui a été trouvé humide (BERGERON, RÉMILLARD 2021 : 39). Les bois, cuirs et textiles gorgés d’eau seront protégés du soleil et du vent dès leur exhumation, conditionnés en doubles sachets hermétiques avec l’eau du site, sans biocide, et stockés au froid (3 à 4 °C), jamais congelés (MINISTÈRE DE LA CULTURE 2022, fiches n° 1, 2 et 12). Les objets composites (bois et métal) ne seront jamais démontés sur le terrain : l’ensemble sera maintenu humide, le matériau le plus vulnérable dictant les conditions. Le laboratoire ne pratique pas la lyophilisation : la stabilisation pérenne de ces matériaux sera confiée, sur devis, à un laboratoire spécialisé.',
+    has('lapid') ? 'Le mobilier lapidaire sera manutentionné avec des élingues protégées, sans entassement, sur palettes imputrescibles interposées de mousses neutres (MINISTÈRE DE LA CULTURE 2022, fiche n° 4 ; PAÏN 2015). Les sels seront extraits par compresses, sous contrôle de la conductivité.' : '',
+    has('enduits') ? 'Les enduits peints seront prélevés et conditionnés à plat, sur supports rigides calés, face peinte protégée, avec relevé de leur position ; au laboratoire, ils feront l’objet d’une mise en état d’étude (nettoyage, fiche), sans consolidation ni stabilisation. Si une conservation curative s’avère nécessaire, elle sera confiée, sur devis, au Centre d’étude des peintures murales romaines (CEPMR, Soissons).' : ''
   ]});
   return out;
 }
@@ -837,7 +841,7 @@ function odtContent(R) {
     'Étude des restes organiques minéralisés : ils sont préservés et signalés ; leur étude relève d’un spécialiste et fait l’objet d’une prestation complémentaire.',
     'Analyses (composition, imagerie avancée, datation, contenus) : prestations complémentaires.',
     'Restauration pour présentation au public : sur devis.'];
-  if (totalMat(MATS.filter(function(m) { return m.k === 'humide'; })[0])) hp.splice(1, 0, 'Stabilisation pérenne des matériaux gorgés d’eau (imprégnation, lyophilisation) : sur devis.');
+  if (totalMat(MATS.filter(function(m) { return m.k === 'humide'; })[0])) hp.splice(1, 0, 'Stabilisation pérenne des matériaux gorgés d’eau (imprégnation, lyophilisation) : non réalisée par le laboratoire (pas de lyophilisateur) ; confiée sur devis à un laboratoire spécialisé.');
   hp.forEach(function(t) { b += p('– ' + t, 'Liste'); });
 
   b += h('7. Conditions et réserves', 1);
