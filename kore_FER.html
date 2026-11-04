@@ -1132,7 +1132,7 @@ function raisonsRenouvellement(lot, m, jb) {
     var part = (m.cl / 35450) / naoh * 100;
     if (part > C.ohMax) r.push({code: 'soude', txt: 'environ ' + fNum(part, 0) + ' % de la soude consommée (' + fNum(m.cl / 35.45, 0) + ' mmol/L de Cl⁻ libérés pour NaOH ' + fNum(naoh, 2) + ' M, à raison d\'environ un OH⁻ par Cl⁻)'});
   }
-  if (jb != null && jb > C.jmax) r.push({code: 'age', txt: 'bain en place depuis ' + jb + ' j (> ' + C.jmax + ' j : sulfite oxydé, soude carbonatée)'});
+  if (jb != null && jb >= C.jmax) r.push({code: 'age', txt: 'bain en place depuis ' + jb + ' j (âge maximal ' + C.jmax + ' j atteint : sulfite oxydé, soude carbonatée)'});
   return r;
 }
 // Titrages consécutifs du même bain sous le seuil, faits après jmin jours d'immersion, jusqu'à m inclus
@@ -1278,7 +1278,18 @@ function evalLot(lot) {
       } else if (o.code === 'titrer' && dern.cl > seuil(lot)) {
         // la date prévue de titrage ne dépasse pas l'âge maximal du bain
         var lim = addJours(debutBain(lot, cy), A.cfg.jmax);
-        if (lim && o.due > lim) o.due = lim;
+        if (lim && o.due >= lim) {
+          var ecart = joursEntre(dern.date, lim);
+          if (ecart != null && ecart <= 3) {
+            // le bain atteint son âge maximal dans les 3 jours : le dernier titrage sert de titrage final,
+            // inutile de retitrer — on change le bain à cette date
+            o.statut = 'Renouveler le bain'; o.cls = 'b-alert'; o.acl = 'a-alert'; o.code = 'changer'; o.due = lim < today ? today : lim;
+            o.msg = 'Le bain ' + cy + ' atteint son âge maximal (' + A.cfg.jmax + ' j) le ' + fDate(lim) + '. Le titrage du ' + fDate(dern.date) + ' (' + fNum(dern.cl, 1) + ' mg/L) sert de titrage final : renouveler la solution' + (lim <= today ? ' dès que possible.' : ' le ' + fDate(lim) + '.');
+          } else {
+            o.due = lim;
+            o.msg += ' Le bain ' + cy + ' atteindra son âge maximal (' + A.cfg.jmax + ' j) le ' + fDate(lim) + ' : ce titrage sera le titrage final, puis renouveler la solution.';
+          }
+        }
       }
     }
   }
