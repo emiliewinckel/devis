@@ -161,24 +161,16 @@ var PARAMS = {
  },
  "ctx": {
   "Rural / habitat": {
-   "majo": 0,
-   "quota": null,
-   "consol": null
+   "majo": 0
   },
   "Urbain": {
-   "majo": 0.15,
-   "quota": null,
-   "consol": null
+   "majo": 0.15
   },
   "Funéraire": {
-   "majo": 0.25,
-   "quota": null,
-   "consol": null
+   "majo": 0.25
   },
   "Subaquatique / milieu humide": {
-   "majo": 0.2,
-   "quota": null,
-   "consol": null
+   "majo": 0.2
   }
  },
  "mats": {
@@ -493,7 +485,7 @@ var LIB = {sed: 'dégagement du sédiment', surf: 'dégagement de la surface d�
 /* ---------------------------------------------------------------------
    ÉTAT DU FORMULAIRE (gardé dans le navigateur)
    --------------------------------------------------------------------- */
-function vide() { return {op: '', commune: '', ro: '', ref: '', contexte: '', delai: '', stab: 'oui', terrain: '', q: {}}; }
+function vide() { return {op: '', commune: '', ro: '', ref: '', contexte: '', delai: '', stab: 'oui', terrain: '', quota: '', quotaU: 'objets', q: {}}; }
 var F = vide();
 try { var sv = JSON.parse(localStorage.getItem('psti-cons2') || 'null'); if (sv) F = Object.assign(F, sv); } catch (e) {}
 function save() { try { localStorage.setItem('psti-cons2', JSON.stringify(F)); } catch (e) {} }
@@ -512,14 +504,28 @@ function totalMat(m) { return m.cls ? C4.reduce(function(a, c) { return a + qte(
    CALCUL — mêmes règles que le simulateur de la grille, étendues aux autres matériaux.
    Temps en minutes, convertis en jours-hommes (1 JH = P.jh heures).
    ===================================================================== */
+function repartirQuota() {
+  var cells = [], N = 0;
+  MATS.forEach(function(m) { if (!m.appro) return; (m.cls ? C4 : [null]).forEach(function(c) { var n = c ? qte(m.k, c) : qte(m.k); if (n) { cells.push({key: m.k + (c || ''), n: n}); N += n; } }); });
+  var v = num(F.quota), Q = F.quotaU === '%' ? Math.round(N * Math.min(v, 100) / 100) : Math.min(Math.round(v), N), par = {};
+  if (!Q || !N) return {Q: 0, N: N, par: par};
+  var used = 0;
+  cells.forEach(function(x) { x.exact = x.n * Q / N; x.base = Math.floor(x.exact); used += x.base; });
+  cells.slice().sort(function(a, b) { return (b.exact - b.base) - (a.exact - a.base); }).slice(0, Q - used).forEach(function(x) { x.base++; });
+  cells.forEach(function(x) { par[x.key] = x.base; });
+  return {Q: Q, N: N, par: par};
+}
 function calcul() {
   var P = PARAMS, manque = [], H = 60 * (P.jh || 7);
   var miss = function(lib) { if (manque.indexOf(lib) < 0) manque.push(lib); };
   var val = function(v, lib) { if (v == null || !isFinite(v)) { miss(lib); return 0; } return v; };
   var ctx = P.ctx[F.contexte] || {};
   if (!F.contexte) miss('contexte de l’opération (à choisir)');
-  var q = F.contexte ? val(ctx.quota, 'quota surface d’origine — ' + F.contexte + ' (Hypothèses)') : 0;
-  var k = F.contexte ? val(ctx.consol, 'part d’objets consolidés — ' + F.contexte + ' (Hypothèses)') : 0;
+  // Quota de traitement approfondi : celui que demande le cahier des charges (nombre d'objets ou %), réparti
+  // au prorata sur les objets concernés (méthode du plus fort reste) ; pas de quota demandé = aucun.
+  // La consolidation n'est pas chiffrée au stade de l'offre (réserve dans le document).
+  var k = 0, alloc = repartirQuota();
+  var q = alloc.N ? alloc.Q / alloc.N : 0;
   var majo = F.contexte ? val(ctx.majo, 'majoration — ' + F.contexte + ' (Hypothèses)') : 0;
   var stabFerme = F.stab === 'oui';
   var lignesMat = [], quotaTot = 0, nObj = 0, minEtude = 0, minStab = 0, depasse = [];
@@ -531,7 +537,7 @@ function calcul() {
     var et = 0, st = 0, nq = 0;
     (m.cls ? C4 : [null]).forEach(function(c) {
       var nc = c ? qte(m.k, c) : qte(m.k); if (!nc) return;
-      var nquota = Math.round(nc * q), ncons = Math.round(nc * k); nq += m.appro ? nquota : 0;
+      var nquota = m.appro ? (alloc.par[m.k + (c || '')] || 0) : 0, ncons = 0; nq += m.appro ? nquota : 0;
       (m.tous || []).forEach(function(r) { et += nc * row(m, r, c); });
       (m.simple || []).forEach(function(r) { et += (nc - nquota) * row(m, r, c); });
       (m.appro || []).forEach(function(r) { et += nquota * row(m, r, c); });
@@ -621,7 +627,11 @@ function renderForm() {
       return '<tr><td class="m"><b>' + esc(m.n) + '</b>' + (m.d ? '<small>' + esc(m.d) + '</small>' : '') + '</td>' + cells + '</tr>';
     }).join('') + '</tbody></table></div>' +
     '<details class="cls"><summary>Exemples par classe (mobilier métallique)</summary><ul>' + C4.map(function(c) { return '<li><b>' + c + '</b> (' + esc(P.dims[c] || '') + ') : ' + esc(P.exemples[c] || '') + '</li>'; }).join('') +
-    '<li>Au-delà de ' + (P.dimMax || 60) + ' cm, ou objet qui ne tient pas dans les bacs : hors gabarit, sur devis.</li></ul></details></section>';
+    '<li>Au-delà de ' + (P.dimMax || 60) + ' cm, ou objet qui ne tient pas dans les bacs : hors gabarit, sur devis.</li></ul></details>' +
+    '<div class="grid" style="margin-top:14px;align-items:end"><div><label for="f-quota">Quota de traitement approfondi demandé par le cahier des charges (facultatif)</label>' +
+    '<input id="f-quota" data-f="quota" type="number" min="0" inputmode="decimal" value="' + esc(F.quota) + '" placeholder="vide si le CCS n’en demande pas"></div>' +
+    '<div>' + seg('quotaU', ['objets', '%'], F.quotaU || 'objets') + '</div></div>' +
+    '<p class="hint" style="margin:6px 0 0">Objets dont la surface d’origine est dégagée sous loupe, avec fiche individuelle (hors monnaies, toujours traitées une à une).</p></section>';
   if (ADMIN) h += adminHtml();
   document.getElementById('form').innerHTML = h;
 }
@@ -643,7 +653,7 @@ function renderRes() {
     '<p class="hint" style="margin:4px 0 0">tranche ferme' + (R.option ? ', + ' + fmt(R.option) + ' JH en option (stabilisation)' : '') + '</p>';
   h += '<ul class="lines">' + R.L.ferme.map(function(x) { return '<li><span>' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') +
     R.L.option.map(function(x) { return '<li class="opt"><span>Option : ' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') + '</ul>';
-  if (R.quotaTot) h += '<p class="hint" style="margin:8px 0 0">Dont ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' en traitement approfondi (quota de ' + pct(R.q) + ').</p>';
+  h += '<p class="hint" style="margin:8px 0 0">' + (R.quotaTot ? 'Dont ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' en traitement approfondi (quota du cahier des charges).' : 'Sans quota de traitement approfondi.') + '</p>';
   var e = R.eClich + R.eSol;
   if (e > 0) h += '<p class="hint" style="margin:6px 0 0">Consommables et prestations : environ ' + fmtE(e) + ' HT.</p>';
   R.alertes.forEach(function(a) { h += '<div class="al">' + esc(a) + '</div>'; });
@@ -692,12 +702,12 @@ var RESERVES = {
 };
 function protocoles(R) {
   var has = function(k) { return k === 'clous' || k === 'monnaies' ? qte(k) > 0 : totalMat(MATS.filter(function(m) { return m.k === k; })[0]) > 0; };
-  var out = [], quota = R.quotaTot ? ' Pour cette opération, le quota est estimé à ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' (' + pct(R.q) + ' du corpus).' : '';
+  var out = [];
   var metal = ['fer', 'clous', 'cu', 'monnaies', 'plomb', 'precieux'].some(has);
   if (metal) out.push({t: 'Mobilier métallique', r: ['cpat', 'mc', 'winckel23', 'winckel26'], p: [
     'Conformément aux articles R. 546-1 et R. 546-2 du Code du patrimoine, la prise en charge du mobilier métallique archéologique inclut sa conservation préventive ainsi que sa mise en état d’étude, conduite sous le contrôle scientifique et technique de l’État. Cette dernière notion recouvre un large spectre d’interventions : du simple retrait des terres jusqu’aux dégagements mécaniques profonds, certaines de ces opérations s’apparentent en réalité à de la conservation curative, voire à de la restauration (WINCKEL 2023). Notre protocole tient compte de cette réalité en proposant une stratégie graduée.',
     'Pour l’ensemble du corpus, la mise en état d’étude débutera par l’imagerie radiographique, outil non invasif permettant au spécialiste d’accéder à la morphologie sous-jacente, aux éventuels décors et aux restes organiques minéralisés sans toucher à la stratigraphie des produits de corrosion (WINCKEL et al. 2026). Ce premier niveau sera complété par un nettoyage mécanique superficiel limité à l’élimination des sédiments meubles, garantissant la lisibilité et la manipulation sécurisée des objets, avant leur conditionnement en atmosphère contrôlée au titre de la conservation préventive (MINISTÈRE DE LA CULTURE 2022, fiche n° 6).',
-    'Certains questionnements scientifiques (lecture de détails micrométriques, identification de damasquinures, restes organiques minéralisés…) peuvent requérir un dégagement plus poussé des couches de corrosion jusqu’à la limite de la surface d’origine. Un quota d’objets est réservé à ces traitements approfondis, chacun faisant l’objet d’une fiche individuelle.' + quota + ' Leur sélection sera décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA. Le laboratoire ne pratique pas de nettoyage partiel « en fenêtres », qui crée un déséquilibre et des altérations après traitement.',
+    'Certains questionnements scientifiques (lecture de détails micrométriques, identification de damasquinures, restes organiques minéralisés…) peuvent requérir un dégagement plus poussé des couches de corrosion jusqu’à la limite de la surface d’origine. ' + (R.quotaTot ? 'Un quota de ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ', demandé par le cahier des charges, est réservé à ces traitements approfondis, chacun faisant l’objet d’une fiche individuelle. Leur sélection sera décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA.' : 'Le cahier des charges ne demandant pas de quota, aucun traitement approfondi n’est compris dans la présente offre ; s’il s’avérait nécessaire, il ferait l’objet d’un devis complémentaire, la sélection des objets étant alors décidée collégialement par l’archéologue spécialiste, le conservateur-restaurateur et le responsable d’opération, et soumise à la validation du SRA.') + ' Le laboratoire ne pratique pas de nettoyage partiel « en fenêtres », qui crée un déséquilibre et des altérations après traitement.',
     has('clous') ? 'Les clous, tiges et tôles sont traités par lot, avec une radiographie sélective ; la conservation sélective prévue par les fiches nationales permet de ne pas conserver l’intégralité de ce mobilier courant, en accord avec le SRA.' : '',
     (has('fer') ? 'Stabilisation des métaux ferreux : déchloruration par bains alcalins successifs en boîtes hermétiques adaptées au volume des objets, avec suivi de l’extraction des chlorures par titrage, puis rinçages, séchage, passivation à l’acide tannique et protection réversible (Paraloid® B72). Un bain dure plusieurs mois. ' : '') +
     ((has('cu') || has('monnaies')) ? 'Stabilisation des alliages cuivreux : dégagement mécanique sous loupe binoculaire préservant les patines stables, puis traitement à la L-cystéine, alternative non toxique au benzotriazole (BTA), et protection réversible (Paraloid® B72). ' : '') +
@@ -786,7 +796,7 @@ function odtContent(R) {
 
   b += h('6. Estimation des moyens', 1);
   b += p('Estimation en jours-hommes (1 JH = ' + P.jh + ' h), établie à partir des temps moyens par objet et par classe de taille de la grille de chiffrage du laboratoire.' +
-    (R.quotaTot ? ' Elle comprend un quota de ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' en traitement approfondi (dégagement de la surface d’origine ou équivalent, avec fiche individuelle), soit ' + pct(R.q) + ' du corpus.' : '') +
+    (R.quotaTot ? ' Elle comprend le quota demandé par le cahier des charges : ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' en traitement approfondi (dégagement de la surface d’origine ou équivalent, avec fiche individuelle).' : ' Aucun quota de traitement approfondi n’est demandé : l’estimation couvre la mise en état d’étude minimale (retrait du sédiment), la radiographie et la stabilisation prévue.') +
     (R.majo > 0 ? ' Le temps de traitement des objets est majoré de ' + pct(R.majo) + ' au titre du contexte (' + F.contexte.toLowerCase() + ').' : ''));
   b += table(['E', 'F'], ['Tranche ferme', 'JH'], R.L.ferme.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total tranche ferme', fmt(R.ferme)]);
   if (R.L.option.length) b += table(['E', 'F'], ['Option : stabilisation', 'JH'], R.L.option.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total de l’option', fmt(R.option)]);
@@ -806,6 +816,7 @@ function odtContent(R) {
   var c = [
     'Le classement des objets (taille, niveau d’intervention) est réalisé par le conservateur-restaurateur lors du tri et du diagnostic post-fouille, sur radiographies. L’estimation repose sur les quantités et les classes de taille connues au stade de l’offre ; elle sera ajustée si le corpus réel diffère.',
     'La grille s’applique dans la limite de son domaine de validité, fixé par matériau (fer : ' + P.seuilFer + ' objets). Au-delà, les quantités supplémentaires font l’objet d’une tranche conditionnelle ou d’un devis.' + (R.depasse.length ? ' Pour cette opération : ' + R.depasse.join(' ; ') + '.' : ''),
+    'Les consolidations d’objets fragilisés ne sont pas chiffrées au stade de l’offre : elles seront établies lors du diagnostic post-fouille et, si nécessaire, feront l’objet d’un devis complémentaire.',
     'Le petit mobilier courant (clous, tiges, tôles) est traité par lot, avec une radiographie sélective ; la conservation sélective (fiches nationales) permet de ne pas tout conserver, en accord avec le SRA.',
     'La stabilisation est ' + (R.stabFerme ? 'comprise dans la tranche ferme' : 'proposée en option') + '. Elle est datée : un bain de déchloruration dure plusieurs mois. ' + (R.boites && num(F.delai) && P.stab.ferMois > num(F.delai) ? 'Sa durée (environ ' + P.stab.ferMois + ' mois) dépassant le délai de rendu, elle sera achevée après le rendu ou sortira du périmètre de l’offre.' : 'Si le délai de rendu est plus court que le traitement, elle se poursuit après le rendu ou sort du périmètre de l’offre.'),
     'Les restes organiques minéralisés observés sur les objets sont préservés et signalés, sans étude.' + (F.contexte === 'Funéraire' ? ' La majoration du contexte funéraire couvre le temps de dégagement supplémentaire qu’ils imposent.' : ''),
@@ -903,7 +914,7 @@ function lireGrille(wb) {
   P.coord = {base: h1(/^base par lot/), palier: h1(/^taille d'un palier/), ajout: h1(/^temps ajouté par palier/)};
   P.ctx = {};
   var ic = trouve(H, /^majoration selon le contexte/);
-  for (var i = ic + 1; ic >= 0 && i < H.length && H[i] && H[i][0] && typeof H[i][1] === 'number'; i++) P.ctx[String(H[i][0]).trim()] = {majo: n(H[i][1]), quota: n(H[i][2]), consol: n(H[i][3])};
+  for (var i = ic + 1; ic >= 0 && i < H.length && H[i] && H[i][0] && typeof H[i][1] === 'number'; i++) P.ctx[String(H[i][0]).trim()] = {majo: n(H[i][1])};
   // Autres matériaux : un bloc par en-tête « … — temps moyen », lignes repérées par leur libellé
   var bloc = function(re) { var i = trouve(A, re); if (i < 0) return null; var j = i + 1; while (j < A.length && A[j] && A[j][0] && !/temps moyen|paramètres communs|seuil du domaine/.test(norm(A[j][0]))) j++; return [i + 1, j]; };
   var b4 = function(bl, re) { if (!bl) return Object.assign({}, VIDE4); var i = trouve(A, re, bl[0], bl[1]); return i < 0 ? Object.assign({}, VIDE4) : row4(A[i]); };
