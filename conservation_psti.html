@@ -155,6 +155,8 @@ var PARAMS = {
  },
  "ficheLot": 30,
  "ouverture": 0.5,
+ "taux": 60,
+ "coef": 1,
  "coord": {
   "base": 0.5,
   "palier": 30,
@@ -543,7 +545,7 @@ function calcul() {
       (m.tous || []).forEach(function(r) { et += nc * row(m, r, c); });
       (m.simple || []).forEach(function(r) { et += (nc - nquota) * row(m, r, c); });
       (m.appro || []).forEach(function(r) { et += nquota * row(m, r, c); });
-      (m.conso || []).forEach(function(r) { et += ncons * row(m, r, c); });
+      (m.conso || []).forEach(function(r) { st += ncons * row(m, r, c); });
       (m.stab || []).forEach(function(r) { st += nc * row(m, r, c); });
     });
     quotaTot += nq;
@@ -575,25 +577,32 @@ function calcul() {
   var nCoord = nObj + nMottes;
   var jhCoord = nCoord ? val(P.coord.base, 'coordination — base') + val(P.coord.ajout, 'coordination — ajout par palier') * Math.max(0, Math.ceil(nCoord / val(P.coord.palier, 'coordination — palier')) - 1) : 0;
   // majoration : sur le temps de traitement des objets (comme le simulateur), pas sur les forfaits ni la coordination
-  var baseMajo = minEtude + minMottes + minClous + (stabFerme ? minStab : 0);
-  var minMajo = baseMajo * majo;
   var jhTerrain = num(F.terrain);
 
   var L = {ferme: [], option: [], parMat: lignesMat};
-  var add = function(w, l, jh, d) { if (jh > 0) L[w].push({l: l, jh: jh, d: d || ''}); };
-  lignesMat.forEach(function(x) { add('ferme', x.m.n + ' : mise en état d’étude (' + x.n + ')', x.et / H); });
-  add('ferme', 'Clous, tiges et tôles (' + nClous + ' restes)', minClous / H);
-  add('ferme', 'Fouille des prélèvements en motte (' + nMottes + ')', minMottes / H);
-  add('ferme', 'Radiographie : ouverture du dossier, préparation et lecture (forfait)', jhRadio);
-  add('ferme', 'Fiches de lot (' + nLots + ')', minLots / H);
-  var w = stabFerme ? 'ferme' : 'option';
-  lignesMat.forEach(function(x) { if (x.st) add(w, x.m.n + ' : ' + (x.m.k === 'fer' ? 'déchloruration, post-bain' : x.m.k === 'ceram' || x.m.k === 'lapid' ? 'dessalement' : 'stabilisation'), x.st / H); });
-  add(w, 'Fer : ouverture de la déchloruration, mise en place et suivi des bains (forfait)', jhBains);
-  if (minMajo > 0) add('ferme', 'Majoration liée au contexte (' + F.contexte.toLowerCase() + ', +' + pct(majo) + ')', minMajo / H);
-  if (!stabFerme && majo > 0 && minStab > 0) add('option', 'Majoration liée au contexte sur la stabilisation', minStab * majo / H);
-  add('ferme', 'Présence du conservateur-restaurateur sur le terrain', jhTerrain);
-  add('ferme', 'Suivi de projet et coordination', jhCoord);
-  var sum = function(a) { return a.reduce(function(s, x) { return s + x.jh; }, 0); };
+  // Quatre postes seulement (comme les lignes du PSTI). Fiches de lot, suivi de projet, majoration de contexte
+  // et consommables (convertis en JH au taux horaire de la grille) sont lissés dans ces postes, sans être détaillés.
+  var eJH = function(e) { return e ? e / (val(P.taux, 'taux horaire du laboratoire (Hypothèses)') * val(P.coef, 'coefficient de vente (Hypothèses)') * (P.jh || 7)) : 0; };
+  var curLib = [], qtot = function(k) { return totalMat(MATS.filter(function(m) { return m.k === k; })[0]); };
+  if (qtot('fer')) curLib.push('déchloruration des ferreux');
+  if (['cu', 'monnaies', 'precieux'].some(function(k) { return qtot(k); })) curLib.push('stabilisation');
+  if (qtot('ceram') || qtot('lapid')) curLib.push('dessalement');
+  var postes = {
+    rx: {l: 'Radiographie (RX)', jh: jhRadio + eJH(eClich), w: 'ferme'},
+    etude: {l: 'Mise en état d’étude', jh: (minEtude + minClous) / H * (1 + majo), w: 'ferme'},
+    cur: {l: 'Conservation curative' + (curLib.length ? ' (' + curLib.join(', ') + ')' : ''), jh: minStab / H * (1 + majo) + jhBains + eJH(eSol), w: stabFerme ? 'ferme' : 'option'},
+    motte: {l: 'Fouille des prélèvements en motte', jh: minMottes / H * (1 + majo), w: 'ferme'}
+  };
+  // frais communs répartis au prorata des postes de la tranche ferme
+  var commun = minLots / H + jhCoord, baseF = 0;
+  Object.keys(postes).forEach(function(k) { if (postes[k].w === 'ferme') baseF += postes[k].jh; });
+  var arr = function(x) { return x > 0 ? Math.max(0.1, Math.round(x * 10) / 10) : 0; };
+  ['rx', 'etude', 'cur', 'motte'].forEach(function(k) {
+    var x = postes[k], jh = x.jh + (x.w === 'ferme' && baseF ? commun * x.jh / baseF : 0);
+    if (jh > 0) L[x.w].push({l: x.l, jh: arr(jh), k: k});
+  });
+  if (jhTerrain) L.ferme.push({l: 'Présence du conservateur-restaurateur sur le terrain', jh: jhTerrain, k: 'terrain'});
+  var sum = function(a) { return Math.round(a.reduce(function(s, x) { return s + x.jh; }, 0) * 10) / 10; };
 
   var alertes = [];
   var delai = num(F.delai), dureeFer = P.stab.ferMois;
@@ -653,12 +662,11 @@ function renderRes() {
     el.innerHTML = h; return;
   }
   h += '<h2>Enveloppe conservation</h2><div class="big">' + fmt(R.ferme) + ' <small>jours-hommes</small></div>' +
-    '<p class="hint" style="margin:4px 0 0">tranche ferme' + (R.option ? ', + ' + fmt(R.option) + ' JH en option (stabilisation)' : '') + '</p>';
+    '<p class="hint" style="margin:4px 0 0">tranche ferme' + (R.option ? ', + ' + fmt(R.option) + ' JH en option (conservation curative)' : '') + '</p>';
   h += '<ul class="lines">' + R.L.ferme.map(function(x) { return '<li><span>' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') +
     R.L.option.map(function(x) { return '<li class="opt"><span>Option : ' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') + '</ul>';
   h += '<p class="hint" style="margin:8px 0 0">' + (R.quotaTot ? 'Dont ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' en traitement approfondi (quota du cahier des charges).' : 'Sans quota de traitement approfondi.') + '</p>';
-  var e = R.eClich + R.eSol;
-  if (e > 0) h += '<p class="hint" style="margin:6px 0 0">Consommables et prestations : environ ' + fmtE(e) + ' HT.</p>';
+  h += '<p class="hint" style="margin:6px 0 0">Fiches, photographies, suivi de projet, contexte et consommables sont compris dans ces postes.</p>';
   R.alertes.forEach(function(a) { h += '<div class="al">' + esc(a) + '</div>'; });
   h += '<button class="btn" id="dl">Télécharger le volet (.odt)</button>';
   h += '<div class="paste"><b>À reporter dans le PSTI :</b><br><span id="pst">' + esc(ligne(R)) + '</span></div>';
@@ -666,9 +674,9 @@ function renderRes() {
   el.innerHTML = h;
 }
 function ligne(R) {
-  var e = R.eClich + R.eSol;
-  return 'Conservation-restauration du mobilier : ' + fmt(R.ferme) + ' JH (tranche ferme)' + (R.option ? ' + ' + fmt(R.option) + ' JH en option' : '') +
-    (e > 0 ? ', consommables et prestations ' + fmtE(e) + ' HT' : '') + ' ; conditions et réserves : voir volet conservation-restauration joint.';
+  return R.L.ferme.map(function(x) { return x.l + ' : ' + fmt(x.jh) + ' JH'; }).join(' ; ') +
+    (R.option ? ' ; en option, ' + R.L.option.map(function(x) { return x.l.charAt(0).toLowerCase() + x.l.slice(1) + ' : ' + fmt(x.jh) + ' JH'; }).join(' ; ') : '') +
+    '. Conditions et réserves : voir volet conservation-restauration joint.';
 }
 
 /* =====================================================================
@@ -800,11 +808,9 @@ function odtContent(R) {
   b += h('6. Estimation des moyens', 1);
   b += p('Estimation en jours-hommes (1 JH = ' + P.jh + ' h), établie à partir des temps moyens par objet et par classe de taille de la grille de chiffrage du laboratoire.' +
     (R.quotaTot ? ' Elle comprend le quota demandé par le cahier des charges : ' + R.quotaTot + ' objet' + (R.quotaTot > 1 ? 's' : '') + ' en traitement approfondi (dégagement de la surface d’origine ou équivalent, avec fiche individuelle).' : ' Aucun quota de traitement approfondi n’est demandé : l’estimation couvre la mise en état d’étude minimale (retrait du sédiment), la radiographie et la stabilisation prévue.') +
-    (R.majo > 0 ? ' Le temps de traitement des objets est majoré de ' + pct(R.majo) + ' au titre du contexte (' + F.contexte.toLowerCase() + ').' : ''));
+    ' Chaque poste comprend la documentation (fiches, photographies), les consommables et le suivi de projet.');
   b += table(['E', 'F'], ['Tranche ferme', 'JH'], R.L.ferme.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total tranche ferme', fmt(R.ferme)]);
-  if (R.L.option.length) b += table(['E', 'F'], ['Option : stabilisation', 'JH'], R.L.option.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total de l’option', fmt(R.option)]);
-  var e = R.eClich + R.eSol;
-  if (e > 0 || R.eSolOpt > 0) b += p('Consommables et prestations associés : environ ' + fmtE(e) + ' HT (clichés radiographiques' + (R.eSol ? ', solution de déchloruration' : '') + ')' + (R.eSolOpt > 0 ? ', plus ' + fmtE(R.eSolOpt) + ' HT de solution de déchloruration avec l’option' : '') + '.');
+  if (R.L.option.length) b += table(['E', 'F'], ['Option', 'JH'], R.L.option.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total de l’option', fmt(R.option)]);
   b += h('Provision', 2);
   b += p('Découvertes exceptionnelles : en cas d’objet exceptionnel, hors normes, ou dans un état de conservation nécessitant une prise en charge exceptionnelle, nous proposerons de revoir la sélection ou le nombre d’objets à traiter avec le SRA dès la fin de l’opération, afin de rester dans le budget initial ; à défaut, un devis complémentaire sera établi.');
   b += h('Hors périmètre de la présente estimation', 2);
@@ -821,9 +827,9 @@ function odtContent(R) {
     'La grille s’applique dans la limite de son domaine de validité, fixé par matériau (fer : ' + P.seuilFer + ' objets). Au-delà, les quantités supplémentaires font l’objet d’une tranche conditionnelle ou d’un devis.' + (R.depasse.length ? ' Pour cette opération : ' + R.depasse.join(' ; ') + '.' : ''),
     'Les consolidations d’objets fragilisés ne sont pas chiffrées au stade de l’offre : elles seront établies lors du diagnostic post-fouille et, si nécessaire, feront l’objet d’un devis complémentaire.',
     'Le petit mobilier courant (clous, tiges, tôles) est traité par lot, avec une radiographie sélective ; la conservation sélective (fiches nationales) permet de ne pas tout conserver, en accord avec le SRA.',
-    'La stabilisation est ' + (R.stabFerme ? 'comprise dans la tranche ferme' : 'proposée en option') + '. Elle est datée : un bain de déchloruration dure plusieurs mois. ' + (R.boites && num(F.delai) && P.stab.ferMois > num(F.delai) ? 'Sa durée (environ ' + P.stab.ferMois + ' mois) dépassant le délai de rendu, elle sera achevée après le rendu ou sortira du périmètre de l’offre.' : 'Si le délai de rendu est plus court que le traitement, elle se poursuit après le rendu ou sort du périmètre de l’offre.'),
-    'Les restes organiques minéralisés observés sur les objets sont préservés et signalés, sans étude.' + (F.contexte === 'Funéraire' ? ' La majoration du contexte funéraire couvre le temps de dégagement supplémentaire qu’ils imposent.' : ''),
-    'Le contexte de l’opération est déterminé par le conservateur-restaurateur ; pour un site mixte, le contexte dominant s’applique. La majoration correspondante est fixée par le laboratoire et révisée chaque année avec la grille.',
+    'La conservation curative (stabilisation) est ' + (R.stabFerme ? 'comprise dans la tranche ferme' : 'proposée en option') + '. Elle est datée : un bain de déchloruration dure plusieurs mois. ' + (R.boites && num(F.delai) && P.stab.ferMois > num(F.delai) ? 'Sa durée (environ ' + P.stab.ferMois + ' mois) dépassant le délai de rendu, elle sera achevée après le rendu ou sortira du périmètre de l’offre.' : 'Si le délai de rendu est plus court que le traitement, elle se poursuit après le rendu ou sort du périmètre de l’offre.'),
+    'Les restes organiques minéralisés observés sur les objets sont préservés et signalés, sans étude.',
+    'Le contexte de l’opération (' + F.contexte.toLowerCase() + ') est pris en compte dans l’estimation ; pour un site mixte, le contexte dominant s’applique.',
     'Le suivi de projet et la coordination (échanges avec le responsable d’opération et les spécialistes, planification, traçabilité) sont compris dans l’estimation.'
   ];
   MATS.forEach(function(m) { if (RESERVES[m.k] && totalMat(m)) c.push(RESERVES[m.k]); });
@@ -905,7 +911,7 @@ function lireGrille(wb) {
   var h4 = function(re, from) { var i = trouve(H, re, from); return i < 0 ? Object.assign({}, VIDE4) : row4(H[i]); };
   var h1 = function(re, from) { var i = trouve(H, re, from); return i < 0 ? null : n(H[i][1]); };
   var iNet = trouve(H, /^nettoyage pour étude/);
-  var P = {version: new Date().toISOString().slice(0, 10), jh: h1(/^durée d'une journée/), seuilFer: h1(/^seuil du domaine de validité/), dimMax: h1(/^plus grande dimension traitable/)};
+  var P = {version: new Date().toISOString().slice(0, 10), jh: h1(/^durée d'une journée/), taux: h1(/^taux horaire/), coef: h1(/^coefficient de vente/), seuilFer: h1(/^seuil du domaine de validité/), dimMax: h1(/^plus grande dimension traitable/)};
   var ie = trouve(H, /^exemples/), ex = ie < 0 ? [] : H[ie];
   P.exemples = {S: ex[1] || '', M: ex[2] || '', L: ex[3] || '', XL: ex[4] || ''};
   P.dims = {S: '< 10 cm', M: '10 à < 20 cm', L: '20 à < 40 cm', XL: '≥ 40 cm'};
@@ -946,7 +952,7 @@ function lireGrille(wb) {
 }
 function manquesParams(P) {
   var out = [], walk = function(o, path) { Object.keys(o).forEach(function(k) { var v = o[k], p = path ? path + ' › ' + k : k; if (v === null) out.push(p); else if (v && typeof v === 'object') walk(v, p); }); };
-  walk({fer: P.fer, motte: P.motte, stab: P.stab, coordination: P.coord, contextes: P.ctx, 'autres matériaux': P.mats, radiographie: P.radio, seuils: P.seuils, clous: {min: P.clousMin}}, '');
+  walk({tarif: {taux: P.taux, coef: P.coef}, fer: P.fer, motte: P.motte, stab: P.stab, coordination: P.coord, contextes: P.ctx, 'autres matériaux': P.mats, radiographie: P.radio, seuils: P.seuils, clous: {min: P.clousMin}}, '');
   return out;
 }
 function adminHtml() {
