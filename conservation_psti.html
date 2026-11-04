@@ -1,7 +1,15 @@
 <!DOCTYPE html>
+<!--
+  Volet conservation-restauration du PSTI
+  Conception et développement : Emilie Winckel, conservatrice-restauratrice,
+  responsable du Pôle Conservation-Restauration, Éveha.
+  © 2026 Emilie Winckel. Tous droits réservés. Reproduction, modification ou diffusion interdites sans son accord écrit.
+-->
 <html lang="fr">
 <head>
 <meta charset="UTF-8">
+<meta name="author" content="Emilie Winckel">
+<meta name="copyright" content="© 2026 Emilie Winckel">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Volet conservation PSTI</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,6 +75,7 @@ details.cls ul{margin:6px 0 0;padding-left:18px}
 <p class="foot" id="foot"></p>
 
 <script>
+/*! Volet conservation-restauration du PSTI — © 2026 Emilie Winckel (Pôle Conservation-Restauration, Éveha). Tous droits réservés. */
 /* =====================================================================
    PARAMÈTRES DU LABORATOIRE
    Lus dans le classeur « Grille_traitement_mobilier.xlsx » (onglets Hypothèses
@@ -900,7 +909,7 @@ function odtXml(xmlBody) {
     col('A', '5.5cm') + col('B', '11.5cm') + col('E', '13.5cm') + col('F', '3.5cm') + col('G', '7cm') + col('H', '2cm') + col('I', '2cm') +
     cell('CellH', OL) + cell('Cell', '') + cell('CellF', OLl) +
     '</office:automatic-styles><office:body><office:text>' + xmlBody + '</office:text></office:body></office:document-content>';
-  var meta = '<?xml version="1.0" encoding="UTF-8"?><office:document-meta ' + ns + ' office:version="1.2"><office:meta><dc:title>Volet conservation-restauration — ' + X(F.op || '') + '</dc:title><meta:generator>Éveha — outil volet conservation PSTI</meta:generator></office:meta></office:document-meta>';
+  var meta = '<?xml version="1.0" encoding="UTF-8"?><office:document-meta ' + ns + ' office:version="1.2"><office:meta><dc:title>Volet conservation-restauration — ' + X(F.op || '') + '</dc:title><meta:generator>Volet conservation-restauration du PSTI — outil conçu par Emilie Winckel (Éveha)</meta:generator></office:meta></office:document-meta>';
   var manifest = '<?xml version="1.0" encoding="UTF-8"?><manifest:manifest xmlns:manifest="urn:oasis:names:tc:opendocument:xmlns:manifest:1.0" manifest:version="1.2">' +
     '<manifest:file-entry manifest:full-path="/" manifest:media-type="application/vnd.oasis.opendocument.text" manifest:version="1.2"/>' +
     '<manifest:file-entry manifest:full-path="content.xml" manifest:media-type="text/xml"/><manifest:file-entry manifest:full-path="styles.xml" manifest:media-type="text/xml"/>' +
@@ -1031,7 +1040,7 @@ document.addEventListener('click', function(e) {
   if (b.id === 'raz' && confirm('Vider le formulaire pour une nouvelle opération ?')) { F = vide(); save(); renderForm(); renderRes(); }
   if (b.id === 'admdl') telechargerPage();
 });
-document.getElementById('foot').textContent = (PARAMS ? 'Grille du laboratoire lue le ' + PARAMS.version : 'Grille non chargée') + (ADMIN ? ' · mode Paramètres' : '');
+document.getElementById('foot').textContent = 'Outil conçu et développé par Emilie Winckel, Pôle Conservation-Restauration, Éveha · © 2026 · ' + (PARAMS ? 'grille du laboratoire du ' + PARAMS.version.split('-').reverse().join('/') : 'grille non chargée') + (ADMIN ? ' · mode Paramètres' : '');
 renderForm(); renderRes();
 </script>
 </body>
