@@ -86,6 +86,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .obj-head .num{font-size:34px;font-weight:800;color:var(--navy);line-height:1;font-variant-numeric:tabular-nums}
 .obj-head .num small{display:block;font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px}
 .obj-head h2{margin:0 0 4px;font-size:17px;font-weight:700;text-wrap:balance}
+.obj-head .edit{font-size:12px;font-weight:600;margin-left:4px;vertical-align:middle}.inv-l{font-size:12px;color:var(--txt2);margin:0 0 6px;word-break:break-word}
 .tags{display:flex;flex-wrap:wrap;gap:5px}
 .tag{font-size:11px;font-weight:600;border-radius:5px;padding:3px 7px;background:var(--bg);color:var(--txt2)}
 .tag.t{background:var(--navy-l);color:var(--navy-d)}
@@ -370,7 +371,7 @@ function mapDossier(pg){const P=pg.properties;return {id:pg.id,num:pv(P['N° lab
   ro:pv(P['RO']),nb:pv(P['Nombre objets']),av:Number(pv(P['Avancement objets'])||0),fin:Number(pv(P['Objets terminés'])||0),
   rapport:pv(P['Rapport de traitement']),dateRapport:pv(P['Date rapport']),retour:pv(P['Date de retour']),arrivee:pv(P["Date d'arrivée au labo"]),
   types:pv(P["Type d'intervention"])||[],nObj:(pv(P['Objets'])||[]).length,op:pv(P['Type Opération']),etat:pv(P['Etat']),drive:pv(P['Lien Drive'])}}
-function mapObjet(pg){const P=pg.properties,o={id:pg.id,nom:pv(P['Nom']),idObj:pv(P['ID objet']),inv:pv(P['N° inventaire']),
+function mapObjet(pg){const P=pg.properties,o={id:pg.id,nom:pv(P['Nom']),idObj:pv(P['ID objet']),inv:pv(P['N° inventaire']),us:pv(P['US']),
   d:pv(P['Description']),m:(pv(P['Matériau'])||[]).join(', '),nr:pv(P['NR']),t:pv(P["Description de l'intervention"]),
   na:pv(P['Étapes non applicables'])||[],kore:pv(P['Bain KORE'])||[],koreStat:pv(P['Statut KORE']),kera:pv(P['Lot KERA'])||[],keraStat:pv(P['Statut KERA']),masse:pv(P['Masse (g)']),dossier:(pv(P['Dossier'])||[])[0],steps:{}};
   STEPS.forEach(s=>o.steps[s.k]=pv(P[s.col]));return o}
@@ -433,6 +434,10 @@ const Notion={
     if(t)await nfetch('/blocks/'+t+'/children','PATCH',{children:[para]});
     else await nfetch('/blocks/'+did+'/children','PATCH',{children:[{object:'block',type:'toggle',toggle:{rich_text:[{type:'text',text:{content:COM_TITRE}}],children:[para]}}]});
     return {head,txt}},
+  majObjet(o,x){const t=v=>({rich_text:v?[{type:'text',text:{content:String(v).slice(0,1900)}}]:[]});
+    return nfetch('/pages/'+o.id,'PATCH',{properties:{'Description':t(x.d),'N° inventaire':t(x.inv),'US':t(x.us),
+      'Matériau':{multi_select:x.mats.map(name=>({name}))},'NR':{number:x.nr},'Masse (g)':{number:x.masse},
+      'Nom':{title:[{type:'text',text:{content:[o.idObj,x.inv].filter(Boolean).join(' · ')||x.d||'objet'}}]}}})},
   setRetour(d,date){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Date de retour':{date:date?{start:date}:null}}})},
   async creerObjet(d,x){const P={'Nom':{title:[{text:{content:x.id+(x.inv?' · '+x.inv:'')}}]},'ID objet':{rich_text:[{text:{content:x.id}}]},
       'Dossier':{relation:[{id:d.id}]}};
@@ -481,6 +486,7 @@ const Demo={
     {app:'kera',id:'demo-c1',ref:'2026_8870-01 céramiques',int:'Saint-Léonard - Centre Bourg',act:'Relevé du bain 3 et changement d’eau',due:t,kid:''},
     {app:'kore',id:'demo-k2',ref:'2026-8870-01 lot 2',int:'Saint-Léonard - Centre Bourg',act:'Titrage du bain 1',due:addJ(t,4),kid:''}].map((x,i,a)=>(a.lus=3,a.err=[],x))},
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
+  async majObjet(o,x){this._sync(o);dsave()},
   async comments(did){return ((DEMO.com||{})[did]||[]).slice()},
   async addComment(did,txt){const c={id:'demo-c'+Date.now(),head:op()+' · '+fr(iso())+' '+new Date().toTimeString().slice(0,5),txt};DEMO.com=DEMO.com||{};(DEMO.com[did]=DEMO.com[did]||[]).push(c);dsave();return c},
   async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,t:x.trait||'',na:[],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
@@ -500,8 +506,11 @@ function st(o,k){if(o.na.includes(sn(k)))return 'na';return parseStep(o.steps[k]
 function next(o){return STEPS.find(s=>['todo','run'].includes(st(o,s.k)))}
 function progress(o){return STEPS.filter(s=>['done','na'].includes(st(o,s.k))).length/STEPS.length}
 const cur=()=>S.objs.find(o=>o.id===view.oid);
-const label=o=>{const m=String(o.inv||'').match(/(\d+[a-z]?)\s*$/i);return m?m[1]:(o.idObj?o.idObj.slice(-3):'?')};
-const short=o=>o.idObj?o.idObj.slice(-3):'';
+// Grand numéro : le n° d'inventaire seulement s'il est simple (« OI 14 », « 152 ») ; sinon (n° de musée composé…)
+// le n° d'ordre du labo (fin de l'ID objet), et le n° d'inventaire complet passe dans la ligne grise.
+const invSimple=o=>/^\s*(?:OI|N°|n°|no\.?)?\s*\d+[a-z]?\s*$/i.test(String(o.inv||''));
+const label=o=>{if(invSimple(o))return String(o.inv).match(/(\d+[a-z]?)\s*$/i)[1];return o.idObj?o.idObj.slice(-3):(String(o.inv||'').trim()||'?')};
+const short=o=>invSimple(o)||!o.inv?(o.idObj?o.idObj.slice(-3):''):o.inv;
 
 /* ---------- vues ---------- */
 function topInfo(){return S.mode==='demo'?`<div class="demo">Mode démonstration : rien n'est envoyé à Notion. <button class="link" data-a="op">Se connecter</button></div>`:''}
@@ -622,7 +631,8 @@ function objetV(){
   return `<button class="back" data-a="dossier">‹ ${esc(d.num)} · ${esc(d.commune)}</button>${topInfo()}
   <section class="card" style="display:flex;flex-direction:column;gap:14px">
     <div class="obj-head"><div class="num"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</div>
-      <div style="min-width:0"><h2>${esc(o.d||o.nom)}</h2>
+      <div style="min-width:0;flex:1"><h2>${esc(o.d||o.nom)} <button class="link edit" data-a="editobj" aria-label="Modifier la fiche">Modifier</button></h2>
+      ${o.inv&&!invSimple(o)?`<div class="inv-l">Inventaire : ${esc(o.inv)}</div>`:''}
       <div class="tags">${o.idObj?`<span class="tag id">${esc(o.idObj)}</span>`:''}${o.m?`<span class="tag">${esc(o.m)}</span>`:''}${o.nr!=null&&o.nr!==''?`<span class="tag">NR ${o.nr}</span>`:''}${o.t?`<span class="tag t">${esc(o.t)}</span>`:''}</div></div></div>
     ${o.idObj?`<div class="label">Photos : ${esc(o.idObj)}_avant_01.jpg · ${esc(o.idObj)}_apres_01.jpg</div>`:''}
   </section>
@@ -795,6 +805,26 @@ function stepSheet(o,k){
     kb.innerHTML=lots.slice(0,8).map(b=>`<button data-bain="${b.id}" data-app="${app}">${esc(b.ref||b.int)}<small>${esc(b.int)}</small></button>`).join('')+
       `<a class="newk" data-kp="${o.id}" data-kapp="${app}" href="${bainUrl(app,S.d,[o])}" target="_blank" rel="noopener">+ ${B.nouveau} ${ICON.ext}</a>`}).catch(()=>{const kb=l.querySelector('#kb');if(kb)kb.innerHTML=`<span class="empty">${B.nom} inaccessible.</span>`});
 }
+function editSheet(){
+  const o=cur();if(!o)return;const ms=(o.m||'').split(',').map(x=>x.trim()).filter(Boolean);
+  sheet(`<div class="sh-h"><small>${esc(o.idObj||'')}</small><b>Modifier la fiche objet</b></div>
+    <label class="fl">Dénomination<input id="ed-d" class="ti" value="${esc(o.d||'')}"></label>
+    <label class="fl">N° d'inventaire<input id="ed-inv" class="ti" value="${esc(o.inv||'')}" placeholder="OI 14, M.P.2004.17.42…"></label>
+    <div class="label">Matériau</div>
+    <div class="chips cwrap" id="ed-m">${MATS.concat(ms.filter(m=>!MATS.includes(m))).map(m=>`<button class="chip" data-edm="${esc(m)}" aria-pressed="${ms.includes(m)}">${esc(m)}</button>`).join('')}</div>
+    <div class="sh-act" style="grid-template-columns:1fr 1fr 1fr">
+      <label class="fl">NR<input id="ed-nr" class="ti" type="number" min="0" inputmode="numeric" value="${o.nr==null?'':esc(o.nr)}"></label>
+      <label class="fl">Masse (g)<input id="ed-ma" class="ti" type="number" min="0" step="0.1" inputmode="decimal" value="${o.masse==null?'':esc(o.masse)}"></label>
+      <label class="fl">US<input id="ed-us" class="ti" value="${esc(o.us||'')}"></label></div>
+    <p class="hint">L'ID objet (${esc(o.idObj||'—')}) ne change pas : il reste sur l'étiquette QR.</p>
+    <div class="sh-act"><button class="big secondary" data-a="close">Annuler</button><button class="big primary" data-a="editok">${ICON.check}Enregistrer</button></div>`,'edit')}
+async function enregistrerObjet(){
+  const o=cur();if(!o)return;const v=id=>($('#'+id)||{}).value||'';const nb=x=>{x=String(x).replace(',','.').trim();return x===''?null:Number(x)};
+  const x={d:v('ed-d').trim(),inv:v('ed-inv').trim(),us:v('ed-us').trim(),nr:nb(v('ed-nr')),masse:nb(v('ed-ma')),
+    mats:[...document.querySelectorAll('#ed-m [aria-pressed="true"]')].map(b=>b.dataset.edm)};
+  const prev={d:o.d,inv:o.inv,us:o.us,nr:o.nr,masse:o.masse,m:o.m};
+  Object.assign(o,{d:x.d,inv:x.inv,us:x.us,nr:x.nr,masse:x.masse,m:x.mats.join(', ')});closeSheet();render();
+  try{await API().majObjet(o,x);toast('Fiche enregistrée')}catch(e){Object.assign(o,prev);render();fail(e)}}
 function opSheet(){
   const ops=LS.get('argoslab:ops',[]);
   sheet(`<div class="sh-h"><small>Qui travaille sur cette tablette ?</small><b>Opérateur</b></div>
@@ -841,6 +871,7 @@ document.addEventListener('click',async e=>{
   const b=e.target.closest('button,[data-s]');if(!b)return;const d=b.dataset;
   if(d.del){delSheet(d.del);return}
   if(d.delok){supprimerSaisie(d.delok,d.delapp||null);return}
+  if(d.edm!=null){const b=e.target.closest('[data-edm]');b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');return}
   if(d.pp){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');return}
   if(d.sv){const o=cur(),k=b.closest('.sheet').dataset.k,p=[...document.querySelectorAll('#pp [aria-pressed="true"]')].map(c=>c.dataset.pp),note=($('#snote')?.value||'').trim();
     closeSheet();const prev=o.steps[k];applyLocal(o,k,d.sv);render();
@@ -878,6 +909,8 @@ document.addEventListener('click',async e=>{
     case 'dossier':view={...view,v:'dossier',sel:new Set()};setUrl({dossier:hex(S.d.id)});render();scrollTo(0,0);break;
     case 'scan':scan();break;
     case 'close':closeSheet();break;
+    case 'editobj':editSheet();break;
+    case 'editok':enregistrerObjet();break;
     case 'op':try{sessionStorage.removeItem('argoslab:in')}catch(e){}await showLogin();await loadHome();break;
     case 'addop':{const n=$('#newop').value.trim();if(!n)return;const ops=LS.get('argoslab:ops',[]);if(!ops.includes(n))ops.push(n);LS.set('argoslab:ops',ops);LS.set('argoslab:op',n);closeSheet();render();break}
     case 'cfg':cfgSheet();break;
