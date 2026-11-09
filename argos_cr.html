@@ -930,9 +930,11 @@ function tFormHtml(t){const d=S.d,F=view.tf,k=F.k,fic=k==='fiches';
   const pers=personnes();
   return `<div class="sh-h"><small>${esc(d.num)} · ${esc(d.commune)}</small><b>${t?'Modifier la tâche':'Nouvelle tâche'}</b></div>
     <div class="label">Étape</div><div class="chips cwrap"><button class="chip" data-tfk="fiches" aria-pressed="${fic}">${T_FICHES}</button>${STEPS.map(s=>`<button class="chip" data-tfk="${s.k}" aria-pressed="${s.k===k}">${s.n}</button>`).join('')}</div>
+    ${fic&&tProg({etape:T_FICHES,dossier:d.id,objets:[]}).fini?`<p class="hint late">Ce dossier a déjà ${d.nObj||S.objs.length} fiche${(d.nObj||S.objs.length)>1?'s':''}${Number(d.nb)?' sur '+Number(d.nb)+' annoncées':''} : une tâche « ${T_FICHES} » serait terminée aussitôt.</p>`:''}
     ${fic?`<p class="hint">Créer les fiches objets du dossier (et imprimer les étiquettes QR) : à faire avant les autres tâches. La tâche se terminera seule quand les fiches seront créées${Number(d.nb)?' ('+Number(d.nb)+' objets annoncés dans le dossier)':''}.</p>`:
     `<div class="label">Objets <button class="link" data-tfall="1">tous ceux à faire</button> · <button class="link" data-tfall="0">aucun</button></div>
-    ${objs.length?`<div class="tobjs pick">${objs.map(({o,fait,coche})=>`<label class="to${fait?' ok':''}"><input type="checkbox" data-tfo="${o.id}" ${coche?'checked':''}> ${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||o.d||'')}</label>`).join('')}</div>`:'<p class="hint">Pas encore de fiches objets : commencez par une tâche « Création des fiches ».</p>'}`}
+    ${objs.length&&objs.every(x=>x.fait)?`<p class="hint late">Cette étape est déjà faite (ou non applicable) sur tous les objets du dossier : choisissez une autre étape.</p>`:''}
+    ${objs.length?`<div class="tobjs pick">${objs.map(({o,fait,coche})=>`<label class="to${fait?' ok':''}" ${fait?'title="étape déjà faite"':''}><input type="checkbox" data-tfo="${o.id}" ${coche&&!fait?'checked':''} ${fait?'disabled':''}> ${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||o.d||'')}${fait?' ✓':''}</label>`).join('')}</div>`:'<p class="hint">Pas encore de fiches objets : commencez par une tâche « Création des fiches ».</p>'}`}
     <label class="fl">Personne<input id="tf-p" class="ti" list="tf-pl" value="${esc(t?t.personne:'')}" placeholder="laisser vide = à attribuer"><datalist id="tf-pl">${pers.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${pers.slice(0,6).map(x=>`<button class="chip" data-tfp="${esc(x)}">${esc(x)}${x===op()?' (moi)':''}</button>`).join('')}</div>
     <div class="sh-act"><label class="fl">Début<input id="tf-d" class="ti" type="date" value="${esc(t?t.debut:iso())}"></label><label class="fl">Échéance<input id="tf-e" class="ti" type="date" value="${esc(t?t.ech:addJ(iso(),7))}"></label></div>
@@ -948,6 +950,7 @@ async function tSave(){const F=view.tf,d=S.d,v=id=>(($('#'+id)||{}).value||'').t
   if(!fic&&!objets.length)return toast('Cochez au moins un objet',0,1);
   const x={titre:et+' — '+d.num+(v('tf-p')?' — '+v('tf-p'):''),dossier:d.id,objets,etape:et,personne:v('tf-p'),debut:v('tf-d'),ech:v('tf-e'),note:v('tf-n')};
   if(x.debut&&x.ech&&x.ech<x.debut)return toast('L’échéance est avant le début',0,1);
+  if(!F.id&&tProg(x).fini)return toast(fic?'Les fiches de ce dossier existent déjà : rien à attribuer.':'Cette étape est déjà faite sur les objets cochés : rien à attribuer.',0,1);
   closeSheet();
   try{if(F.id){const t=S.taches.find(y=>y.id===F.id);await API().majTache(t,x);Object.assign(t,x);toast('Tâche modifiée')}
     else{const t=await API().creerTache(x);(S.taches=S.taches||[]).push(Object.assign(t,{objets:x.objets}));toast('Tâche créée'+(x.personne?' pour '+x.personne:''))}
