@@ -442,8 +442,11 @@ var PARAMS = {
   }
  },
  "radio": {
-  "hLot": 3.5,
-  "objLot": 50
+  "surfPlanche": 550,
+  "minPlanche": 10,
+  "minJour": 210,
+  "plafond": 10,
+  "paliers": [[300, 1], [1200, 3], [2400, 10], [4800, 15], [9800, 20], [20000, 25]]
  },
  "clousMin": 5,
  "seuils": {
@@ -586,12 +589,29 @@ function calcul() {
   var nClous = qte('clous'), minClous = nClous ? nClous * val(P.clousMin, 'clous — temps par reste (Autres matériaux)') : 0;
   var nMottes = totalMat(MATS.filter(function(m) { return m.k === 'mottes'; })[0]);
   var minMottes = C4.reduce(function(a, c) { var n = qte('mottes', c); return a + (n ? n * val(P.motte[c], 'motte ' + c + ' (Hypothèses)') : 0); }, 0);
-  // radiographie : lots d'objets métalliques ; clichés selon la classe (fer) ou par monnaie
+  // radiographie (outil « calcul auto planches RX » du laboratoire) : mobilier métallique et prélèvements en motte.
+  // Planches : nombre d'objets par cliché de la grille (surface d'un objet ≈ surface utile d'une planche ÷ objets par cliché).
+  // Temps : minutes par objet selon sa surface + 10 min par planche ; une journée au service de radiographie = 210 min
+  // de prises de vue, l'autre demi-journée étant le trajet ; arrondi à la demi-journée (½ JH incompressible), plafonné.
+  var R_ = P.radio || {};
+  var minSurf = function(sf) { var pal = R_.paliers || []; for (var i = 0; i < pal.length; i++) if (sf <= pal[i][0]) return pal[i][1]; return pal.length ? pal[pal.length - 1][1] : 0; };
+  var plRX = 0, minObjRX = 0, eRX = 0, nRX = 0;
+  var rxCls = function(k, c, n) {
+    var oc = val(P.fer.objCliche[c], 'objets par cliché ' + c + ' (Hypothèses)'), ce = val(P.fer.clicheE[c], 'coût d’un cliché ' + c + ' (Hypothèses)');
+    if (!oc) return;
+    plRX += n / oc; eRX += n * ce / oc; nRX += n;
+    minObjRX += n * minSurf(val(R_.surfPlanche, 'radiographie — surface utile d’une planche') / oc);
+  };
+  MATS.filter(function(m) { return (m.metal && m.cls) || m.k === 'mottes'; }).forEach(function(m) { C4.forEach(function(c) { var n = qte(m.k, c); if (n) rxCls(m.k, c, n); }); });
+  if (qte('monnaies')) {
+    var pc = val(P.mats.monnaies.parCliche, 'monnaies par cliché (Autres matériaux)'), nm = qte('monnaies');
+    if (pc) { plRX += nm / pc; eRX += nm * val(P.fer.clicheE.S, 'coût d’un cliché S') / pc; nRX += nm; minObjRX += nm * minSurf(val(R_.surfPlanche, 'radiographie — surface utile d’une planche') / pc); }
+  }
   var nMet = MATS.filter(function(m) { return m.metal; }).reduce(function(a, m) { return a + totalMat(m); }, 0);
-  var jhRadio = nMet ? jhOuv : 0;
-  var eClich = 0;
-  MATS.filter(function(m) { return m.metal && m.cls; }).forEach(function(m) { C4.forEach(function(c) { var n = qte(m.k, c); if (n) eClich += n * val(P.fer.clicheE[c], 'coût d’un cliché ' + c) / val(P.fer.objCliche[c], 'objets par cliché ' + c); }); });
-  if (qte('monnaies')) eClich += qte('monnaies') * val(P.fer.clicheE.S, 'coût d’un cliché S') / val(P.mats.monnaies.parCliche, 'monnaies par cliché');
+  var nPlanches = plRX > 0 ? Math.max(1, Math.ceil(plRX - 1e-9)) : 0;
+  var minRX = nPlanches ? minObjRX + Math.min(nPlanches, 100) * val(R_.minPlanche, 'radiographie — minutes par planche') : 0;
+  var jhRadio = minRX ? Math.min(val(R_.plafond, 'radiographie — plafond (JH)'), Math.ceil(minRX / val(R_.minJour, 'radiographie — minutes de prises de vue par jour') * 2 - 1e-9) / 2) : 0;
+  var eClich = plRX > 0 ? eRX * nPlanches / plRX : 0;
   // fiches de lot : une par matériau dont des objets sont traités simplement (hors quota)
   var nLots = lignesMat.filter(function(x) { return x.n - x.nq > 0; }).length + (nClous ? 1 : 0);
   var minLots = nLots * val(P.ficheLot, 'fiche de lot (Hypothèses)');
@@ -632,7 +652,7 @@ function calcul() {
   if (depasse.length) alertes.push('Au-delà du domaine de validité de la grille — ' + depasse.join(' ; ') + ' : tranche conditionnelle ou devis pour les quantités supplémentaires.');
   var vide_ = !nObj && !nClous && !nMottes;
   return {L: L, ferme: sum(L.ferme), option: sum(L.option), eClich: eClich, eSol: stabFerme ? eSol : 0, eSolOpt: stabFerme ? 0 : eSol,
-    alertes: alertes, manque: manque, vide: vide_, nObj: nObj, nMottes: nMottes, nClous: nClous, quotaTot: quotaTot, fStab: fStab, q: q, k: k, majo: majo, boites: boites, depasse: depasse, stabFerme: stabFerme, nMet: nMet, hasCur: postes.cur.jh > 0, nMon: qtot('monnaies')};
+    alertes: alertes, manque: manque, vide: vide_, nObj: nObj, nMottes: nMottes, nClous: nClous, quotaTot: quotaTot, fStab: fStab, q: q, k: k, majo: majo, boites: boites, depasse: depasse, stabFerme: stabFerme, nMet: nMet, nRX: nRX, nPlanches: nPlanches, jhRadio: jhRadio, rxMottes: nMottes > 0, hasCur: postes.cur.jh > 0, nMon: qtot('monnaies')};
 }
 
 /* =====================================================================
@@ -662,7 +682,7 @@ function renderForm() {
     '<details class="cls"><summary>Exemples par classe (mobilier métallique)</summary><ul>' + C4.map(function(c) { return '<li><b>' + c + '</b> (' + esc(P.dims[c] || '') + ') : ' + esc(P.exemples[c] || '') + '</li>'; }).join('') +
     '<li>Au-delà de ' + (P.dimMax || 60) + ' cm, ou objet qui ne tient pas dans les bacs : hors gabarit, sur devis.</li></ul></details>' +
     '</section>';
-  h += '<section class="card"><h2>4. Ce que demande le cahier des charges</h2><p class="hint">Deux questions, pour l’ensemble du mobilier saisi ci-dessus. Tous les objets sont débarrassés du sédiment et le mobilier métallique est radiographié ; ces questions portent sur ce qui vient en plus.</p>' +
+  h += '<section class="card"><h2>4. Ce que demande le cahier des charges</h2><p class="hint">Deux questions, pour l’ensemble du mobilier saisi ci-dessus. Tous les objets sont débarrassés du sédiment ; le mobilier métallique et les prélèvements en motte sont radiographiés ; ces questions portent sur ce qui vient en plus.</p>' +
     '<label>Stabilisation (déchloruration, dessalement…)</label>' + seg('stab', STAB_OPT, F.stab) +
     (F.stab === 'Une partie' ? '<div class="grid" style="margin-top:8px"><div><label for="f-stabPct">Part du mobilier à stabiliser (%)</label><input id="f-stabPct" data-f="stabPct" type="number" min="0" max="100" inputmode="decimal" value="' + esc(F.stabPct) + '"></div></div>' : '') +
     (F.stab === 'Non demandée' ? '<p class="hint" style="margin:6px 0 0">La stabilisation sera proposée en option.</p>' : '') +
@@ -695,7 +715,7 @@ function renderRes() {
     '<p class="hint" style="margin:4px 0 0">tranche ferme' + (R.option ? ', + ' + fmt(R.option) + ' JH en option (conservation curative)' : '') + '</p>';
   h += '<ul class="lines">' + R.L.ferme.map(function(x) { return '<li><span>' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') +
     R.L.option.map(function(x) { return '<li class="opt"><span>Option : ' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') + '</ul>';
-  h += '<p class="hint" style="margin:8px 0 0">' + (R.fStab < 1 ? 'Stabilisation de ' + pct(R.fStab) + ' du mobilier. ' : '') + '</p>';
+  h += '<p class="hint" style="margin:8px 0 0">' + (R.nPlanches ? 'Radiographie : environ ' + R.nPlanches + ' planche' + (R.nPlanches > 1 ? 's' : '') + ' (' + fmt(R.jhRadio) + ' JH sur place, trajet compris). ' : '') + (R.fStab < 1 ? 'Stabilisation de ' + pct(R.fStab) + ' du mobilier. ' : '') + '</p>';
   h += '<p class="hint" style="margin:6px 0 0">Fiches, photographies, suivi de projet, contexte et consommables sont compris dans ces postes.</p>';
   R.alertes.forEach(function(a) { h += '<div class="al">' + esc(a) + '</div>'; });
   h += '<button class="btn" id="dl">Télécharger le volet (.odt)</button>';
@@ -825,7 +845,7 @@ function odtContent(R) {
     rows.push([m.n].concat(m.cls ? C4.map(function(c) { return String(qte(m.k, c) || '—'); }) : ['', '', '', '']).concat([String(n)]));
   });
   b += table(['G', 'H', 'H', 'H', 'H', 'I'], ['Matériau', 'S', 'M', 'L', 'XL', 'Total'], rows);
-  b += p('Ces quantités sont indicatives. Le classement définitif des objets (taille, niveau d’intervention) est établi par le conservateur-restaurateur lors du tri et du diagnostic post-fouille' + (R.nMet ? ', sur radiographies' : '') + '.', 'Note');
+  b += p('Ces quantités sont indicatives. Le classement définitif des objets (taille, niveau d’intervention) est établi par le conservateur-restaurateur lors du tri et du diagnostic post-fouille' + (R.nRX ? ', sur radiographies' : '') + '.', 'Note');
 
   b += h('3. Organisation de la prise en charge', 1);
   b += p('La prise en charge est continue, du terrain à la remise du mobilier pour étude : premiers soins et prélèvements sur le terrain, conditionnement adapté à chaque matériau, transfert au laboratoire, tri et diagnostic, mise en état d’étude, stabilisation lorsqu’elle est prévue, conditionnement de conservation et remise avec la documentation.');
@@ -840,7 +860,7 @@ function odtContent(R) {
 
   b += h('6. Estimation des moyens', 1);
   b += p('Estimation en jours-hommes (1 JH = ' + P.jh + ' h), établie à partir des temps moyens par objet et par classe de taille de la grille de chiffrage du laboratoire.' +
-    ' Hypothèses retenues : ' + [R.nMet ? 'radiographie du mobilier métallique' : '', F.etude === 'Tout le mobilier' ? '' : 'retrait du sédiment pour l’ensemble du mobilier',
+    ' Hypothèses retenues : ' + [R.nRX ? 'radiographie ' + (R.nMet && R.rxMottes ? 'du mobilier métallique et des prélèvements en motte' : R.nMet ? 'du mobilier métallique' : 'des prélèvements en motte') + ' (préparation, prises de vue sur planches et lecture, déplacement au service de radiographie compris)' : '', F.etude === 'Tout le mobilier' ? '' : 'retrait du sédiment pour l’ensemble du mobilier',
       F.etude === 'Tout le mobilier' ? 'nettoyage pour étude de l’ensemble du mobilier (dégagement de la surface d’origine ou équivalent, avec fiche individuelle)'
         : R.quotaTot ? 'nettoyage pour étude d’une partie du mobilier, selon le cahier des charges (dégagement de la surface d’origine ou équivalent, avec fiche individuelle)' : 'pas de nettoyage pour étude',
       R.nMon ? 'nettoyage des monnaies une à une, avec fiche individuelle' : '',
@@ -861,7 +881,7 @@ function odtContent(R) {
 
   b += h('7. Conditions et réserves', 1);
   var c = [
-    'Le classement des objets (taille, niveau d’intervention) est réalisé par le conservateur-restaurateur lors du tri et du diagnostic post-fouille' + (R.nMet ? ', sur radiographies' : '') + '. L’estimation repose sur les quantités et les classes de taille connues au stade de l’offre ; elle sera ajustée si le corpus réel diffère.',
+    'Le classement des objets (taille, niveau d’intervention) est réalisé par le conservateur-restaurateur lors du tri et du diagnostic post-fouille' + (R.nRX ? ', sur radiographies' : '') + '. L’estimation repose sur les quantités et les classes de taille connues au stade de l’offre ; elle sera ajustée si le corpus réel diffère.',
     'La grille s’applique dans la limite de son domaine de validité, fixé par matériau' + (qte('fer', 'S') + qte('fer', 'M') + qte('fer', 'L') + qte('fer', 'XL') ? ' (fer : ' + P.seuilFer + ' objets)' : '') + '. Au-delà, les quantités supplémentaires font l’objet d’une tranche conditionnelle ou d’un devis.' + (R.depasse.length ? ' Pour cette opération : ' + R.depasse.join(' ; ') + '.' : ''),
     'Les consolidations d’objets fragilisés décrites dans les protocoles ne sont pas chiffrées au stade de l’offre : leur nécessité sera établie lors du diagnostic post-fouille et, le cas échéant, elles feront l’objet d’un devis complémentaire.',
     !R.nClous ? '' : 'Le petit mobilier courant (clous, tiges, tôles) est traité par lot, avec une radiographie sélective ; la conservation sélective (fiches nationales) permet de ne pas tout conserver, en accord avec le SRA.',
@@ -979,7 +999,9 @@ function lireGrille(wb) {
   B = bloc(/^bois, cuir/); P.mats.humide = {pec: b4(B, /^prise en charge/), fiche: b4(B, /^fiche individuelle/)};
   B = bloc(/^lapidaire/); P.mats.lapid = {net: b4(B, /^nettoyage/), consol: b4(B, /^consolidation/), dessal: b4(B, /^dessalement/), fiche: b4(B, /^fiche individuelle/)};
   var ip = trouve(A, /^paramètres communs/), iS = trouve(A, /^seuil du domaine de validité/), PC = [ip + 1, iS < 0 ? A.length : iS];
-  P.radio = {hLot: b1(PC, /^radiographie/), objLot: b1(PC, /^nombre moyen d'objets par lot/)};
+  var RXD = (typeof PARAMS !== 'undefined' && PARAMS && PARAMS.radio && PARAMS.radio.paliers) ? PARAMS.radio : {surfPlanche: 550, minPlanche: 10, minJour: 210, plafond: 10, paliers: [[300, 1], [1200, 3], [2400, 10], [4800, 15], [9800, 20], [20000, 25]]};
+  var sp = b1(PC, /^surface utile d'une planche/), mp = b1(PC, /^minutes par planche/), mj = b1(PC, /^minutes de prises de vue par jour/);
+  P.radio = {surfPlanche: sp != null ? sp : RXD.surfPlanche, minPlanche: mp != null ? mp : RXD.minPlanche, minJour: mj != null ? mj : RXD.minJour, plafond: RXD.plafond, paliers: RXD.paliers};
   var fl = b1(PC, /^fiche de lot/); if (fl != null) P.ficheLot = fl;
   var ouv = b1(PC, /^ouverture de dossier/); if (ouv == null) ouv = h1(/^ouverture de dossier/); P.ouverture = ouv != null ? ouv : 0.5;
   P.clousMin = b1(PC, /^clous/);
