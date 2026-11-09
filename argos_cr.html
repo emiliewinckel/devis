@@ -100,6 +100,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .tl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--border);border-left:4px solid var(--navy);background:var(--card);border-radius:10px;padding:8px 10px;font:inherit;text-align:left;cursor:pointer}
 .tl.late{border-left-color:#B42318}.tl.fic{border-left-color:#E8A33D}.tl-e{font-weight:800;font-size:13px;color:var(--navy)}.tl-m{font-size:12px;color:var(--txt2)}
 .tobjs{display:flex;flex-wrap:wrap;gap:5px;max-height:220px;overflow:auto}.tobjs .to{font-size:11px;border:1px solid var(--border);border-radius:7px;padding:3px 7px;background:var(--bg)}
+.tf-oh{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}.chip.sm{padding:4px 10px;font-size:12px}
 .tobjs .to.ok{background:#E8F5E9;border-color:#A5D6A7;color:#2E7D32}.tobjs.pick .to{display:flex;align-items:center;gap:4px;cursor:pointer}
 .late{color:#B42318}
 .link.danger{color:#B42318}.big.primary.danger{background:#B42318;border-color:#B42318;color:#fff}
@@ -924,7 +925,7 @@ function tacheSheet(id){const t=(S.taches||[]).find(x=>x.id===id);if(!t)return;c
 function tacheForm(t){const d=S.d,k0=t?(t.etape===T_FICHES?'fiches':kEt(t.etape)):(view.v==='lot'&&view.step)||(S.objs.length?null:'fiches');
   const sel=t?new Set(t.objets.map(hex)):view.v==='lot'&&view.sel.size?new Set([...view.sel].map(hex)):null;
   view.tf={k:k0||'ne',id:t?t.id:null,sel};
-  const l=sheet(tFormHtml(t),'tf');}
+  const l=sheet(tFormHtml(t),'tf');tfCompte()}
 function tFormHtml(t){const d=S.d,F=view.tf,k=F.k,fic=k==='fiches';
   const objs=fic?[]:S.objs.map(o=>{const x=st(o,k),fait=x==='done'||x==='na';const coche=F.sel?F.sel.has(hex(o.id)):!fait;return {o,fait,coche}});
   const pers=personnes();
@@ -932,7 +933,7 @@ function tFormHtml(t){const d=S.d,F=view.tf,k=F.k,fic=k==='fiches';
     <div class="label">Étape</div><div class="chips cwrap"><button class="chip" data-tfk="fiches" aria-pressed="${fic}">${T_FICHES}</button>${STEPS.map(s=>`<button class="chip" data-tfk="${s.k}" aria-pressed="${s.k===k}">${s.n}</button>`).join('')}</div>
     ${fic&&tProg({etape:T_FICHES,dossier:d.id,objets:[]}).fini?`<p class="hint late">Ce dossier a déjà ${d.nObj||S.objs.length} fiche${(d.nObj||S.objs.length)>1?'s':''}${Number(d.nb)?' sur '+Number(d.nb)+' annoncées':''} : une tâche « ${T_FICHES} » serait terminée aussitôt.</p>`:''}
     ${fic?`<p class="hint">Créer les fiches objets du dossier (et imprimer les étiquettes QR) : à faire avant les autres tâches. La tâche se terminera seule quand les fiches seront créées${Number(d.nb)?' ('+Number(d.nb)+' objets annoncés dans le dossier)':''}.</p>`:
-    `<div class="label">Objets <button class="link" data-tfall="1">tous ceux à faire</button> · <button class="link" data-tfall="0">aucun</button></div>
+    `<div class="tf-oh"><span class="label">Objets <span id="tf-cnt"></span></span><span><button class="chip sm" data-tfall="1">Tout sélectionner</button> <button class="chip sm" data-tfall="0">Tout désélectionner</button></span></div>
     ${objs.length&&objs.every(x=>x.fait)?`<p class="hint late">Cette étape est déjà faite (ou non applicable) sur tous les objets du dossier : choisissez une autre étape.</p>`:''}
     ${objs.length?`<div class="tobjs pick">${objs.map(({o,fait,coche})=>`<label class="to${fait?' ok':''}" ${fait?'title="étape déjà faite"':''}><input type="checkbox" data-tfo="${o.id}" ${coche&&!fait?'checked':''} ${fait?'disabled':''}> ${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||o.d||'')}${fait?' ✓':''}</label>`).join('')}</div>`:'<p class="hint">Pas encore de fiches objets : commencez par une tâche « Création des fiches ».</p>'}`}
     <label class="fl">Personne<input id="tf-p" class="ti" list="tf-pl" value="${esc(t?t.personne:'')}" placeholder="laisser vide = à attribuer"><datalist id="tf-pl">${pers.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
@@ -940,10 +941,12 @@ function tFormHtml(t){const d=S.d,F=view.tf,k=F.k,fic=k==='fiches';
     <div class="sh-act"><label class="fl">Début<input id="tf-d" class="ti" type="date" value="${esc(t?t.debut:iso())}"></label><label class="fl">Échéance<input id="tf-e" class="ti" type="date" value="${esc(t?t.ech:addJ(iso(),7))}"></label></div>
     <label class="fl">Note (facultatif)<input id="tf-n" class="ti" value="${esc(t?t.note:'')}"></label>
     <div class="sh-act"><button class="big secondary" data-a="close">Annuler</button><button class="big primary" data-a="tsave">${ICON.check}${t?'Enregistrer':'Créer la tâche'}</button></div>`}
+function tfCompte(){const e=$('#tf-cnt');if(!e)return;const c=[...document.querySelectorAll('[data-tfo]')],n=c.filter(x=>x.checked).length,dispo=c.filter(x=>!x.disabled).length;e.textContent=dispo?`(${n} / ${dispo} sélectionné${n>1?'s':''})`:''}
+document.addEventListener('change',e=>{if(e.target.matches&&e.target.matches('[data-tfo]'))tfCompte()});
 function tfRefresh(){const sh=document.querySelector('.sheet[data-k="tf"] .sheet-in');if(!sh)return;
   const keep={p:($('#tf-p')||{}).value,d:($('#tf-d')||{}).value,e:($('#tf-e')||{}).value,n:($('#tf-n')||{}).value};
   const t=view.tf.id?(S.taches||[]).find(x=>x.id===view.tf.id):null;sh.innerHTML=tFormHtml(t);
-  $('#tf-p').value=keep.p||'';$('#tf-d').value=keep.d||'';$('#tf-e').value=keep.e||'';$('#tf-n').value=keep.n||''}
+  $('#tf-p').value=keep.p||'';$('#tf-d').value=keep.d||'';$('#tf-e').value=keep.e||'';$('#tf-n').value=keep.n||'';tfCompte()}
 async function tSave(){const F=view.tf,d=S.d,v=id=>(($('#'+id)||{}).value||'').trim();
   const objets=[...document.querySelectorAll('[data-tfo]')].filter(c=>c.checked).map(c=>c.dataset.tfo);
   const fic=F.k==='fiches',et=fic?T_FICHES:sn(F.k);
@@ -1370,7 +1373,7 @@ document.addEventListener('click',async e=>{
   if(d.tedit){const t=(S.taches||[]).find(x=>x.id===d.tedit);closeSheet();if(t){if(!S.d||hex(S.d.id)!==hex(t.dossier))await openDossier(t.dossier);tacheForm(t)}return}
   if(d.topen){closeSheet();openDossier(d.topen);return}
   if(d.tfk){view.tf.k=d.tfk;view.tf.sel=null;tfRefresh();return}
-  if(d.tfall!=null){document.querySelectorAll('[data-tfo]').forEach(c=>{const o=S.objs.find(x=>x.id===c.dataset.tfo),x=o&&st(o,view.tf.k);c.checked=d.tfall==='1'&&!(x==='done'||x==='na')});return}
+  if(d.tfall!=null){document.querySelectorAll('[data-tfo]').forEach(c=>{c.checked=d.tfall==='1'&&!c.disabled});tfCompte();return}
   if(d.tfp!=null){$('#tf-p').value=d.tfp;return}
   if(d.f){view.filter=d.f;render();return}
   if(d.step){view.step=d.step;view.sel=new Set();view.lotProto=new Set();view.lotSt='terminé';render();return}
