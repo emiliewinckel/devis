@@ -340,27 +340,38 @@ def main():
     if journaux():
         if re.match(r'^[aA]', demande('Un renommage a déjà été fait ici. R = renommer (nouvelles photos comprises), A = annuler le dernier renommage : ')):
             annuler(); return
-    plan, alertes, nb_obj = [], [], 0
-    for obj in sorted((d for d in os.listdir(racine) if os.path.isdir(os.path.join(racine, d))), key=cle_nat):
-        po = os.path.join(racine, obj)
-        phases = [d for d in os.listdir(po) if os.path.isdir(os.path.join(po, d)) and phase(d)]
-        if not phases: alertes.append(f'« {obj} » : pas de dossier photo_avant_traitement / photo_post_traitement, ignoré.'); continue
+    plan, alertes = [], []
+    # deux rangements acceptés : chantier/objet/photo_avant_traitement  ou  chantier/photo_avant_traitement/objet
+    paires = []
+    sous = lambda p: sorted((d for d in os.listdir(p) if os.path.isdir(os.path.join(p, d))), key=cle_nat)
+    for d in sous(racine):
+        pd = os.path.join(racine, d)
+        if phase(d):
+            for o in sous(pd): paires.append((o, phase(d), os.path.join(pd, o)))
+            if any(os.path.splitext(f)[1].lower() in EXT for f in os.listdir(pd)):
+                alertes.append(f'« {d} » contient des photos en vrac : rangez-les dans un dossier par objet (n° d\'inventaire ou 001…), elles ne sont pas renommées.')
+        else:
+            ph = [p for p in sous(pd) if phase(p)]
+            if not ph: alertes.append(f'« {d} » : pas de dossier photo_avant_traitement / photo_post_traitement, ignoré.'); continue
+            for p in ph: paires.append((d, phase(p), os.path.join(pd, p)))
+    objets = []
+    for obj, sens, pp in paires:
         cle = obj.strip().lower()
         if cle in CORR: inv = CORR[cle]
         else:
             inv = nettoie(obj)
-            if CORR: alertes.append(f'« {obj} » : objet inconnu dans ARGOS CR, le nom du dossier est utilisé tel quel.')
-        nb_obj += 1
-        for ph in phases:
-            sens, pp = phase(ph), os.path.join(po, ph)
-            fichiers = [f for f in os.listdir(pp) if os.path.isfile(os.path.join(pp, f)) and os.path.splitext(f)[1].lower() in EXT]
-            groupes = {}
-            for f in fichiers: groupes.setdefault(os.path.splitext(f)[0], []).append(f)   # RAW + JPG : même numéro
-            for n, base in enumerate(sorted(groupes, key=cle_nat), 1):
-                for f in groupes[base]:
-                    nouveau = f'{AN}_{DOS}_{inv}_{sens}_{n}{os.path.splitext(f)[1].lower()}'
-                    if f != nouveau: plan.append((pp, f, nouveau))
+            if CORR and obj not in objets: alertes.append(f'« {obj} » : objet inconnu dans ARGOS CR, le nom du dossier est utilisé tel quel.')
+        if obj not in objets: objets.append(obj)
+        fichiers = [f for f in os.listdir(pp) if os.path.isfile(os.path.join(pp, f)) and os.path.splitext(f)[1].lower() in EXT]
+        groupes = {}
+        for f in fichiers: groupes.setdefault(os.path.splitext(f)[0], []).append(f)   # RAW + JPG : même numéro
+        for n, base in enumerate(sorted(groupes, key=cle_nat), 1):
+            for f in groupes[base]:
+                nouveau = f'{AN}_{DOS}_{inv}_{sens}_{n}{os.path.splitext(f)[1].lower()}'
+                if f != nouveau: plan.append((pp, f, nouveau))
+    nb_obj = len(objets)
     for a in alertes: print('  !', a)
+    if not nb_obj: print('Aucun dossier d\'objet trouvé. Rangement attendu : chantier / objet / photo_avant_traitement, ou chantier / photo_avant_traitement / objet.'); return
     if not plan: print(f'Rien à renommer ({nb_obj} objet(s) vus) : les photos portent déjà le bon nom.'); return
     print(f'{len(plan)} photo(s) à renommer dans {nb_obj} objet(s). Exemples :')
     for pp, f, nouveau in plan[:8]: print(f'  {f}  ->  {nouveau}')
@@ -447,34 +458,45 @@ if ((Journaux).Count) {
   if ($c -match '^[aA]') { Annuler; return }
 }
 
-$plan = @(); $alertes = @(); $nbObj = 0
-foreach ($obj in (Get-ChildItem -LiteralPath $racine -Directory | Sort-Object { CleNat $_.Name })) {
-  $phases = @(Get-ChildItem -LiteralPath $obj.FullName -Directory | Where-Object { Phase $_.Name })
-  if (-not $phases.Count) { $alertes += "« $($obj.Name) » : pas de dossier photo_avant_traitement / photo_post_traitement, ignoré."; continue }
-  $cle = $obj.Name.Trim().ToLower()
+$plan = @(); $alertes = @()
+# deux rangements acceptés : chantier\objet\photo_avant_traitement  ou  chantier\photo_avant_traitement\objet
+$paires = @()
+foreach ($d in (Get-ChildItem -LiteralPath $racine -Directory | Sort-Object { CleNat $_.Name })) {
+  if (Phase $d.Name) {
+    foreach ($o in (Get-ChildItem -LiteralPath $d.FullName -Directory | Sort-Object { CleNat $_.Name })) { $paires += ,@($o.Name, (Phase $d.Name), $o.FullName) }
+    if (@(Get-ChildItem -LiteralPath $d.FullName -File | Where-Object { $EXT -contains $_.Extension.ToLower() }).Count) { $alertes += "« $($d.Name) » contient des photos en vrac : rangez-les dans un dossier par objet (n° d'inventaire ou 001…), elles ne sont pas renommées." }
+  } else {
+    $ph = @(Get-ChildItem -LiteralPath $d.FullName -Directory | Where-Object { Phase $_.Name } | Sort-Object { CleNat $_.Name })
+    if (-not $ph.Count) { $alertes += "« $($d.Name) » : pas de dossier photo_avant_traitement / photo_post_traitement, ignoré."; continue }
+    foreach ($p in $ph) { $paires += ,@($d.Name, (Phase $p.Name), $p.FullName) }
+  }
+}
+$objets = @()
+foreach ($pr in $paires) {
+  $obj = $pr[0]; $sens = $pr[1]; $dir = $pr[2]
+  $cle = $obj.Trim().ToLower()
   if ($CORR.ContainsKey($cle)) { $inv = $CORR[$cle] }
   else {
-    $inv = Nettoie $obj.Name
-    if ($CORR.Count) { $alertes += "« $($obj.Name) » : objet inconnu dans ARGOS CR, le nom du dossier est utilisé tel quel." }
+    $inv = Nettoie $obj
+    if ($CORR.Count -and ($objets -notcontains $obj)) { $alertes += "« $obj » : objet inconnu dans ARGOS CR, le nom du dossier est utilisé tel quel." }
   }
-  $nbObj++
-  foreach ($ph in $phases) {
-    $sens = Phase $ph.Name
-    $fichiers = @(Get-ChildItem -LiteralPath $ph.FullName -File | Where-Object { $EXT -contains $_.Extension.ToLower() })
-    # une photo prise en RAW + JPG garde le même numéro
-    $groupes = $fichiers | Group-Object BaseName | Sort-Object { CleNat $_.Name }
-    $n = 0
-    foreach ($g in $groupes) {
-      $n++
-      foreach ($f in $g.Group) {
-        $nouveau = "{0}_{1}_{2}_{3}_{4}{5}" -f $AN, $DOS, $inv, $sens, $n, $f.Extension.ToLower()
-        if ($f.Name -cne $nouveau) { $plan += [pscustomobject]@{ f = $f; nouveau = $nouveau } }
-      }
+  if ($objets -notcontains $obj) { $objets += $obj }
+  $fichiers = @(Get-ChildItem -LiteralPath $dir -File | Where-Object { $EXT -contains $_.Extension.ToLower() })
+  # une photo prise en RAW + JPG garde le même numéro
+  $groupes = $fichiers | Group-Object BaseName | Sort-Object { CleNat $_.Name }
+  $n = 0
+  foreach ($g in $groupes) {
+    $n++
+    foreach ($f in $g.Group) {
+      $nouveau = "{0}_{1}_{2}_{3}_{4}{5}" -f $AN, $DOS, $inv, $sens, $n, $f.Extension.ToLower()
+      if ($f.Name -cne $nouveau) { $plan += [pscustomobject]@{ f = $f; nouveau = $nouveau } }
     }
   }
 }
+$nbObj = $objets.Count
 
 $alertes | ForEach-Object { Write-Host "  ! $_" -ForegroundColor Yellow }
+if (-not $nbObj) { Write-Host "Aucun dossier d'objet trouvé. Rangement attendu : chantier\objet\photo_avant_traitement, ou chantier\photo_avant_traitement\objet." -ForegroundColor Yellow; return }
 if (-not $plan.Count) { Write-Host "Rien à renommer ($nbObj objet(s) vus) : les photos portent déjà le bon nom." -ForegroundColor Green; return }
 Write-Host ("{0} photo(s) à renommer dans {1} objet(s). Exemples :" -f $plan.Count, $nbObj)
 $plan | Select-Object -First 8 | ForEach-Object { Write-Host ("  {0}  ->  {1}" -f $_.f.Name, $_.nouveau) }
@@ -1061,7 +1083,7 @@ function stepSheet(o,k){
 // Fichier de renommage des photos (Windows) : PowerShell dans un .bat, avec la correspondance dossier d'objet → n° d'inventaire
 function renSheet(){const d=S.d;
   sheet(`<div class="sh-h"><small>${esc(d.num)} · ${esc(d.commune)}</small><b>Renommer les photos</b></div>
-    <p class="hint">1. Rangez les photos ainsi : <b>dossier du chantier</b> (ex. ${esc(d.num)}_${esc((d.commune||'').split(/[\s(]/)[0])}) › <b>un dossier par objet</b> (nommé par son n° d’inventaire, ex. « ${esc(S.objs[0]&&S.objs[0].inv||'OI 14')} », ou son n° d’ordre labo, ex. « ${esc(S.objs[0]&&S.objs[0].idObj?S.objs[0].idObj.slice(-3):'001')} ») › <b>photo_avant_traitement</b> et <b>photo_post_traitement</b>.</p>
+    <p class="hint">1. Dans le <b>dossier du chantier</b>, un dossier par objet (nommé par son n° d’inventaire, ex. « ${esc(S.objs[0]&&S.objs[0].inv||'OI 14')} », ou son n° d’ordre labo, ex. « ${esc(S.objs[0]&&S.objs[0].idObj?S.objs[0].idObj.slice(-3):'001')} »), rangé au choix : <b>chantier › objet › photo_avant_traitement / photo_post_traitement</b>, ou <b>chantier › photo_avant_traitement / photo_post_traitement › objet</b>.</p>
     <p class="hint">2. Téléchargez le fichier et placez-le dans le dossier du chantier. <b>Windows</b> : double-clic. <b>Linux / Mac</b> : ouvrez un terminal (Ctrl + Alt + T sous Linux), tapez <code>bash</code> suivi d'une espace, glissez le fichier .sh dans la fenêtre du terminal, puis Entrée. Il affiche ce qu'il va faire et demande confirmation ; un journal permet d'annuler.</p>
     <p class="hint">Résultat : ${esc(photoBase(d,S.objs[0]))}_avant_1.jpg … _post_1.jpg. Les nouvelles photos ajoutées plus tard sont numérotées à la suite.</p>
     <div class="sh-act"><button class="big secondary" data-a="rendl" data-os="win">Windows (.bat)</button><button class="big primary" data-a="rendl" data-os="nix">Linux / Mac (.sh)</button></div>
