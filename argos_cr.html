@@ -87,6 +87,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .obj-head .num{font-size:34px;font-weight:800;color:var(--navy);line-height:1;font-variant-numeric:tabular-nums}
 .obj-head .num small{display:block;font-size:10px;letter-spacing:1px;color:var(--txt3);font-weight:700;margin-bottom:2px}
 .obj-head h2{margin:0 0 4px;font-size:17px;font-weight:700;text-wrap:balance}
+.link.danger{color:#B42318}.big.primary.danger{background:#B42318;border-color:#B42318;color:#fff}
 .obj-head .edit{font-size:12px;font-weight:600;margin-left:4px;vertical-align:middle}.inv-l{font-size:12px;color:var(--txt2);margin:0 0 6px;word-break:break-word}
 .tags{display:flex;flex-wrap:wrap;gap:5px}
 .tag{font-size:11px;font-weight:600;border-radius:5px;padding:3px 7px;background:var(--bg);color:var(--txt2)}
@@ -671,6 +672,7 @@ const Notion={
     if(t)await nfetch('/blocks/'+t+'/children','PATCH',{children:[para]});
     else await nfetch('/blocks/'+did+'/children','PATCH',{children:[{object:'block',type:'toggle',toggle:{rich_text:[{type:'text',text:{content:COM_TITRE}}],children:[para]}}]});
     return {head,txt}},
+  supprObjet(o){return nfetch('/pages/'+o.id,'PATCH',{archived:true})},
   majObjet(o,x){const t=v=>({rich_text:v?[{type:'text',text:{content:String(v).slice(0,1900)}}]:[]});
     return nfetch('/pages/'+o.id,'PATCH',{properties:{'Description':t(x.d),'N° inventaire':t(x.inv),'US':t(x.us),
       'Matériau':{multi_select:x.mats.map(name=>({name}))},'NR':{number:x.nr},'Masse (g)':{number:x.masse},
@@ -724,6 +726,7 @@ const Demo={
     {app:'kore',id:'demo-k2',ref:'2026-8870-01 lot 2',int:'Saint-Léonard - Centre Bourg',act:'Titrage du bain 1',due:addJ(t,4),kid:''}].map((x,i,a)=>(a.lus=3,a.err=[],x))},
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
   async majObjet(o,x){this._sync(o);dsave()},
+  async supprObjet(o){DEMO.objets=DEMO.objets.filter(x=>x.id!==o.id);const dd=DEMO.dossiers.find(y=>y.id===o.dossier);if(dd)dd.nObj=Math.max(0,(dd.nObj||1)-1);dsave()},
   async comments(did){return ((DEMO.com||{})[did]||[]).slice()},
   async addComment(did,txt){const c={id:'demo-c'+Date.now(),head:op()+' · '+fr(iso())+' '+new Date().toTimeString().slice(0,5),txt};DEMO.com=DEMO.com||{};(DEMO.com[did]=DEMO.com[did]||[]).push(c);dsave();return c},
   async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,t:x.trait||'',na:[],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
@@ -882,7 +885,7 @@ function objetV(){
       <div style="min-width:0;flex:1"><h2>${esc(o.d||o.nom)} <button class="link edit" data-a="editobj" aria-label="Modifier la fiche">Modifier</button></h2>
       ${o.inv&&!invSimple(o)?`<div class="inv-l">Inventaire : ${esc(o.inv)}</div>`:''}
       <div class="tags">${o.idObj?`<span class="tag id">${esc(o.idObj)}</span>`:''}${o.m?`<span class="tag">${esc(o.m)}</span>`:''}${o.nr!=null&&o.nr!==''?`<span class="tag">NR ${o.nr}</span>`:''}${o.t?`<span class="tag t">${esc(o.t)}</span>`:''}</div></div></div>
-    ${photoBase(d,o)?`<div class="label">Photos : ${esc(photoBase(d,o))}_avant_1.jpg … _avant_n · ${esc(photoBase(d,o))}_post_1.jpg … _post_n</div>`:''}
+    ${photoBase(d,o)?`<div class="label" style="text-transform:none;letter-spacing:0">Photos : ${esc(photoBase(d,o))}_avant_1.jpg … _avant_n · ${esc(photoBase(d,o))}_post_1.jpg … _post_n</div>`:''}
   </section>
   ${go}
   <div class="steps">${STEPS.map((s,j)=>{const x=st(o,s.k);
@@ -1128,7 +1131,20 @@ function editSheet(){
       <label class="fl">Masse (g)<input id="ed-ma" class="ti" type="number" min="0" step="0.1" inputmode="decimal" value="${o.masse==null?'':esc(o.masse)}"></label>
       <label class="fl">US<input id="ed-us" class="ti" value="${esc(o.us||'')}"></label></div>
     <p class="hint">L'ID objet (${esc(o.idObj||'—')}) ne change pas : il reste sur l'étiquette QR.</p>
-    <div class="sh-act"><button class="big secondary" data-a="close">Annuler</button><button class="big primary" data-a="editok">${ICON.check}Enregistrer</button></div>`,'edit')}
+    <div class="sh-act"><button class="big secondary" data-a="close">Annuler</button><button class="big primary" data-a="editok">${ICON.check}Enregistrer</button></div>
+    <button class="link danger" data-a="delobj" style="align-self:center">Supprimer cette fiche objet…</button>`,'edit')}
+function delObjSheet(){const o=cur();if(!o)return;
+  sheet(`<div class="sh-h"><small>${esc(o.idObj||'')}${o.inv?' · '+esc(o.inv):''}</small><b>Supprimer cet objet ?</b></div>
+    <p class="hint"><b>${esc(o.d||o.nom||'')}</b> sera retiré du dossier ${esc(S.d.num)}, avec son étiquette QR.</p>
+    <p class="hint">La fiche part dans la corbeille de Notion (récupérable pendant 30 jours) ; son journal d’interventions y reste attaché. À n’utiliser qu’en cas d’erreur (objet créé en double, mauvais dossier…).</p>
+    ${bainOf(o)?`<p class="hint">L’objet est relié à un ${BATH[bainOf(o)].lot} ${BATH[bainOf(o)].nom} : il en sera détaché.</p>`:''}
+    <div class="sh-act"><button class="big secondary" data-a="close">Garder</button><button class="big primary danger" data-a="delobjok">Supprimer</button></div>`)}
+async function supprimerObjet(){const o=cur(),d=S.d;closeSheet();if(!o)return;
+  try{const a=bainOf(o);if(a)await API().setBain(o,a,null);
+    await API().supprObjet(o);
+    S.objs=S.objs.filter(x=>x.id!==o.id);if(d)d.nObj=Math.max(0,(d.nObj||1)-1);
+    view={...view,v:'dossier',oid:null,sel:new Set()};setUrl({dossier:hex(d.id)});render();scrollTo(0,0);toast('Objet supprimé (récupérable dans la corbeille Notion)')}
+  catch(e){fail(e)}}
 async function enregistrerObjet(){
   const o=cur();if(!o)return;const v=id=>($('#'+id)||{}).value||'';const nb=x=>{x=String(x).replace(',','.').trim();return x===''?null:Number(x)};
   const x={d:v('ed-d').trim(),inv:v('ed-inv').trim(),us:v('ed-us').trim(),nr:nb(v('ed-nr')),masse:nb(v('ed-ma')),
@@ -1224,6 +1240,8 @@ document.addEventListener('click',async e=>{
     case 'renphotos':renSheet();break;
     case 'rendl':telechargerRenommage(d.os);break;
     case 'editok':enregistrerObjet();break;
+    case 'delobj':delObjSheet();break;
+    case 'delobjok':supprimerObjet();break;
     case 'op':try{sessionStorage.removeItem('argoslab:in')}catch(e){}await showLogin();await loadHome();break;
     case 'addop':{const n=$('#newop').value.trim();if(!n)return;const ops=LS.get('argoslab:ops',[]);if(!ops.includes(n))ops.push(n);LS.set('argoslab:ops',ops);LS.set('argoslab:op',n);closeSheet();render();break}
     case 'cfg':cfgSheet();break;
