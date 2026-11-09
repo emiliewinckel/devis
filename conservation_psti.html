@@ -501,7 +501,7 @@ var LIB = {sed: 'dégagement du sédiment', surf: 'dégagement de la surface d�
 /* ---------------------------------------------------------------------
    ÉTAT DU FORMULAIRE (gardé dans le navigateur)
    --------------------------------------------------------------------- */
-function vide() { return {op: '', commune: '', projet: '', ro: '', ref: '', contexte: '', delai: '', stab: 'Tout le mobilier', stabPct: '', etude: 'Aucun', terrain: '', quota: '', quotaU: 'objets', q: {}}; }
+function vide() { return {op: '', commune: '', projet: '', ro: '', ref: '', contexte: '', delai: '', stab: 'Tout le mobilier', stabPct: '', etude: 'Aucun', clousRX: '', terrain: '', quota: '', quotaU: 'objets', q: {}}; }
 var F = vide();
 var sv = null;
 try { sv = JSON.parse(localStorage.getItem('psti-cons2') || 'null'); if (sv) F = Object.assign(F, sv); } catch (e) {}
@@ -604,6 +604,12 @@ function calcul() {
     minObjRX += n * minSurf(val(R_.surfPlanche, 'radiographie — surface utile d’une planche') / oc);
   };
   MATS.filter(function(m) { return (m.metal && m.cls) || m.k === 'mottes'; }).forEach(function(m) { C4.forEach(function(c) { var n = qte(m.k, c); if (n) rxCls(m.k, c, n); }); });
+  // clous, tiges, tôles : radiographie sélective, part choisie par le chargé de projet, comptés comme des objets de classe S
+  var nClousRX = 0;
+  if (qte('clous')) {
+    if (String(F.clousRX).trim() === '') miss('part des clous, tiges et tôles radiographiés, en % (à saisir)');
+    else { nClousRX = Math.round(qte('clous') * Math.min(Math.max(parseFloat(String(F.clousRX).replace(',', '.')) || 0, 0), 100) / 100); if (nClousRX) rxCls('clous', 'S', nClousRX); }
+  }
   if (qte('monnaies')) {
     var pc = val(P.mats.monnaies.parCliche, 'monnaies par cliché (Autres matériaux)'), nm = qte('monnaies');
     if (pc) { plRX += nm / pc; eRX += nm * val(P.fer.clicheE.S, 'coût d’un cliché S') / pc; nRX += nm; minObjRX += nm * minSurf(val(R_.surfPlanche, 'radiographie — surface utile d’une planche') / pc); }
@@ -689,6 +695,7 @@ function renderForm() {
     (F.stab === 'Non demandée' ? '<p class="hint" style="margin:6px 0 0">La stabilisation sera proposée en option.</p>' : '') +
     '<label style="margin-top:14px">Nettoyage pour étude (dégagement de la surface d’origine, fiche par objet)</label>' + seg('etude', ETUDE_OPT, F.etude) +
     (F.etude === 'Une partie' ? '<div class="grid" style="margin-top:8px;align-items:end"><div><label for="f-quota">Combien d’objets ?</label><input id="f-quota" data-f="quota" type="number" min="0" inputmode="decimal" value="' + esc(F.quota) + '"></div><div>' + seg('quotaU', ['objets', '%'], F.quotaU || 'objets') + '</div></div>' : '') +
+    '<div class="grid" style="margin-top:14px"><div><label for="f-clousRX">Clous, tiges et tôles radiographiés (% des restes, si attendus)</label><input id="f-clousRX" data-f="clousRX" type="number" min="0" max="100" inputmode="decimal" value="' + esc(F.clousRX) + '" placeholder="0 à 100"></div></div>' +
     '<p class="hint" style="margin:6px 0 0">Les monnaies sont toujours nettoyées une à une ; elles ne comptent pas ici.</p>' +
     '<details class="cls"><summary>Le cahier des charges est flou ?</summary><ul>' +
     '<li>« Le mobilier présentant un intérêt scientifique sera systématiquement stabilisé » → <b>Stabilisation : tout le mobilier</b>. Le tri se fait au laboratoire, pas au devis.</li>' +
