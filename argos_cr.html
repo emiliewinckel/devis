@@ -287,6 +287,124 @@ div.bains{cursor:default}
 <div id="dock"></div>
 <div id="layer"></div>
 
+<script type="text/plain" id="tpl-ren"># Renommage des photos — ARGOS CR (outil conçu par Emilie Winckel, Pôle Conservation-Restauration, Éveha)
+# À placer dans le dossier « numéro Éveha_commune » qui contient un dossier par objet,
+# chacun avec « photo_avant_traitement » et « photo_post_traitement ».
+# Nom produit : année_n° de dossier_n° d'inventaire_avant_1.jpg … / _post_1.jpg …
+$ErrorActionPreference = 'Stop'
+try { [Console]::OutputEncoding = [Text.Encoding]::UTF8 } catch {}
+
+$AN  = '%%AN%%'
+$DOS = '%%DOS%%'
+$CORR = @{}
+%%CORR%%
+
+$self = $env:ARGOS_SELF
+if (-not $self) { $self = $PSCommandPath }
+$racine = Split-Path -Parent $self
+$EXT = @('.jpg','.jpeg','.png','.tif','.tiff','.heic','.webp','.cr2','.cr3','.nef','.arw','.dng','.orf','.rw2','.raf')
+
+function Nettoie([string]$s) { return (($s.Trim() -replace '\s+','') -replace '[\\/:*?"<>|]+','-') }
+function CleNat([string]$s) { return [regex]::Replace($s.ToLower(), '\d+', { param($m) $m.Value.PadLeft(12,'0') }) }
+function Phase([string]$nom) {
+  $n = $nom.ToLower()
+  if ($n -match 'avant') { return 'avant' }
+  if ($n -match 'post|apr[eè]s') { return 'post' }
+  return $null
+}
+
+# Année et n° de dossier : fournis par ARGOS CR, sinon lus dans le nom du dossier (« 2026_9120_Caen », « 2026-5131_Mauves »)
+$nomRacine = Split-Path -Leaf $racine
+if (-not $AN -or $AN -like '%%*') {
+  if ($nomRacine -match '^(\d{4})[_\-\s]+([^_]+)') { $AN = $matches[1]; $DOS = $matches[2] }
+  else {
+    Write-Host "Le dossier « $nomRacine » ne commence pas par année_n° de dossier (ex. 2026_9120_Caen)." -ForegroundColor Red
+    Write-Host "Placez ce fichier dans le dossier du chantier, ou téléchargez-le depuis la page du dossier dans ARGOS CR."
+    return
+  }
+}
+
+function Journaux { return @(Get-ChildItem -LiteralPath $racine -Filter 'renommage_photos_*.csv' -File | Sort-Object Name) }
+
+function Annuler {
+  $j = Journaux
+  if (-not $j.Count) { Write-Host 'Aucun renommage à annuler.'; return }
+  $dernier = $j[-1]
+  $lignes = Import-Csv -LiteralPath $dernier.FullName -Delimiter ';' -Encoding UTF8
+  Write-Host ("Annulation de « {0} » : {1} fichier(s) retrouvent leur ancien nom." -f $dernier.Name, $lignes.Count)
+  if ((Read-Host 'Confirmer ? (O/N)') -notmatch '^[oOyY]') { Write-Host 'Rien n''a été modifié.'; return }
+  $tmp = @()
+  foreach ($l in $lignes) {
+    $p = Join-Path $racine $l.nouveau
+    if (Test-Path -LiteralPath $p) { $t = $p + '.argos_tmp'; Rename-Item -LiteralPath $p -NewName (Split-Path -Leaf $t); $tmp += ,@($t, (Join-Path $racine $l.ancien)) }
+    else { Write-Host ("  introuvable : {0}" -f $l.nouveau) -ForegroundColor Yellow }
+  }
+  foreach ($x in $tmp) { Rename-Item -LiteralPath $x[0] -NewName (Split-Path -Leaf $x[1]) }
+  Rename-Item -LiteralPath $dernier.FullName -NewName ($dernier.Name -replace '\.csv$','_annule.txt')
+  Write-Host 'Annulation terminée.' -ForegroundColor Green
+}
+
+Write-Host ''
+Write-Host "ARGOS CR — renommage des photos du dossier $AN`_$DOS" -ForegroundColor Cyan
+Write-Host "Dossier : $racine"
+Write-Host ''
+if ((Journaux).Count) {
+  $c = Read-Host 'Un renommage a déjà été fait ici. R = renommer (nouvelles photos comprises), A = annuler le dernier renommage'
+  if ($c -match '^[aA]') { Annuler; return }
+}
+
+$plan = @(); $alertes = @(); $nbObj = 0
+foreach ($obj in (Get-ChildItem -LiteralPath $racine -Directory | Sort-Object { CleNat $_.Name })) {
+  $phases = @(Get-ChildItem -LiteralPath $obj.FullName -Directory | Where-Object { Phase $_.Name })
+  if (-not $phases.Count) { $alertes += "« $($obj.Name) » : pas de dossier photo_avant_traitement / photo_post_traitement, ignoré."; continue }
+  $cle = $obj.Name.Trim().ToLower()
+  if ($CORR.ContainsKey($cle)) { $inv = $CORR[$cle] }
+  else {
+    $inv = Nettoie $obj.Name
+    if ($CORR.Count) { $alertes += "« $($obj.Name) » : objet inconnu dans ARGOS CR, le nom du dossier est utilisé tel quel." }
+  }
+  $nbObj++
+  foreach ($ph in $phases) {
+    $sens = Phase $ph.Name
+    $fichiers = @(Get-ChildItem -LiteralPath $ph.FullName -File | Where-Object { $EXT -contains $_.Extension.ToLower() })
+    # une photo prise en RAW + JPG garde le même numéro
+    $groupes = $fichiers | Group-Object BaseName | Sort-Object { CleNat $_.Name }
+    $n = 0
+    foreach ($g in $groupes) {
+      $n++
+      foreach ($f in $g.Group) {
+        $nouveau = "{0}_{1}_{2}_{3}_{4}{5}" -f $AN, $DOS, $inv, $sens, $n, $f.Extension.ToLower()
+        if ($f.Name -cne $nouveau) { $plan += [pscustomobject]@{ f = $f; nouveau = $nouveau } }
+      }
+    }
+  }
+}
+
+$alertes | ForEach-Object { Write-Host "  ! $_" -ForegroundColor Yellow }
+if (-not $plan.Count) { Write-Host "Rien à renommer ($nbObj objet(s) vus) : les photos portent déjà le bon nom." -ForegroundColor Green; return }
+Write-Host ("{0} photo(s) à renommer dans {1} objet(s). Exemples :" -f $plan.Count, $nbObj)
+$plan | Select-Object -First 8 | ForEach-Object { Write-Host ("  {0}  ->  {1}" -f $_.f.Name, $_.nouveau) }
+if ($plan.Count -gt 8) { Write-Host '  …' }
+Write-Host ''
+if ((Read-Host 'Renommer ? (O/N)') -notmatch '^[oOyY]') { Write-Host 'Rien n''a été modifié.'; return }
+
+# en deux temps (noms provisoires) pour ne jamais écraser une photo
+$rel = { param($p) $p.Substring($racine.Length).TrimStart('\','/') }
+$journal = @(); $tmp = @()
+foreach ($x in $plan) {
+  $t = $x.f.FullName + '.argos_tmp'
+  Rename-Item -LiteralPath $x.f.FullName -NewName (Split-Path -Leaf $t)
+  $tmp += ,@($t, $x)
+}
+foreach ($y in $tmp) {
+  $x = $y[1]; $dest = Join-Path $x.f.DirectoryName $x.nouveau
+  Rename-Item -LiteralPath $y[0] -NewName $x.nouveau
+  $journal += [pscustomobject]@{ ancien = (& $rel $x.f.FullName); nouveau = (& $rel $dest) }
+}
+$nomJ = 'renommage_photos_' + (Get-Date -Format 'yyyyMMdd_HHmmss') + '.csv'
+$journal | Export-Csv -LiteralPath (Join-Path $racine $nomJ) -Delimiter ';' -NoTypeInformation -Encoding UTF8
+Write-Host ("Terminé : {0} photo(s) renommée(s). Journal : {1} (relancer ce fichier puis A pour annuler)." -f $plan.Count, $nomJ) -ForegroundColor Green
+</script>
 <script>
 /* ARGOS CR : interface du labo branchée sur Notion (via le proxy commun KORE / KERA / Rapports).
    Notion reste la source : l'app lit les dossiers « en cours » et les fiches objets,
@@ -576,6 +694,7 @@ function links(d){
   if(/déchlo|stabil|fer/.test(t))a.push(`<a class="lk kore" href="${koreUrl(d,[])}" target="_blank" rel="noopener"><span class="dot"></span>KORE${ICON.ext}</a>`);
   if(/dessal|céram/.test(t))a.push(`<a class="lk kera" href="${URLS.kera}" target="_blank" rel="noopener"><span class="dot"></span>KERA${ICON.ext}</a>`);
   if(/^https?:\/\//i.test(d.drive||''))a.push(`<a class="lk drive" href="${esc(d.drive)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Drive${ICON.ext}</a>`);
+  if(S.objs.length&&S.d&&S.d.id===d.id)a.push(`<button class="lk lab" data-a="renphotos"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Renommer les photos</button>`);
   if(S.objs.length&&S.d&&S.d.id===d.id)a.push(`<button class="lk lab" data-a="labels"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>Étiquettes QR</button>`);
   return `<div class="links">${a.join('')}</div>`;
 }
@@ -845,6 +964,31 @@ function stepSheet(o,k){
     kb.innerHTML=lotPicker(app,b=>`<button data-bain="${b.id}" data-app="${app}">${esc(b.ref||b.int)}<small>${esc(b.int)}</small></button>`,'kbl1')+
       `<a class="newk" data-kp="${o.id}" data-kapp="${app}" href="${bainUrl(app,S.d,[o])}" target="_blank" rel="noopener">+ ${B.nouveau} ${ICON.ext}</a>`}).catch(()=>{const kb=l.querySelector('#kb');if(kb)kb.innerHTML=`<span class="empty">${B.nom} inaccessible.</span>`});
 }
+// Fichier de renommage des photos (Windows) : PowerShell dans un .bat, avec la correspondance dossier d'objet → n° d'inventaire
+function renSheet(){const d=S.d;
+  sheet(`<div class="sh-h"><small>${esc(d.num)} · ${esc(d.commune)}</small><b>Renommer les photos</b></div>
+    <p class="hint">1. Rangez les photos ainsi : <b>dossier du chantier</b> (ex. ${esc(d.num)}_${esc((d.commune||'').split(/[\s(]/)[0])}) › <b>un dossier par objet</b> (nommé par son n° d’inventaire, ex. « ${esc(S.objs[0]&&S.objs[0].inv||'OI 14')} », ou son n° d’ordre labo, ex. « ${esc(S.objs[0]&&S.objs[0].idObj?S.objs[0].idObj.slice(-3):'001')} ») › <b>photo_avant_traitement</b> et <b>photo_post_traitement</b>.</p>
+    <p class="hint">2. Téléchargez le fichier, placez-le dans le dossier du chantier et double-cliquez dessus (Windows). Il affiche ce qu'il va faire et demande confirmation ; un journal permet d'annuler.</p>
+    <p class="hint">Résultat : ${esc(photoBase(d,S.objs[0]))}_avant_1.jpg … _post_1.jpg. Les nouvelles photos ajoutées plus tard sont numérotées à la suite.</p>
+    <div class="sh-act"><button class="big secondary" data-a="close">Fermer</button><button class="big primary" data-a="rendl">${ICON.check}Télécharger</button></div>`)}
+function telechargerRenommage(){
+  const d=S.d,q=x=>String(x).replace(/'/g,"''"),m=/^(\d{4})[_\-\s]+(.+)$/.exec(String(d.num||'').trim());
+  const an=m?m[1]:'',dos=(m?m[2]:String(d.num||'')).trim().replace(/[\s\/\\]+/g,'-');
+  const corr={};
+  // nom du dossier d'objet accepté : n° d'inventaire (tel quel, sans espaces, ou son numéro), puis n° d'ordre du labo (001) ou ID objet ;
+  // en cas de doublon, le n° d'inventaire l'emporte
+  const invOf=o=>{const base=photoBase(d,o),pre=[an,dos].filter(Boolean).join('_')+'_';return base.startsWith(pre)?base.slice(pre.length):base};
+  const put=(k,v)=>{k=String(k||'').trim().toLowerCase();if(k&&!(k in corr))corr[k]=v};
+  S.objs.forEach(o=>{const v=invOf(o);[o.inv,String(o.inv||'').replace(/\s+/g,''),v].forEach(k=>put(k,v));if(o.inv&&invSimple(o))put(label(o),v)});
+  S.objs.forEach(o=>{const v=invOf(o),seq=o.idObj?o.idObj.slice(-3):'';[seq,o.idObj].forEach(k=>put(k,v))});
+  const lignes=Object.keys(corr).map(k=>`$CORR['${q(k)}']='${q(corr[k])}'`).join('\n');
+  const ps=$('#tpl-ren').textContent.replace("'%%AN%%'","'"+q(an)+"'").replace("'%%DOS%%'","'"+q(dos)+"'").replace('%%CORR%%',lignes);
+  const bat=['<# : partie Windows (ne pas modifier)','@echo off','chcp 65001 >nul','setlocal','set "ARGOS_SELF=%~f0"',
+    'powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ([IO.File]::ReadAllText($env:ARGOS_SELF,[Text.Encoding]::UTF8))"',
+    'echo.','pause','exit /b','#>',ps].join('\r\n').replace(/\r?\n/g,'\r\n');
+  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bat],{type:'application/octet-stream'}));
+  a.download='renommer_photos_'+(d.num||'dossier').replace(/[^\w\-]+/g,'_')+'.bat';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);closeSheet();toast('Fichier téléchargé : placez-le dans le dossier du chantier')}
 function editSheet(){
   const o=cur();if(!o)return;const ms=(o.m||'').split(',').map(x=>x.trim()).filter(Boolean);
   sheet(`<div class="sh-h"><small>${esc(o.idObj||'')}</small><b>Modifier la fiche objet</b></div>
@@ -950,6 +1094,8 @@ document.addEventListener('click',async e=>{
     case 'scan':scan();break;
     case 'close':closeSheet();break;
     case 'editobj':editSheet();break;
+    case 'renphotos':renSheet();break;
+    case 'rendl':telechargerRenommage();break;
     case 'editok':enregistrerObjet();break;
     case 'op':try{sessionStorage.removeItem('argoslab:in')}catch(e){}await showLogin();await loadHome();break;
     case 'addop':{const n=$('#newop').value.trim();if(!n)return;const ops=LS.get('argoslab:ops',[]);if(!ops.includes(n))ops.push(n);LS.set('argoslab:ops',ops);LS.set('argoslab:op',n);closeSheet();render();break}
