@@ -181,6 +181,15 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 </style>
 </head>
 <body>
+<div id="keygate" style="display:none;position:fixed;inset:0;background:rgba(14,40,64,.92);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;border-radius:12px;max-width:420px;width:100%;padding:22px">
+    <div style="font-size:16px;font-weight:800;margin-bottom:8px">KERA — accès au laboratoire</div>
+    <div id="keygate-msg" style="font-size:12px;line-height:1.6;color:#4A5F72;margin-bottom:12px"></div>
+    <input type="password" id="keygate-input" autocomplete="off" placeholder="Clé d'accès de cet appareil" onkeydown="if(event.key==='Enter')validerAppKey()" style="width:100%;padding:9px;border:1px solid #C9D6E2;border-radius:7px;font-size:14px;margin-bottom:6px;box-sizing:border-box">
+    <div id="keygate-err" style="font-size:11px;color:#791F1F;min-height:14px;margin-bottom:8px"></div>
+    <button class="btn btn-p" style="width:100%" onclick="validerAppKey()">Ouvrir le suivi</button>
+  </div>
+</div>
 <div class="app">
 
 <div class="topbar">
@@ -371,11 +380,10 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
     <div id="notion-status" class="alert a-info" style="display:none;margin-bottom:9px"></div>
     <div style="font-size:12px;color:#27623A;margin-bottom:8px">✅ Proxy Cloudflare configuré — connexion sécurisée</div>
     <div style="font-size:11px;color:#4A5F72;line-height:1.6">
-      Le token Notion est stocké en sécurité dans le proxy Cloudflare.<br>
-      Clé d'accès active : <code style="background:#eee;padding:1px 5px;border-radius:3px">KERA-EMILIE-PC</code>
+      Le token Notion est stocké en sécurité dans le proxy Cloudflare. La clé d'accès de cet appareil n'est enregistrée que dans ce navigateur.
     </div>
     <div class="btn-row" style="margin-top:10px">
-      <div style="margin-bottom:8px"><label style="font-size:10px;color:#4A5F72;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:3px">Appareil</label><div style="display:flex;gap:6px"><select id="cfg-appkey-sel" style="flex:1;font-size:12px;margin-top:0"><option value="">Auto</option><option value="KERA-EMILIE-PC">PC</option><option value="KERA-EMILIE-PHONE">Téléphone</option><option value="KERA-EMILIE-TABLETTE">Tablette</option></select><button class="btn btn-sm" onclick="changerAppKey()">OK</button></div></div><button class="btn btn-sm" onclick="rechargerDepuisNotion()">🔄 Recharger depuis Notion</button>
+      <div style="margin-bottom:8px"><label style="font-size:10px;color:#4A5F72;text-transform:uppercase;letter-spacing:.3px;display:block;margin-bottom:3px">Clé d'accès</label><div style="display:flex;gap:6px;align-items:center"><span id="cfg-appkey-display" style="flex:1;font-size:12px"></span><button class="btn btn-sm" onclick="demanderAppKey()">Changer la clé</button></div></div><button class="btn btn-sm" onclick="rechargerDepuisNotion()">🔄 Recharger depuis Notion</button>
     </div>
   </div>
 
@@ -410,15 +418,39 @@ var ARGOS_OBJETS_DB = '38fd72a9-3a1d-8077-9ef1-c2aaf4e8886e';
 var DB_OBJETS_NAME = 'KERA Objets';
 var DB_BAINS_NAME  = 'KERA Bains';
 
+// Clé d'accès au proxy : comme KORE, elle n'est JAMAIS écrite dans cette page (publique).
+// Chaque appareil la saisit une fois ; si KORE ou ARGOS CR ont déjà une clé sur cet appareil, elle est reprise.
+// Les anciennes clés publiques « KERA-EMILIE-… » ne sont plus acceptées par le proxy.
 function detectAppKey() {
-  var stored = localStorage.getItem('kera_app_key');
-  if (stored) return stored;
-  var ua = navigator.userAgent.toLowerCase();
-  var isMobile = /android|iphone|ipod/.test(ua);
-  var isTablet = /ipad|tablet/.test(ua) || (isMobile && window.screen.width >= 768);
-  if (isTablet) return 'KERA-EMILIE-TABLETTE';
-  if (isMobile) return 'KERA-EMILIE-PHONE';
-  return 'KERA-EMILIE-PC';
+  try {
+    var k = localStorage.getItem('kera_app_key');
+    if (k && !/^KERA-EMILIE-/.test(k)) return k;
+    k = localStorage.getItem('kore_app_key'); if (k) return k;
+    var c = JSON.parse(localStorage.getItem('argoslab:cfg') || 'null'); if (c && c.key) return c.key;
+  } catch (e) {}
+  return '';
+}
+function enregistrerAppKey(k) {
+  k = String(k || '').trim();
+  try { if (k) localStorage.setItem('kera_app_key', k); else localStorage.removeItem('kera_app_key'); } catch (e) {}
+  APP_KEY = detectAppKey();
+  return APP_KEY;
+}
+function cleRefusee(e) { return /401|403|unauthoris|unauthoriz|forbidden/i.test(String(e && e.message || '')); }
+function demanderAppKey(motif) {
+  var g = gid('keygate'); if (!g) return;
+  gid('keygate-msg').innerHTML = motif || 'Saisissez la clé d\'accès de cet appareil (la même que pour KORE ou ARGOS CR). Elle n\'est enregistrée que sur cet appareil.';
+  g.style.display = 'flex';
+  var i = gid('keygate-input'); if (i) { i.value = ''; setTimeout(function () { i.focus(); }, 50); }
+}
+function validerAppKey() {
+  var k = (gid('keygate-input').value || '').trim();
+  if (!k) { gid('keygate-err').textContent = 'Saisissez une clé.'; return; }
+  enregistrerAppKey(k);
+  gid('keygate-err').textContent = '';
+  gid('keygate').style.display = 'none';
+  afficherAppKey();
+  demarrerNotion();
 }
 var APP_KEY = detectAppKey();
 
@@ -448,6 +480,10 @@ function init() {
   var td = new Date().toISOString().split('T')[0];
   document.querySelectorAll('input[type=date]').forEach(function(e) { if (!e.value) e.value = td; });
 
+  if (!APP_KEY) { ref(); demanderAppKey(); return; }
+  demarrerNotion();
+}
+function demarrerNotion() {
   setStatus('Connexion à Notion…', 'info');
   notionSetup().then(function() {
     return loadObjetsFromNotion();
@@ -462,6 +498,12 @@ function init() {
       if (lotCible) ouvrirLot(lotCible.id);
     }
   }).catch(function(e) {
+    if (cleRefusee(e)) {
+      try { localStorage.removeItem('kera_app_key'); } catch (x) {}
+      setStatus('', ''); ref();
+      demanderAppKey('<b>Clé refusée par le serveur.</b> Saisissez la clé d\'accès de cet appareil (la même que pour KORE ou ARGOS CR).');
+      return;
+    }
     setStatus('Erreur Notion : ' + e.message, 'error');
     ref();
   });
@@ -531,7 +573,7 @@ function notionFetch(path, method, body) {
       'Authorization': 'Bearer ' + A.notionToken,
       'Notion-Version': NOTION_VERSION,
       'Content-Type': 'application/json',
-      'X-App-Key': 'KERA-EMILIE-PC'
+      'X-App-Key': APP_KEY
     }
   };
   if (body) opts.body = JSON.stringify(body);
@@ -1692,17 +1734,8 @@ function sauvegarderTokenNotion() {
   });
 }
 
-function changerAppKey(){
-  var sel=document.getElementById('cfg-appkey-sel');if(!sel)return;
-  if(sel.value){localStorage.setItem('kera_app_key',sel.value);APP_KEY=sel.value;}
-  else{localStorage.removeItem('kera_app_key');APP_KEY=detectAppKey();}
-  var d=document.getElementById('cfg-appkey-display');if(d)d.textContent=APP_KEY;
-  setStatus('Clé mise à jour : '+APP_KEY,'ok');
-}
 function afficherAppKey(){
-  var d=document.getElementById('cfg-appkey-display');if(d)d.textContent=APP_KEY;
-  var sel=document.getElementById('cfg-appkey-sel');
-  if(sel){var s=localStorage.getItem('kera_app_key');sel.value=s||'';}
+  var d=document.getElementById('cfg-appkey-display');if(d)d.textContent=APP_KEY?'clé enregistrée sur cet appareil (…'+APP_KEY.slice(-4)+')':'aucune clé';
 }
 function rechargerDepuisNotion() {
   if (!A.notionToken) { alert('Token non configuré.'); return; }
