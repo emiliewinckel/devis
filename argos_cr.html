@@ -612,6 +612,14 @@ function dossierV(){
   ${comV()}`;
 }
 
+// Nom des photos : année_n° de dossier_n° d'inventaire (sans espaces), puis _avant_ ou _post_ et un numéro de 1 à n
+function photoBase(d,o){
+  const m=/^(\d{4})[_\-\s]+(.+)$/.exec(String(d&&d.num||'').trim());
+  const an=m?m[1]:'',dos=(m?m[2]:String(d&&d.num||'')).trim().replace(/[\s\/\\]+/g,'-');
+  const inv=String(o&&o.inv||'').trim().replace(/\s+/g,'').replace(/[\/\\:*?"<>|]+/g,'-');
+  if(!inv)return o&&o.idObj?o.idObj:'';
+  return [an,dos,inv].filter(Boolean).join('_');
+}
 function stepLine(o,k){
   const x=st(o,k),p=parseStep(o.steps[k]);
   if(x==='done')return p.d||'fait';
@@ -634,7 +642,7 @@ function objetV(){
       <div style="min-width:0;flex:1"><h2>${esc(o.d||o.nom)} <button class="link edit" data-a="editobj" aria-label="Modifier la fiche">Modifier</button></h2>
       ${o.inv&&!invSimple(o)?`<div class="inv-l">Inventaire : ${esc(o.inv)}</div>`:''}
       <div class="tags">${o.idObj?`<span class="tag id">${esc(o.idObj)}</span>`:''}${o.m?`<span class="tag">${esc(o.m)}</span>`:''}${o.nr!=null&&o.nr!==''?`<span class="tag">NR ${o.nr}</span>`:''}${o.t?`<span class="tag t">${esc(o.t)}</span>`:''}</div></div></div>
-    ${o.idObj?`<div class="label">Photos : ${esc(o.idObj)}_avant_01.jpg · ${esc(o.idObj)}_apres_01.jpg</div>`:''}
+    ${photoBase(d,o)?`<div class="label">Photos : ${esc(photoBase(d,o))}_avant_1.jpg … _avant_n · ${esc(photoBase(d,o))}_post_1.jpg … _post_n</div>`:''}
   </section>
   ${go}
   <div class="steps">${STEPS.map((s,j)=>{const x=st(o,s.k);
