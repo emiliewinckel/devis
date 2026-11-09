@@ -252,7 +252,7 @@ var PARAMS = {
   },
   "monnaies": {
    "deg": 30,
-   "stab": 15,
+   "stab": 10,
    "fiche": 5,
    "parCliche": 30
   },
@@ -679,17 +679,7 @@ function renderForm() {
   h += '<section class="card"><h2>2. Contexte et délais</h2><p class="hint">Si le site mêle plusieurs contextes, choisissez le contexte dominant.</p>' +
     '<label>Contexte de l’opération</label>' + seg('contexte', Object.keys(P.ctx), F.contexte) +
     '<div class="grid" style="margin-top:12px">' + fld('delai', 'Délai de rendu après la fouille (mois)', 'number') + fld('terrain', 'Jours de présence du C-R sur le terrain (facultatif)', 'number') + '</div></section>';
-  h += '<section class="card"><h2>3. Mobilier attendu</h2><p class="hint">Nombre d’objets par classe de taille (plus grande dimension conservée), d’après le rapport de diagnostic ou l’estimation du RO. Laissez vide ce qui n’est pas attendu. En cas de doute entre deux classes, prenez la classe supérieure.</p>' +
-    '<div class="tw"><table class="mob"><thead><tr><th>Matériau</th>' + C4.map(function(c) { return '<th>' + c + '<small>' + esc(P.dims[c] || '') + '</small></th>'; }).join('') + '</tr></thead><tbody>' +
-    MATS.map(function(m) {
-      var cells = m.cls ? C4.map(function(c) { return '<td><input type="number" min="0" step="1" inputmode="numeric" data-q="' + m.k + '" data-c="' + c + '" value="' + esc((F.q[m.k] || {})[c] || '') + '" aria-label="' + esc(m.n) + ' ' + c + '"></td>'; }).join('')
-        : '<td class="one" colspan="4"><input type="number" min="0" step="1" inputmode="numeric" data-q="' + m.k + '" value="' + esc((F.q[m.k] || {}).n || '') + '" placeholder="nombre de ' + esc(m.u) + '" aria-label="' + esc(m.n) + '" style="max-width:220px;text-align:left"></td>';
-      return '<tr><td class="m"><b>' + esc(m.n) + '</b>' + (m.d ? '<small>' + esc(m.d) + '</small>' : '') + '</td>' + cells + '</tr>';
-    }).join('') + '</tbody></table></div>' +
-    '<details class="cls"><summary>Exemples par classe (mobilier métallique)</summary><ul>' + C4.map(function(c) { return '<li><b>' + c + '</b> (' + esc(P.dims[c] || '') + ') : ' + esc(P.exemples[c] || '') + '</li>'; }).join('') +
-    '<li>Au-delà de ' + (P.dimMax || 60) + ' cm, ou objet qui ne tient pas dans les bacs : hors gabarit, sur devis.</li></ul></details>' +
-    '</section>';
-  h += '<section class="card"><h2>4. Ce que demande le cahier des charges</h2><p class="hint">Deux questions, pour l’ensemble du mobilier saisi ci-dessus. Tous les objets sont débarrassés du sédiment ; le mobilier métallique et les prélèvements en motte sont radiographiés ; ces questions portent sur ce qui vient en plus.</p>' +
+  h += '<section class="card"><h2>3. Ce que demande le cahier des charges</h2><p class="hint">Deux questions, pour l’ensemble du mobilier à saisir ci-dessous. Tous les objets sont débarrassés du sédiment ; le mobilier métallique et les prélèvements en motte sont radiographiés ; ces questions portent sur ce qui vient en plus.</p>' +
     '<label>Stabilisation (déchloruration, dessalement…)</label>' + seg('stab', STAB_OPT, F.stab) +
     (F.stab === 'Une partie' ? '<div class="grid" style="margin-top:8px"><div><label for="f-stabPct">Part du mobilier à stabiliser (%)</label><input id="f-stabPct" data-f="stabPct" type="number" min="0" max="100" inputmode="decimal" value="' + esc(F.stabPct) + '"></div></div>' : '') +
     (F.stab === 'Non demandée' ? '<p class="hint" style="margin:6px 0 0">La stabilisation sera proposée en option.</p>' : '') +
@@ -702,6 +692,16 @@ function renderForm() {
     '<li>« Le mobilier d’une dizaine de tombes sera nettoyé pour étude » → <b>Nettoyage : une partie</b>, en estimant le nombre d’objets (par exemple 10 tombes × 3 objets = 30 objets).</li>' +
     '<li>« Le mobilier sera mis en état pour étude » sans précision → <b>Nettoyage : aucun</b> : le retrait du sédiment et la radiographie suffisent à l’étude courante.</li>' +
     '<li>Le chiffre retenu est écrit dans le document comme hypothèse : il sera ajusté avec le SRA à l’issue de la fouille.</li></ul></details></section>';
+  h += '<section class="card"><h2>4. Mobilier attendu</h2><p class="hint">Nombre d’objets par classe de taille (plus grande dimension conservée), d’après le rapport de diagnostic ou l’estimation du RO. Laissez vide ce qui n’est pas attendu. En cas de doute entre deux classes, prenez la classe supérieure.</p>' +
+    '<div class="tw"><table class="mob"><thead><tr><th>Matériau</th>' + C4.map(function(c) { return '<th>' + c + '<small>' + esc(P.dims[c] || '') + '</small></th>'; }).join('') + '</tr></thead><tbody>' +
+    MATS.map(function(m) {
+      var cells = m.cls ? C4.map(function(c) { return '<td><input type="number" min="0" step="1" inputmode="numeric" data-q="' + m.k + '" data-c="' + c + '" value="' + esc((F.q[m.k] || {})[c] || '') + '" aria-label="' + esc(m.n) + ' ' + c + '"></td>'; }).join('')
+        : '<td class="one" colspan="4"><input type="number" min="0" step="1" inputmode="numeric" data-q="' + m.k + '" value="' + esc((F.q[m.k] || {}).n || '') + '" placeholder="nombre de ' + esc(m.u) + '" aria-label="' + esc(m.n) + '" style="max-width:220px;text-align:left"></td>';
+      return '<tr><td class="m"><b>' + esc(m.n) + '</b>' + (m.d ? '<small>' + esc(m.d) + '</small>' : '') + '</td>' + cells + '</tr>';
+    }).join('') + '</tbody></table></div>' +
+    '<details class="cls"><summary>Exemples par classe (mobilier métallique)</summary><ul>' + C4.map(function(c) { return '<li><b>' + c + '</b> (' + esc(P.dims[c] || '') + ') : ' + esc(P.exemples[c] || '') + '</li>'; }).join('') +
+    '<li>Au-delà de ' + (P.dimMax || 60) + ' cm, ou objet qui ne tient pas dans les bacs : hors gabarit, sur devis.</li></ul></details>' +
+    '</section>';
   if (ADMIN) h += adminHtml();
   document.getElementById('form').innerHTML = h;
 }
