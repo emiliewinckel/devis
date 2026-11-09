@@ -254,7 +254,7 @@ var PARAMS = {
    "deg": 30,
    "stab": 15,
    "fiche": 5,
-   "parCliche": 1
+   "parCliche": 30
   },
   "plomb": {
    "net": {
@@ -592,7 +592,8 @@ function calcul() {
   // radiographie (outil « calcul auto planches RX » du laboratoire) : mobilier métallique et prélèvements en motte.
   // Planches : nombre d'objets par cliché de la grille (surface d'un objet ≈ surface utile d'une planche ÷ objets par cliché).
   // Temps : minutes par objet selon sa surface + 10 min par planche ; une journée au service de radiographie = 210 min
-  // de prises de vue, l'autre demi-journée étant le trajet ; arrondi à la demi-journée (½ JH incompressible), plafonné.
+  // de prises de vue, le reste de la journée couvrant le trajet (service de radiographie à 2 km) ; arrondi à la demi-journée
+  // (½ JH incompressible), plafonné.
   var R_ = P.radio || {};
   var minSurf = function(sf) { var pal = R_.paliers || []; for (var i = 0; i < pal.length; i++) if (sf <= pal[i][0]) return pal[i][1]; return pal.length ? pal[pal.length - 1][1] : 0; };
   var plRX = 0, minObjRX = 0, eRX = 0, nRX = 0;
