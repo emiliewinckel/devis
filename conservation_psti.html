@@ -254,7 +254,7 @@ var PARAMS = {
    "deg": 30,
    "stab": 15,
    "fiche": 5,
-   "parCliche": 1
+   "parCliche": 30
   },
   "plomb": {
    "net": {
@@ -592,7 +592,8 @@ function calcul() {
   // radiographie (outil « calcul auto planches RX » du laboratoire) : mobilier métallique et prélèvements en motte.
   // Planches : nombre d'objets par cliché de la grille (surface d'un objet ≈ surface utile d'une planche ÷ objets par cliché).
   // Temps : minutes par objet selon sa surface + 10 min par planche ; une journée au service de radiographie = 210 min
-  // de prises de vue, l'autre demi-journée étant le trajet ; arrondi à la demi-journée (½ JH incompressible), plafonné.
+  // de prises de vue, le reste de la journée couvrant le trajet (service de radiographie à 2 km) ; arrondi à la demi-journée
+  // (½ JH incompressible), plafonné.
   var R_ = P.radio || {};
   var minSurf = function(sf) { var pal = R_.paliers || []; for (var i = 0; i < pal.length; i++) if (sf <= pal[i][0]) return pal[i][1]; return pal.length ? pal[pal.length - 1][1] : 0; };
   var plRX = 0, minObjRX = 0, eRX = 0, nRX = 0;
@@ -629,7 +630,7 @@ function calcul() {
   if (['cu', 'monnaies', 'precieux'].some(function(k) { return qtot(k); })) curLib.push('stabilisation');
   if (qtot('ceram') || qtot('lapid')) curLib.push('dessalement');
   var postes = {
-    rx: {l: 'Radiographie (RX)', jh: jhRadio + eJH(eClich), w: 'ferme'},
+    rx: {l: 'Radiographie (RX)', jh: jhRadio, w: 'ferme'},  // temps de l'équipe ; les clichés sont un forfait en euros, à part
     sed: {l: 'Retrait du sédiment (ensemble du mobilier)', jh: (minSed + minClous) / H * (1 + majo), w: 'ferme'},
     net: {l: 'Nettoyage pour étude', jh: minNet / H * (1 + majo), w: 'ferme'},
     cur: {l: 'Conservation curative' + (curLib.length ? ' (' + curLib.join(', ') + ')' : ''), jh: minStab / H * (1 + majo) + jhBains + eJH(eSol), w: stabFerme ? 'ferme' : 'option'},
@@ -715,8 +716,9 @@ function renderRes() {
     '<p class="hint" style="margin:4px 0 0">tranche ferme' + (R.option ? ', + ' + fmt(R.option) + ' JH en option (conservation curative)' : '') + '</p>';
   h += '<ul class="lines">' + R.L.ferme.map(function(x) { return '<li><span>' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') +
     R.L.option.map(function(x) { return '<li class="opt"><span>Option : ' + esc(x.l) + '</span><b>' + fmt(x.jh) + '</b></li>'; }).join('') + '</ul>';
-  h += '<p class="hint" style="margin:8px 0 0">' + (R.nPlanches ? 'Radiographie : environ ' + R.nPlanches + ' planche' + (R.nPlanches > 1 ? 's' : '') + ' (' + fmt(R.jhRadio) + ' JH sur place, trajet compris). ' : '') + (R.fStab < 1 ? 'Stabilisation de ' + pct(R.fStab) + ' du mobilier. ' : '') + '</p>';
-  h += '<p class="hint" style="margin:6px 0 0">Fiches, photographies, suivi de projet, contexte et consommables sont compris dans ces postes.</p>';
+  h += '<p class="hint" style="margin:8px 0 0">' + (R.nPlanches ? 'Radiographie : environ ' + R.nPlanches + ' planche' + (R.nPlanches > 1 ? 's' : '') + ' ; la ligne RX en JH est le temps de l’équipe (trajet, conditionnement et prises de vue avec le mobilier). ' : '') + (R.fStab < 1 ? 'Stabilisation de ' + pct(R.fStab) + ' du mobilier. ' : '') + '</p>';
+  if (R.eClich > 0) h += '<ul class="lines"><li><span>Forfait clichés radiographiques (€ HT)</span><b>' + fmtE(R.eClich) + '</b></li></ul>';
+  h += '<p class="hint" style="margin:6px 0 0">Fiches, photographies, suivi de projet, contexte et consommables sont compris dans les postes en JH' + (R.eClich > 0 ? ' ; les clichés radiographiques sont facturés à part, au forfait' : '') + '.</p>';
   R.alertes.forEach(function(a) { h += '<div class="al">' + esc(a) + '</div>'; });
   h += '<button class="btn" id="dl">Télécharger le volet (.odt)</button>';
   h += '<div class="paste"><b>À reporter dans le PSTI :</b><br><span id="pst">' + esc(ligne(R)) + '</span></div>';
@@ -726,7 +728,7 @@ function renderRes() {
 function ligne(R) {
   return R.L.ferme.map(function(x) { return x.l + ' : ' + fmt(x.jh) + ' JH'; }).join(' ; ') +
     (R.option ? ' ; en option, ' + R.L.option.map(function(x) { return x.l.charAt(0).toLowerCase() + x.l.slice(1) + ' : ' + fmt(x.jh) + ' JH'; }).join(' ; ') : '') +
-    '. Conditions et réserves : voir volet conservation-restauration joint.';
+    (R.eClich > 0 ? ' ; forfait clichés radiographiques : ' + fmtE(R.eClich) + ' HT' : '') + '. Conditions et réserves : voir volet conservation-restauration joint.';
 }
 
 /* =====================================================================
@@ -866,9 +868,10 @@ function odtContent(R) {
       R.nMon ? 'nettoyage des monnaies une à une, avec fiche individuelle' : '',
       !R.hasCur ? '' : F.stab === 'Non demandée' ? 'stabilisation proposée en option' : F.stab === 'Une partie' ? 'stabilisation d’une partie du mobilier, selon le cahier des charges' : 'stabilisation de l’ensemble du mobilier qui le nécessite'
     ].filter(Boolean).join('\u00a0; ') + '. Ces hypothèses traduisent le cahier des charges ; les quantités seront précisées avec le SRA à l’issue de la fouille, au vu du mobilier réellement mis au jour.' +
-    ' Chaque poste comprend la documentation (fiches, photographies), les consommables et le suivi de projet.');
+    ' Chaque poste comprend la documentation (fiches, photographies), les consommables et le suivi de projet' + (R.eClich > 0 ? ' ; les clichés radiographiques font l’objet d’un forfait distinct, en euros' : '') + '.');
   b += table(['E', 'F'], ['Tranche ferme', 'JH'], R.L.ferme.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total tranche ferme', fmt(R.ferme)]);
   if (R.L.option.length) b += table(['E', 'F'], ['Option', 'JH'], R.L.option.map(function(x) { return [x.l, fmt(x.jh)]; }), ['Total de l’option', fmt(R.option)]);
+  if (R.eClich > 0) b += table(['E', 'F'], ['Forfait', '€ HT'], [['Clichés radiographiques (planches réalisées par le service de radiographie)', fmtE(R.eClich)]], null);
   b += h('Provision', 2);
   b += p('Découvertes exceptionnelles : en cas d’objet exceptionnel, hors normes, ou dans un état de conservation nécessitant une prise en charge exceptionnelle, nous proposerons de revoir la sélection ou le nombre d’objets à traiter avec le SRA dès la fin de l’opération, afin de rester dans le budget initial ; à défaut, un devis complémentaire sera établi.');
   b += h('Hors périmètre de la présente estimation', 2);
