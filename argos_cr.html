@@ -182,7 +182,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .sh-act .big:only-child{grid-column:1/-1}
 .kbox{border:1.5px dashed var(--sky);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;background:var(--sky-l)}
 .kbox b{display:block;font-size:13px}.kbox span{font-size:12px;color:var(--txt2)}
-.kb{display:flex;flex-wrap:wrap;gap:6px}
+.kb{display:flex;flex-wrap:wrap;gap:6px}.ksearch{margin:0 0 8px}#kb{display:block}
 .kb button{border:1px solid var(--sky);background:#fff;color:var(--navy);border-radius:8px;padding:8px 10px;font-weight:700;font-size:12px}
 
 .op{border:0;color:#fff}.op small{font-size:10px;text-transform:uppercase;letter-spacing:.8px;opacity:.8}
@@ -409,9 +409,8 @@ const Notion={
   setNA(o,na){return nfetch('/pages/'+o.id,'PATCH',{properties:{'Étapes non applicables':{multi_select:na.map(name=>({name}))}}})},
   setBain(o,app,kid){return nfetch('/pages/'+o.id,'PATCH',{properties:{[BATH[app].prop]:{relation:kid?[{id:kid}]:[]}}})},
   // Bains KORE / lots KERA en cours (les terminés ne sont pas proposés)
-  async bainLots(app){const B=BATH[app],j=await nfetch('/databases/'+DB[app]+'/query','POST',{page_size:40,
-    sorts:[{property:'Date début',direction:'descending'}]});
-    return (j.results||[]).map(pg=>({id:pg.id,int:pv(pg.properties[B.title]),ref:pv(pg.properties['Référence']),statut:pv(pg.properties['Statut']),kid:pv(pg.properties[B.nom+' ID'])}))
+  async bainLots(app){const B=BATH[app],res=await queryAll(DB[app],{sorts:[{property:'Date début',direction:'descending'}]});
+    return res.map(pg=>({id:pg.id,int:pv(pg.properties[B.title]),ref:pv(pg.properties['Référence']),statut:pv(pg.properties['Statut']),kid:pv(pg.properties[B.nom+' ID'])}))
       .filter(l=>!/termin/i.test(l.statut||''))},
   // Prochaines actions des bains KORE et des lots KERA (champs écrits par les deux applications)
   async echeances(){const out=[];out.lus=0;out.err=[];
@@ -738,8 +737,35 @@ async function openObj(id){
 }
 async function bainName(o){const a=bainOf(o);if(!a||o.bainName)return;try{const l=await lotsOf(a);
   const k=l.find(x=>hex(x.id)===hex(o[a][0]));if(k){o.bainName=k.ref||k.int;if(view.oid===o.id)render()}}catch(e){}}
+// Choix d'un bain : ceux du dossier en premier, puis les autres ; champ de recherche sur tous les bains
+const sansAcc=x=>String(x||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+function lotsTri(lots){const d=S.d||{},m=/^\d{4}\D+(\d{3,})/.exec(String(d.num||'')),num=m?m[1]:'',com=sansAcc(d.commune).split(/[\s(]/)[0];
+  // n° de dossier sans l'année (2026_8249-8 → 8249), ou commune
+  const ok=l=>{const t=sansAcc((l.ref||'')+' '+(l.int||''));return (num&&t.replace(/[^0-9]/g,' ').split(/\s+/).includes(num))||(com.length>3&&t.includes(com))};
+  const fini=l=>/termin|clos/i.test(l.statut||'');
+  return lots.map((l,i)=>({l,i,k:(ok(l)?0:2)+(fini(l)?1:0)})).sort((a,b)=>a.k-b.k||a.i-b.i).map(x=>x.l)}
+function lotBtns(app,q,btn){const all=lotsTri(S.lots[app]||[]),Q=sansAcc(q).trim();
+  const L=Q?all.filter(l=>Q.split(/\s+/).every(w=>sansAcc((l.ref||'')+' '+(l.int||'')).includes(w))).slice(0,30):all.slice(0,12);
+  return L.length?L.map(btn).join(''):`<span class="empty">Aucun ${BATH[app].lot} ne correspond${Q?' à « '+esc(q)+' »':''}.</span>`}
+function lotPicker(app,btn,id){LOTBTN[id]={app,btn};const n=(S.lots[app]||[]).length;
+  return `<input class="ti ksearch" data-ks="${id}" type="search" placeholder="Rechercher parmi les ${n} ${BATH[app].lot}s : n° de dossier, commune…" autocomplete="off">
+    <div class="kb" id="${id}">${lotBtns(app,'',btn)}</div>`}
+const LOTBTN={};
+document.addEventListener('input',e=>{const t=e.target;if(!t.classList||!t.classList.contains('ksearch'))return;const P=LOTBTN[t.dataset.ks],box=document.getElementById(t.dataset.ks);if(P&&box)box.innerHTML=lotBtns(P.app,t.value,P.btn)});
 async function lotsOf(a,fresh){if(fresh||!S.lots[a])S.lots[a]=await API().bainLots(a);return S.lots[a]}
-function setUrl(p){try{const u=new URL(location.href);u.search=new URLSearchParams(p).toString();history.replaceState(null,'',u)}catch(e){}}
+// Chaque page (accueil, dossier, objet) est une entrée de l'historique : la flèche « retour » du navigateur reste dans ARGOS CR.
+let navPop=false;
+function setUrl(p){try{const u=new URL(location.href);u.search=new URLSearchParams(p).toString();
+  if(u.href===location.href)return;
+  if(navPop)history.replaceState(null,'',u);else history.pushState(null,'',u)}catch(e){}}
+window.addEventListener('popstate',async()=>{
+  const q=new URLSearchParams(location.search),obj=q.get('objet'),dos=q.get('dossier');
+  closeSheet();navPop=true;
+  try{
+    if(obj)await openObj(obj);
+    else if(dos){if(S.d&&hex(S.d.id)===hex(dos)&&S.objs.length){view={...view,v:'dossier',sel:new Set()};render();scrollTo(0,0)}else await openDossier(dos)}
+    else{if(!S.dossiers.length)await loadHome();view={...view,v:'home',sel:new Set()};render();scrollTo(0,0)}
+  }finally{navPop=false}});
 
 /* ---------- écritures ---------- */
 // Une validation = une ligne dans Interventions ; l'état affiché est mis à jour tout de suite,
@@ -810,7 +836,7 @@ function stepSheet(o,k){
     <button class="link" data-a="close" style="align-self:center">Fermer</button>`,k);
   if(B)lotsOf(app).then(lots=>{
     const kb=l.querySelector('#kb');if(!kb)return;
-    kb.innerHTML=lots.slice(0,8).map(b=>`<button data-bain="${b.id}" data-app="${app}">${esc(b.ref||b.int)}<small>${esc(b.int)}</small></button>`).join('')+
+    kb.innerHTML=lotPicker(app,b=>`<button data-bain="${b.id}" data-app="${app}">${esc(b.ref||b.int)}<small>${esc(b.int)}</small></button>`,'kbl1')+
       `<a class="newk" data-kp="${o.id}" data-kapp="${app}" href="${bainUrl(app,S.d,[o])}" target="_blank" rel="noopener">+ ${B.nouveau} ${ICON.ext}</a>`}).catch(()=>{const kb=l.querySelector('#kb');if(kb)kb.innerHTML=`<span class="empty">${B.nom} inaccessible.</span>`});
 }
 function editSheet(){
@@ -936,7 +962,7 @@ document.addEventListener('click',async e=>{
     case 'bpick':{const app=d.app,B=BATH[app],objs=S.objs.filter(o=>view.sel.has(o.id)&&B.test(o));if(!objs.length)return;
       const lots=await lotsOf(app).catch(()=>[]);
       sheet(`<div class="sh-h"><small>${objs.length} objet${objs.length>1?'s':''} ${B.mat}</small><b>Choisir le ${B.lot} ${B.nom}</b></div>
-        <div class="kb">${lots.length?lots.slice(0,10).map(l=>`<button data-klink="${l.id}" data-kapp="${app}">${esc(l.ref||l.int)}<small>${esc(l.int)}</small></button>`).join(''):`<span class="empty">Aucun ${B.lot} en cours dans ${B.nom}.</span>`}</div>
+        ${lots.length?lotPicker(app,l=>`<button data-klink="${l.id}" data-kapp="${app}">${esc(l.ref||l.int)}<small>${esc(l.int)}</small></button>`,'kbl2'):`<div class="kb"><span class="empty">Aucun ${B.lot} dans ${B.nom}.</span></div>`}
         <button class="link" data-a="close" style="align-self:center">Fermer</button>`);break}
     case 'kplater':closeSheet();break;
     case 'creer':creerFiches();break;
@@ -1194,6 +1220,6 @@ document.addEventListener('change',e=>{if(e.target.id==='cmat'){view.cMat=e.targ
   if(!inside||!LS.get('argoslab:op',''))await showLogin();
   else S.mode=CFG.key&&LS.get('argoslab:mode','')!=='demo'?'notion':'demo';
   await loadHome();
-  if(obj)openObj(obj);else if(dos)openDossier(dos);
+  navPop=true;try{if(obj)await openObj(obj);else if(dos)await openDossier(dos)}finally{navPop=false}
 })();
 </script>
