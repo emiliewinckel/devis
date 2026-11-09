@@ -98,7 +98,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .dwrap{display:flex;flex-direction:column;gap:4px}.dtog{align-self:flex-start;border:0;background:none;color:var(--navy);font:600 12px var(--font);padding:2px 6px;cursor:pointer}.dtog.late{color:#B42318}
 .tlist{display:flex;flex-direction:column;gap:6px;margin-top:6px}.tlist.court{margin:0 0 4px 12px}
 .tl{display:flex;flex-direction:column;align-items:flex-start;gap:2px;border:1px solid var(--border);border-left:4px solid var(--navy);background:var(--card);border-radius:10px;padding:8px 10px;font:inherit;text-align:left;cursor:pointer}
-.tl.late{border-left-color:#B42318}.tl-e{font-weight:800;font-size:13px;color:var(--navy)}.tl-m{font-size:12px;color:var(--txt2)}
+.tl.late{border-left-color:#B42318}.tl.fic{border-left-color:#E8A33D}.tl-e{font-weight:800;font-size:13px;color:var(--navy)}.tl-m{font-size:12px;color:var(--txt2)}
 .tobjs{display:flex;flex-wrap:wrap;gap:5px;max-height:220px;overflow:auto}.tobjs .to{font-size:11px;border:1px solid var(--border);border-radius:7px;padding:3px 7px;background:var(--bg)}
 .tobjs .to.ok{background:#E8F5E9;border-color:#A5D6A7;color:#2E7D32}.tobjs.pick .to{display:flex;align-items:center;gap:4px;cursor:pointer}
 .late{color:#B42318}
@@ -863,8 +863,13 @@ function links(d){
 // Elle se termine seule quand l'étape est faite (ou non applicable) sur tous ses objets, quel que soit
 // l'opérateur qui l'a validée : rien à cocher, aucune erreur si quelqu'un d'autre l'a faite.
 const kEt=n=>(STEPS.find(s=>s.n===n)||{}).k;
+const T_FICHES='Création des fiches';
+const dossierDe=id=>(S.d&&hex(S.d.id)===hex(id)?S.d:null)||S.dossiers.find(x=>hex(x.id)===hex(id))||null;
 function objT(id){const h=hex(id);return S.objs.find(o=>hex(o.id)===h)||S.objT[h]||null}
-function tProg(t){const k=kEt(t.etape),os=t.objets.map(objT).filter(Boolean);
+function tProg(t){
+  if(t.etape===T_FICHES){const d=dossierDe(t.dossier);if(!d)return {ok:0,n:0,fiches:1,fini:false};const n=d.nObj||0,nb=Number(d.nb)||0;
+    return {ok:n,n:nb,fiches:1,fini:!!t.faite||(nb?n>=nb:n>0)}}
+  const k=kEt(t.etape),os=t.objets.map(objT).filter(Boolean);
   const ok=os.filter(o=>{const x=st(o,k);return x==='done'||x==='na'}).length;return {ok,n:t.objets.length,connus:os.length,fini:!!k&&os.length===t.objets.length&&t.objets.length>0&&ok===os.length}}
 async function chargerTaches(){
   try{const [ts,os]=await Promise.all([API().taches(),API().objetsTaches()]);S.objT={};os.forEach(o=>S.objT[hex(o.id)]=o);S.taches=ts;S.tErr=''}
@@ -875,8 +880,9 @@ function finirTaches(){if(!S.taches)return;const finis=S.taches.filter(t=>tProg(
 const dNum=id=>{const d=S.dossiers.find(x=>hex(x.id)===hex(id))||(S.d&&hex(S.d.id)===hex(id)?S.d:null);return d?d.num:''};
 const lundi=iso0=>{const d=new Date(iso0+'T12:00:00'),j=(d.getDay()+6)%7;d.setDate(d.getDate()-j);return d.toISOString().slice(0,10)};
 function tRetard(t){return t.ech&&t.ech<iso()}
-function tLigne(t){const p=tProg(t);return `<button class="tl${tRetard(t)?' late':''}" data-tache="${t.id}"><span class="tl-e">${esc(t.etape)}</span>
-  <span class="tl-m">${esc(t.personne||'non attribuée')} · ${p.ok}/${p.n} objet${p.n>1?'s':''}${t.ech?' · '+(tRetard(t)?'en retard, ':'avant le ')+fr(t.ech):''}</span></button>`}
+const tAv=p=>p.fiches?(p.n?p.ok+'/'+p.n+' fiches':p.ok+' fiche'+(p.ok>1?'s':'')):p.ok+'/'+p.n+' objet'+(p.n>1?'s':'');
+function tLigne(t){const p=tProg(t);return `<button class="tl${tRetard(t)?' late':''}${p.fiches?' fic':''}" data-tache="${t.id}"><span class="tl-e">${esc(t.etape)}</span>
+  <span class="tl-m">${esc(t.personne||'non attribuée')} · ${tAv(p)}${t.ech?' · '+(tRetard(t)?'en retard, ':'avant le ')+fr(t.ech):''}</span></button>`}
 // Frise par personne : une ligne par tâche, groupées par personne, sur 6 semaines
 function planningV(){
   if(S.taches===null)return '';
@@ -892,38 +898,41 @@ function planningV(){
     L.forEach((t,j)=>{let a=idx(t.debut||t.ech),b=idx(t.ech||t.debut);if(a===null){a=0;b=0}a=Math.max(0,Math.min(NS-1,a));b=Math.max(a,Math.min(NS-1,b));
       const pr=tProg(t),hors=idx(t.ech||t.debut)!==null&&idx(t.ech||t.debut)>=NS;
       h+=`<span class="fp${j?' cont':''}${p===op()?' moi':''}">${j?'':esc(p||'Non attribuées')}</span>`+
-        `<button class="fb${tRetard(t)?' late':''}${t.ech?'':' nodate'}" style="grid-column:${a+2}/${b+3}" data-tache="${t.id}" title="${esc(t.etape)} · ${esc(dNum(t.dossier))}"><b>${esc(t.etape)}</b> ${esc(dNum(t.dossier))} · ${pr.ok}/${pr.n}${hors?' →':''}</button>`;
+        `<button class="fb${tRetard(t)?' late':''}${t.ech?'':' nodate'}" style="grid-column:${a+2}/${b+3}" data-tache="${t.id}" title="${esc(t.etape)} · ${esc(dNum(t.dossier))}"><b>${esc(t.etape)}</b> ${esc(dNum(t.dossier))} · ${pr.fiches?(pr.n?pr.ok+'/'+pr.n:pr.ok)+' fiches':pr.ok+'/'+pr.n}${hors?' →':''}</button>`;
       for(let c=0;c<NS;c++)if(c<a||c>b)h+=`<span class="fe" style="grid-column:${c+2}"></span>`;});});
   return h+'</div></div>';
 }
-function dTachesV(d,court){const L=(S.taches||[]).filter(t=>hex(t.dossier)===hex(d.id));if(!L.length)return '';
+const ordreT=(a,b)=>(a.etape===T_FICHES?0:1)-(b.etape===T_FICHES?0:1)||STEPS.findIndex(s=>s.n===a.etape)-STEPS.findIndex(s=>s.n===b.etape)||(a.ech||'9').localeCompare(b.ech||'9');
+function dTachesV(d,court){const L=(S.taches||[]).filter(t=>hex(t.dossier)===hex(d.id)).sort(ordreT);if(!L.length)return '';
   return `<div class="tlist${court?' court':''}">${L.map(tLigne).join('')}</div>`}
 function tachesDossierV(d){
-  const L=(S.taches||[]).filter(t=>hex(t.dossier)===hex(d.id));
+  const L=(S.taches||[]).filter(t=>hex(t.dossier)===hex(d.id)).sort(ordreT);
   return `<section class="card tach"><div class="label">Tâches</div>
     ${S.taches===null?'<p class="cm-v">Chargement…</p>':L.length?`<div class="tlist">${L.map(tLigne).join('')}</div>`:'<p class="cm-v">Aucune tâche en cours sur ce dossier.</p>'}
     <button class="link" data-a="tnew">+ Nouvelle tâche${view.v==='lot'&&view.sel.size?' pour la sélection':''}</button></section>`}
 function personnes(){return [...new Set([op()].concat(LS.get('argoslab:ops',[]),(S.taches||[]).map(t=>t.personne)).filter(x=>x&&x!=='—'))]}
-function tacheSheet(id){const t=(S.taches||[]).find(x=>x.id===id);if(!t)return;const k=kEt(t.etape),p=tProg(t);
+function tacheSheet(id){const t=(S.taches||[]).find(x=>x.id===id);if(!t)return;const k=kEt(t.etape),p=tProg(t),fic=t.etape===T_FICHES;
   const os=t.objets.map(i=>objT(i)||{id:i,idObj:'(objet d’un autre dossier)',d:''});
   sheet(`<div class="sh-h"><small>${esc(dNum(t.dossier))}${t.par?' · créée par '+esc(t.par):''}</small><b>${esc(t.etape)} — ${esc(t.personne||'non attribuée')}</b></div>
-    <p class="hint">${t.debut?'Du '+fr(t.debut)+' ':''}${t.ech?(t.debut?'au ':'Avant le ')+fr(t.ech):'Sans échéance'}${tRetard(t)?' · <b class="late">en retard</b>':''} · ${p.ok}/${p.n} objet${p.n>1?'s':''} faits</p>
+    <p class="hint">${t.debut?'Du '+fr(t.debut)+' ':''}${t.ech?(t.debut?'au ':'Avant le ')+fr(t.ech):'Sans échéance'}${tRetard(t)?' · <b class="late">en retard</b>':''} · ${fic?tAv(p)+' créée'+(p.ok>1?'s':''):p.ok+'/'+p.n+' objet'+(p.n>1?'s':'')+' faits'}</p>
+    ${fic?`<p class="hint">La tâche se termine seule quand les fiches du dossier sont créées${p.n?' ('+p.n+' attendues d’après le n° d’objets du dossier)':''}. Si le nombre attendu est inexact, utilisez « C’est fait ».</p>`:''}
     ${t.note?`<p class="hint">${esc(t.note)}</p>`:''}
-    <div class="tobjs">${os.map(o=>{const x=o.steps?st(o,k):'';return `<span class="to ${x==='done'||x==='na'?'ok':''}">${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||'')}</span>`}).join('')}</div>
+    ${fic?'':`<div class="tobjs">${os.map(o=>{const x=o.steps?st(o,k):'';return `<span class="to ${x==='done'||x==='na'?'ok':''}">${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||'')}</span>`}).join('')}</div>`}
     <div class="sh-act">${t.personne!==op()?`<button class="big secondary" data-tme="${t.id}">Je m’en charge</button>`:`<button class="big secondary" data-tlib="${t.id}">Je ne m’en charge plus</button>`}
       <button class="big primary" data-topen="${t.dossier}">Ouvrir le dossier</button></div>
-    <div style="display:flex;justify-content:center;gap:18px"><button class="link" data-tedit="${t.id}">Modifier</button><button class="link danger" data-tdel="${t.id}">Supprimer</button><button class="link" data-a="close">Fermer</button></div>`)}
-function tacheForm(t){const d=S.d,k0=t?kEt(t.etape):(view.v==='lot'&&view.step)||null;
+    <div style="display:flex;justify-content:center;gap:18px">${fic?`<button class="link" data-tfait="${t.id}">C’est fait</button>`:''}<button class="link" data-tedit="${t.id}">Modifier</button><button class="link danger" data-tdel="${t.id}">Supprimer</button><button class="link" data-a="close">Fermer</button></div>`)}
+function tacheForm(t){const d=S.d,k0=t?(t.etape===T_FICHES?'fiches':kEt(t.etape)):(view.v==='lot'&&view.step)||(S.objs.length?null:'fiches');
   const sel=t?new Set(t.objets.map(hex)):view.v==='lot'&&view.sel.size?new Set([...view.sel].map(hex)):null;
   view.tf={k:k0||'ne',id:t?t.id:null,sel};
   const l=sheet(tFormHtml(t),'tf');}
-function tFormHtml(t){const d=S.d,F=view.tf,k=F.k;
-  const objs=S.objs.map(o=>{const x=st(o,k),fait=x==='done'||x==='na';const coche=F.sel?F.sel.has(hex(o.id)):!fait;return {o,fait,coche}});
+function tFormHtml(t){const d=S.d,F=view.tf,k=F.k,fic=k==='fiches';
+  const objs=fic?[]:S.objs.map(o=>{const x=st(o,k),fait=x==='done'||x==='na';const coche=F.sel?F.sel.has(hex(o.id)):!fait;return {o,fait,coche}});
   const pers=personnes();
   return `<div class="sh-h"><small>${esc(d.num)} · ${esc(d.commune)}</small><b>${t?'Modifier la tâche':'Nouvelle tâche'}</b></div>
-    <div class="label">Étape</div><div class="chips cwrap">${STEPS.map(s=>`<button class="chip" data-tfk="${s.k}" aria-pressed="${s.k===k}">${s.n}</button>`).join('')}</div>
-    <div class="label">Objets <button class="link" data-tfall="1">tous ceux à faire</button> · <button class="link" data-tfall="0">aucun</button></div>
-    <div class="tobjs pick">${objs.map(({o,fait,coche})=>`<label class="to${fait?' ok':''}"><input type="checkbox" data-tfo="${o.id}" ${coche?'checked':''}> ${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||o.d||'')}</label>`).join('')}</div>
+    <div class="label">Étape</div><div class="chips cwrap"><button class="chip" data-tfk="fiches" aria-pressed="${fic}">${T_FICHES}</button>${STEPS.map(s=>`<button class="chip" data-tfk="${s.k}" aria-pressed="${s.k===k}">${s.n}</button>`).join('')}</div>
+    ${fic?`<p class="hint">Créer les fiches objets du dossier (et imprimer les étiquettes QR) : à faire avant les autres tâches. La tâche se terminera seule quand les fiches seront créées${Number(d.nb)?' ('+Number(d.nb)+' objets annoncés dans le dossier)':''}.</p>`:
+    `<div class="label">Objets <button class="link" data-tfall="1">tous ceux à faire</button> · <button class="link" data-tfall="0">aucun</button></div>
+    ${objs.length?`<div class="tobjs pick">${objs.map(({o,fait,coche})=>`<label class="to${fait?' ok':''}"><input type="checkbox" data-tfo="${o.id}" ${coche?'checked':''}> ${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||o.d||'')}</label>`).join('')}</div>`:'<p class="hint">Pas encore de fiches objets : commencez par une tâche « Création des fiches ».</p>'}`}
     <label class="fl">Personne<input id="tf-p" class="ti" list="tf-pl" value="${esc(t?t.personne:'')}" placeholder="laisser vide = à attribuer"><datalist id="tf-pl">${pers.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${pers.slice(0,6).map(x=>`<button class="chip" data-tfp="${esc(x)}">${esc(x)}${x===op()?' (moi)':''}</button>`).join('')}</div>
     <div class="sh-act"><label class="fl">Début<input id="tf-d" class="ti" type="date" value="${esc(t?t.debut:iso())}"></label><label class="fl">Échéance<input id="tf-e" class="ti" type="date" value="${esc(t?t.ech:addJ(iso(),7))}"></label></div>
@@ -935,8 +944,9 @@ function tfRefresh(){const sh=document.querySelector('.sheet[data-k="tf"] .sheet
   $('#tf-p').value=keep.p||'';$('#tf-d').value=keep.d||'';$('#tf-e').value=keep.e||'';$('#tf-n').value=keep.n||''}
 async function tSave(){const F=view.tf,d=S.d,v=id=>(($('#'+id)||{}).value||'').trim();
   const objets=[...document.querySelectorAll('[data-tfo]')].filter(c=>c.checked).map(c=>c.dataset.tfo);
-  if(!objets.length)return toast('Cochez au moins un objet',0,1);
-  const x={titre:sn(F.k)+' — '+d.num+(v('tf-p')?' — '+v('tf-p'):''),dossier:d.id,objets,etape:sn(F.k),personne:v('tf-p'),debut:v('tf-d'),ech:v('tf-e'),note:v('tf-n')};
+  const fic=F.k==='fiches',et=fic?T_FICHES:sn(F.k);
+  if(!fic&&!objets.length)return toast('Cochez au moins un objet',0,1);
+  const x={titre:et+' — '+d.num+(v('tf-p')?' — '+v('tf-p'):''),dossier:d.id,objets,etape:et,personne:v('tf-p'),debut:v('tf-d'),ech:v('tf-e'),note:v('tf-n')};
   if(x.debut&&x.ech&&x.ech<x.debut)return toast('L’échéance est avant le début',0,1);
   closeSheet();
   try{if(F.id){const t=S.taches.find(y=>y.id===F.id);await API().majTache(t,x);Object.assign(t,x);toast('Tâche modifiée')}
@@ -1353,6 +1363,7 @@ document.addEventListener('click',async e=>{
   if(d.tme){tAttrib(d.tme,op());return}
   if(d.tlib){tAttrib(d.tlib,'');return}
   if(d.tdel){tSuppr(d.tdel);return}
+  if(d.tfait){const t=(S.taches||[]).find(x=>x.id===d.tfait);closeSheet();if(t){t.faite=true;finirTaches();render();toast('Tâche terminée')}return}
   if(d.tedit){const t=(S.taches||[]).find(x=>x.id===d.tedit);closeSheet();if(t){if(!S.d||hex(S.d.id)!==hex(t.dossier))await openDossier(t.dossier);tacheForm(t)}return}
   if(d.topen){closeSheet();openDossier(d.topen);return}
   if(d.tfk){view.tf.k=d.tfk;view.tf.sel=null;tfRefresh();return}
