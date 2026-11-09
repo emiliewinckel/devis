@@ -287,6 +287,100 @@ div.bains{cursor:default}
 <div id="dock"></div>
 <div id="layer"></div>
 
+<script type="text/plain" id="tpl-ren-py"># Renommage des photos — ARGOS CR (outil conçu par Emilie Winckel, Pôle Conservation-Restauration, Éveha)
+# Même règle que la version Windows : année_n° de dossier_n° d'inventaire_avant_1.jpg … / _post_1.jpg …
+import os, re, sys, csv, uuid, datetime
+
+AN = '%%AN%%'
+DOS = '%%DOS%%'
+CORR = %%CORR%%
+
+racine = os.path.abspath(sys.argv[1] if len(sys.argv) > 1 else os.getcwd())
+EXT = {'.jpg', '.jpeg', '.png', '.tif', '.tiff', '.heic', '.webp', '.cr2', '.cr3', '.nef', '.arw', '.dng', '.orf', '.rw2', '.raf'}
+
+def nettoie(s): return re.sub(r'[\\/:*?"<>|]+', '-', re.sub(r'\s+', '', s.strip()))
+def cle_nat(s): return re.sub(r'\d+', lambda m: m.group(0).zfill(12), s.lower())
+def phase(nom):
+    n = nom.lower()
+    if 'avant' in n: return 'avant'
+    if re.search(r'post|apr[eè]s', n): return 'post'
+    return None
+def demande(q):
+    try: return input(q).strip()
+    except EOFError: return ''
+def oui(r): return bool(re.match(r'^[oOyY]', r))
+def journaux(): return sorted(f for f in os.listdir(racine) if f.startswith('renommage_photos_') and f.endswith('.csv'))
+
+def annuler():
+    j = journaux()
+    if not j: print('Aucun renommage à annuler.'); return
+    dernier = os.path.join(racine, j[-1])
+    with open(dernier, encoding='utf-8-sig', newline='') as fh: lignes = list(csv.DictReader(fh, delimiter=';'))
+    print(f'Annulation de « {j[-1]} » : {len(lignes)} fichier(s) retrouvent leur ancien nom.')
+    if not oui(demande('Confirmer ? (O/N) ')): print("Rien n'a été modifié."); return
+    tmp = []
+    for l in lignes:
+        p = os.path.join(racine, *re.split(r'[\\/]', l['nouveau']))
+        if os.path.exists(p): t = p + '.argos_tmp'; os.rename(p, t); tmp.append((t, os.path.join(racine, *re.split(r'[\\/]', l['ancien']))))
+        else: print('  introuvable :', l['nouveau'])
+    for t, a in tmp: os.rename(t, a)
+    os.rename(dernier, dernier[:-4] + '_annule.txt')
+    print('Annulation terminée.')
+
+def main():
+    global AN, DOS
+    nom_racine = os.path.basename(racine)
+    if not AN or AN.startswith('%%'):
+        m = re.match(r'^(\d{4})[_\-\s]+([^_]+)', nom_racine)
+        if not m:
+            print(f'Le dossier « {nom_racine} » ne commence pas par année_n° de dossier (ex. 2026_9120_Caen).')
+            print('Placez ce fichier dans le dossier du chantier, ou téléchargez-le depuis la page du dossier dans ARGOS CR.'); return
+        AN, DOS = m.group(1), m.group(2)
+    print(f'\nARGOS CR — renommage des photos du dossier {AN}_{DOS}\nDossier : {racine}\n')
+    if journaux():
+        if re.match(r'^[aA]', demande('Un renommage a déjà été fait ici. R = renommer (nouvelles photos comprises), A = annuler le dernier renommage : ')):
+            annuler(); return
+    plan, alertes, nb_obj = [], [], 0
+    for obj in sorted((d for d in os.listdir(racine) if os.path.isdir(os.path.join(racine, d))), key=cle_nat):
+        po = os.path.join(racine, obj)
+        phases = [d for d in os.listdir(po) if os.path.isdir(os.path.join(po, d)) and phase(d)]
+        if not phases: alertes.append(f'« {obj} » : pas de dossier photo_avant_traitement / photo_post_traitement, ignoré.'); continue
+        cle = obj.strip().lower()
+        if cle in CORR: inv = CORR[cle]
+        else:
+            inv = nettoie(obj)
+            if CORR: alertes.append(f'« {obj} » : objet inconnu dans ARGOS CR, le nom du dossier est utilisé tel quel.')
+        nb_obj += 1
+        for ph in phases:
+            sens, pp = phase(ph), os.path.join(po, ph)
+            fichiers = [f for f in os.listdir(pp) if os.path.isfile(os.path.join(pp, f)) and os.path.splitext(f)[1].lower() in EXT]
+            groupes = {}
+            for f in fichiers: groupes.setdefault(os.path.splitext(f)[0], []).append(f)   # RAW + JPG : même numéro
+            for n, base in enumerate(sorted(groupes, key=cle_nat), 1):
+                for f in groupes[base]:
+                    nouveau = f'{AN}_{DOS}_{inv}_{sens}_{n}{os.path.splitext(f)[1].lower()}'
+                    if f != nouveau: plan.append((pp, f, nouveau))
+    for a in alertes: print('  !', a)
+    if not plan: print(f'Rien à renommer ({nb_obj} objet(s) vus) : les photos portent déjà le bon nom.'); return
+    print(f'{len(plan)} photo(s) à renommer dans {nb_obj} objet(s). Exemples :')
+    for pp, f, nouveau in plan[:8]: print(f'  {f}  ->  {nouveau}')
+    if len(plan) > 8: print('  …')
+    if not oui(demande('\nRenommer ? (O/N) ')): print("Rien n'a été modifié."); return
+    tmp = []
+    for pp, f, nouveau in plan:   # en deux temps : jamais d'écrasement
+        t = os.path.join(pp, f + '.argos_tmp'); os.rename(os.path.join(pp, f), t); tmp.append((t, pp, f, nouveau))
+    journal = []
+    for t, pp, f, nouveau in tmp:
+        os.rename(t, os.path.join(pp, nouveau))
+        journal.append({'ancien': os.path.relpath(os.path.join(pp, f), racine), 'nouveau': os.path.relpath(os.path.join(pp, nouveau), racine)})
+    nom_j = 'renommage_photos_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S') + '.csv'
+    with open(os.path.join(racine, nom_j), 'w', encoding='utf-8-sig', newline='') as fh:
+        w = csv.DictWriter(fh, fieldnames=['ancien', 'nouveau'], delimiter=';', quoting=csv.QUOTE_ALL); w.writeheader(); w.writerows(journal)
+    print(f'Terminé : {len(plan)} photo(s) renommée(s). Journal : {nom_j} (relancer ce fichier puis A pour annuler).')
+
+try: main()
+except Exception as e: print('Erreur :', e)
+</script>
 <script type="text/plain" id="tpl-ren"># Renommage des photos — ARGOS CR (outil conçu par Emilie Winckel, Pôle Conservation-Restauration, Éveha)
 # À placer dans le dossier « numéro Éveha_commune » qui contient un dossier par objet,
 # chacun avec « photo_avant_traitement » et « photo_post_traitement ».
@@ -968,10 +1062,11 @@ function stepSheet(o,k){
 function renSheet(){const d=S.d;
   sheet(`<div class="sh-h"><small>${esc(d.num)} · ${esc(d.commune)}</small><b>Renommer les photos</b></div>
     <p class="hint">1. Rangez les photos ainsi : <b>dossier du chantier</b> (ex. ${esc(d.num)}_${esc((d.commune||'').split(/[\s(]/)[0])}) › <b>un dossier par objet</b> (nommé par son n° d’inventaire, ex. « ${esc(S.objs[0]&&S.objs[0].inv||'OI 14')} », ou son n° d’ordre labo, ex. « ${esc(S.objs[0]&&S.objs[0].idObj?S.objs[0].idObj.slice(-3):'001')} ») › <b>photo_avant_traitement</b> et <b>photo_post_traitement</b>.</p>
-    <p class="hint">2. Téléchargez le fichier, placez-le dans le dossier du chantier et double-cliquez dessus (Windows). Il affiche ce qu'il va faire et demande confirmation ; un journal permet d'annuler.</p>
+    <p class="hint">2. Téléchargez le fichier et placez-le dans le dossier du chantier. <b>Windows</b> : double-clic. <b>Linux / Mac</b> : clic droit dans le dossier › « Ouvrir dans un terminal », puis tapez <code>bash renommer_photos_${esc((d.num||'dossier').replace(/[^\w\-]+/g,'_'))}.sh</code> et Entrée. Il affiche ce qu'il va faire et demande confirmation ; un journal permet d'annuler.</p>
     <p class="hint">Résultat : ${esc(photoBase(d,S.objs[0]))}_avant_1.jpg … _post_1.jpg. Les nouvelles photos ajoutées plus tard sont numérotées à la suite.</p>
-    <div class="sh-act"><button class="big secondary" data-a="close">Fermer</button><button class="big primary" data-a="rendl">${ICON.check}Télécharger</button></div>`)}
-function telechargerRenommage(){
+    <div class="sh-act"><button class="big secondary" data-a="rendl" data-os="win">Windows (.bat)</button><button class="big primary" data-a="rendl" data-os="nix">Linux / Mac (.sh)</button></div>
+    <button class="link" data-a="close" style="align-self:center">Fermer</button>`)}
+function telechargerRenommage(os){
   const d=S.d,q=x=>String(x).replace(/'/g,"''"),m=/^(\d{4})[_\-\s]+(.+)$/.exec(String(d.num||'').trim());
   const an=m?m[1]:'',dos=(m?m[2]:String(d.num||'')).trim().replace(/[\s\/\\]+/g,'-');
   const corr={};
@@ -982,12 +1077,22 @@ function telechargerRenommage(){
   S.objs.forEach(o=>{const v=invOf(o);[o.inv,String(o.inv||'').replace(/\s+/g,''),v].forEach(k=>put(k,v));if(o.inv&&invSimple(o))put(label(o),v)});
   S.objs.forEach(o=>{const v=invOf(o),seq=o.idObj?o.idObj.slice(-3):'';[seq,o.idObj].forEach(k=>put(k,v))});
   const lignes=Object.keys(corr).map(k=>`$CORR['${q(k)}']='${q(corr[k])}'`).join('\n');
+  const nomF='renommer_photos_'+(d.num||'dossier').replace(/[^\w\-]+/g,'_');
+  if(os==='nix'){
+    const py=$('#tpl-ren-py').textContent.replace("'%%AN%%'",JSON.stringify(an)).replace("'%%DOS%%'",JSON.stringify(dos)).replace('%%CORR%%',JSON.stringify(corr));
+    const sh=['#!/usr/bin/env bash','# Renommage des photos — ARGOS CR (Emilie Winckel, Éveha). Lancer depuis le dossier du chantier : bash '+nomF+'.sh',
+      'DIR="$(cd "$(dirname "$0")" && pwd)"',
+      'if [ ! -t 0 ] && [ -z "$ARGOS_NO_TERM" ]; then for t in x-terminal-emulator gnome-terminal konsole xfce4-terminal mate-terminal xterm; do if command -v "$t" >/dev/null 2>&1; then if [ "$t" = gnome-terminal ]; then exec gnome-terminal -- bash "$0"; else exec "$t" -e bash "$0"; fi; fi; done; fi',
+      'if ! command -v python3 >/dev/null 2>&1; then echo "python3 est nécessaire (sudo apt install python3)."; read -r -p "Entrée pour fermer." _; exit 1; fi',
+      "PY=$(cat <<'ARGOSPY'",py,'ARGOSPY',')','python3 -c "$PY" "$DIR"','echo','read -r -p "Appuyez sur Entrée pour fermer." _ || true',''].join('\n');
+    return telecharger(sh,nomF+'.sh')}
   const ps=$('#tpl-ren').textContent.replace("'%%AN%%'","'"+q(an)+"'").replace("'%%DOS%%'","'"+q(dos)+"'").replace('%%CORR%%',lignes);
   const bat=['<# : partie Windows (ne pas modifier)','@echo off','chcp 65001 >nul','setlocal','set "ARGOS_SELF=%~f0"',
     'powershell -NoProfile -ExecutionPolicy Bypass -Command "iex ([IO.File]::ReadAllText($env:ARGOS_SELF,[Text.Encoding]::UTF8))"',
     'echo.','pause','exit /b','#>',ps].join('\r\n').replace(/\r?\n/g,'\r\n');
-  const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([bat],{type:'application/octet-stream'}));
-  a.download='renommer_photos_'+(d.num||'dossier').replace(/[^\w\-]+/g,'_')+'.bat';document.body.appendChild(a);a.click();
+  telecharger(bat,nomF+'.bat')}
+function telecharger(txt,nom){const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([txt],{type:'application/octet-stream'}));
+  a.download=nom;document.body.appendChild(a);a.click();
   setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1000);closeSheet();toast('Fichier téléchargé : placez-le dans le dossier du chantier')}
 function editSheet(){
   const o=cur();if(!o)return;const ms=(o.m||'').split(',').map(x=>x.trim()).filter(Boolean);
@@ -1095,7 +1200,7 @@ document.addEventListener('click',async e=>{
     case 'close':closeSheet();break;
     case 'editobj':editSheet();break;
     case 'renphotos':renSheet();break;
-    case 'rendl':telechargerRenommage();break;
+    case 'rendl':telechargerRenommage(d.os);break;
     case 'editok':enregistrerObjet();break;
     case 'op':try{sessionStorage.removeItem('argoslab:in')}catch(e){}await showLogin();await loadHome();break;
     case 'addop':{const n=$('#newop').value.trim();if(!n)return;const ops=LS.get('argoslab:ops',[]);if(!ops.includes(n))ops.push(n);LS.set('argoslab:ops',ops);LS.set('argoslab:op',n);closeSheet();render();break}
