@@ -154,6 +154,12 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .lot-row[aria-checked="true"] .box{background:var(--navy);border-color:var(--navy)}
 .lot-row[aria-checked="true"] .box::after{content:"";width:10px;height:6px;border-left:2.5px solid #fff;border-bottom:2.5px solid #fff;transform:rotate(-45deg) translate(1px,-1px)}
 .lot-tools{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lotg{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-top:4px}
+.lotg-h{display:flex;align-items:baseline;gap:8px;border:0;background:none;padding:8px 2px;font-size:15px;color:var(--txt);text-align:left;flex:1;min-width:0}
+.lotg-h .car{width:14px;color:var(--navy);font-size:13px}
+.lotg-h em{font-style:normal;font-size:12px;color:var(--txt2)}
+.nrb{font-style:normal;font-size:11px;font-weight:700;background:var(--navy);color:#fff;border-radius:8px;padding:1px 6px;margin-left:6px;vertical-align:1px}
+.dock .two-b{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:720px;margin:0 auto}
 .link{border:0;background:none;color:var(--navy);font-weight:600;font-size:12px;padding:4px 0}
 .dock{position:fixed;left:0;right:0;bottom:0;z-index:90;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.06);
   padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
@@ -629,7 +635,7 @@ function mapDossier(pg){const P=pg.properties;return {id:pg.id,num:pv(P['N° lab
   types:pv(P["Type d'intervention"])||[],nObj:(pv(P['Objets'])||[]).length,op:pv(P['Type Opération']),etat:pv(P['Etat']),drive:pv(P['Lien Drive'])}}
 function mapObjet(pg){const P=pg.properties,o={id:pg.id,nom:pv(P['Nom']),idObj:pv(P['ID objet']),inv:pv(P['N° inventaire']),us:pv(P['US']),
   d:pv(P['Description']),m:(pv(P['Matériau'])||[]).join(', '),nr:pv(P['NR']),t:pv(P["Description de l'intervention"]),
-  na:pv(P['Étapes non applicables'])||[],kore:pv(P['Bain KORE'])||[],koreStat:pv(P['Statut KORE']),kera:pv(P['Lot KERA'])||[],keraStat:pv(P['Statut KERA']),masse:pv(P['Masse (g)']),dossier:(pv(P['Dossier'])||[])[0],steps:{}};
+  na:pv(P['Étapes non applicables'])||[],kore:pv(P['Bain KORE'])||[],koreStat:pv(P['Statut KORE']),kera:pv(P['Lot KERA'])||[],keraStat:pv(P['Statut KERA']),masse:pv(P['Masse (g)']),lot:pv(P['Lot'])||'',dossier:(pv(P['Dossier'])||[])[0],steps:{}};
   STEPS.forEach(s=>o.steps[s.k]=pv(P[s.col]));return o}
 function mapTache(pg){const P=pg.properties;return {id:pg.id,titre:pv(P['Titre']),dossier:(pv(P['Dossier'])||[])[0]||'',objets:pv(P['Objets'])||[],
   etape:pv(P['Étape']),personne:pv(P['Personne']),debut:pv(P['Début']),ech:pv(P['Échéance']),note:pv(P['Note']),par:pv(P['Créée par'])}}
@@ -705,15 +711,17 @@ const Notion={
   supprTache(t){return nfetch('/pages/'+t.id,'PATCH',{archived:true})},
   majObjet(o,x){const t=v=>({rich_text:v?[{type:'text',text:{content:String(v).slice(0,1900)}}]:[]});
     return nfetch('/pages/'+o.id,'PATCH',{properties:{'Description':t(x.d),'N° inventaire':t(x.inv),'US':t(x.us),
-      'Matériau':{multi_select:x.mats.map(name=>({name}))},'NR':{number:x.nr},'Masse (g)':{number:x.masse},
+      'Matériau':{multi_select:x.mats.map(name=>({name}))},'NR':{number:x.nr},'Masse (g)':{number:x.masse},'Lot':t(x.lot),
       'Nom':{title:[{type:'text',text:{content:[o.idObj,x.inv].filter(Boolean).join(' · ')||x.d||'objet'}}]}}})},
   setRetour(d,date){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Date de retour':{date:date?{start:date}:null}}})},
+  setLot(o,lot){return nfetch('/pages/'+o.id,'PATCH',{properties:{'Lot':{rich_text:lot?[{type:'text',text:{content:String(lot).slice(0,200)}}]:[]}}})},
   async creerObjet(d,x){const P={'Nom':{title:[{text:{content:x.id+(x.inv?' · '+x.inv:'')}}]},'ID objet':{rich_text:[{text:{content:x.id}}]},
       'Dossier':{relation:[{id:d.id}]}};
     if(x.inv)P['N° inventaire']={rich_text:[{text:{content:x.inv}}]};
     if(x.des)P['Description']={rich_text:[{text:{content:x.des.slice(0,1900)}}]};
     if(x.mat.length)P['Matériau']={multi_select:x.mat.map(name=>({name}))};
     if(x.nr!=null)P['NR']={number:x.nr};
+    if(x.lot)P['Lot']={rich_text:[{text:{content:x.lot.slice(0,200)}}]};
     if(x.trait)P["Description de l'intervention"]={rich_text:[{text:{content:x.trait}}]};
     return mapObjet(await nfetch('/pages','POST',{parent:{database_id:DB.objets},properties:P}))}
 };
@@ -756,6 +764,7 @@ const Demo={
     {app:'kore',id:'demo-k2',ref:'2026-8870-01 lot 2',int:'Saint-Léonard - Centre Bourg',act:'Titrage du bain 1',due:addJ(t,4),kid:''}].map((x,i,a)=>(a.lus=3,a.err=[],x))},
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
   async majObjet(o,x){this._sync(o);dsave()},
+  async setLot(o,lot){this._sync(o);dsave()},
   async taches(){return JSON.parse(JSON.stringify((DEMO.taches||[]).filter(t=>!t.fini)))},
   async objetsTaches(){const ids=new Set((DEMO.taches||[]).flatMap(t=>t.objets));return JSON.parse(JSON.stringify(DEMO.objets.filter(o=>ids.has(o.id))))},
   async creerTache(x){const t={id:'demo-t'+Date.now(),...JSON.parse(JSON.stringify(x)),par:op()};(DEMO.taches=DEMO.taches||[]).push(t);dsave();return JSON.parse(JSON.stringify(t))},
@@ -766,7 +775,7 @@ const Demo={
   async supprObjet(o){DEMO.objets=DEMO.objets.filter(x=>x.id!==o.id);const dd=DEMO.dossiers.find(y=>y.id===o.dossier);if(dd)dd.nObj=Math.max(0,(dd.nObj||1)-1);dsave()},
   async comments(did){return ((DEMO.com||{})[did]||[]).slice()},
   async addComment(did,txt){const c={id:'demo-c'+Date.now(),head:op()+' · '+fr(iso())+' '+new Date().toTimeString().slice(0,5),txt};DEMO.com=DEMO.com||{};(DEMO.com[did]=DEMO.com[did]||[]).push(c);dsave();return c},
-  async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,t:x.trait||'',na:[],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
+  async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,lot:x.lot||'',t:x.trait||'',na:[],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
     STEPS.forEach(st=>o.steps[st.k]='');DEMO.objets.push(o);const dd=DEMO.dossiers.find(y=>y.id===d.id);if(dd)dd.nObj=(dd.nObj||0)+1;dsave();return JSON.parse(JSON.stringify(o))},
   _sync(o){const i=DEMO.objets.findIndex(x=>x.id===o.id);DEMO.objets[i]=JSON.parse(JSON.stringify(o))},
   async bainFin(o,app){const B=BATH[app];o[app]=[];o.steps.st='✓ '+fr(iso());this._sync(o);(DEMO.journal[o.id]=DEMO.journal[o.id]||[]).unshift({id:'k'+Date.now(),etape:'Stabilisation',statut:'terminé',date:iso(),op:B.nom,proto:[B.proto],note:'Fin du '+B.lot+' dans '+B.nom});dsave()}
@@ -935,8 +944,9 @@ function tFormHtml(t){const d=S.d,F=view.tf,k=F.k,fic=k==='fiches';
     ${fic&&tProg({etape:T_FICHES,dossier:d.id,objets:[]}).fini?`<p class="hint late">Ce dossier a déjà ${d.nObj||S.objs.length} fiche${(d.nObj||S.objs.length)>1?'s':''}${Number(d.nb)?' sur '+Number(d.nb)+' annoncées':''} : une tâche « ${T_FICHES} » serait terminée aussitôt.</p>`:''}
     ${fic?`<p class="hint">Créer les fiches objets du dossier (et imprimer les étiquettes QR) : à faire avant les autres tâches. La tâche se terminera seule quand les fiches seront créées${Number(d.nb)?' ('+Number(d.nb)+' objets annoncés dans le dossier)':''}.</p>`:
     `<div class="tf-oh"><span class="label">Objets <span id="tf-cnt"></span></span><span><button class="chip sm" data-tfall="1">Tout sélectionner</button> <button class="chip sm" data-tfall="0">Tout désélectionner</button></span></div>
+    ${lotsDe().length?`<div class="chips cwrap"><span class="label" style="align-self:center">Cocher un lot :</span>${lotsDe().map(n=>`<button class="chip sm" data-tflot="${esc(n)}">${esc(n)}</button>`).join('')}</div>`:''}
     ${objs.length&&objs.every(x=>x.fait)?`<p class="hint late">Cette étape est déjà faite (ou non applicable) sur tous les objets du dossier : choisissez une autre étape.</p>`:''}
-    ${objs.length?`<div class="tobjs pick">${objs.map(({o,fait,coche})=>`<label class="to${fait?' ok':''}" ${fait?'title="étape déjà faite"':''}><input type="checkbox" data-tfo="${o.id}" ${coche&&!fait?'checked':''} ${fait?'disabled':''}> ${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||o.d||'')}${fait?' ✓':''}</label>`).join('')}</div>`:'<p class="hint">Pas encore de fiches objets : commencez par une tâche « Création des fiches ».</p>'}`}
+    ${objs.length?`<div class="tobjs pick">${objs.map(({o,fait,coche})=>`<label class="to${fait?' ok':''}" ${fait?'title="étape déjà faite"':''}><input type="checkbox" data-tfo="${o.id}" data-tfl="${esc(lotDe(o))}" ${coche&&!fait?'checked':''} ${fait?'disabled':''}> ${esc(o.idObj?o.idObj.slice(-3):'')} ${esc(o.inv||o.d||'')}${fait?' ✓':''}</label>`).join('')}</div>`:'<p class="hint">Pas encore de fiches objets : commencez par une tâche « Création des fiches ».</p>'}`}
     <label class="fl">Personne<input id="tf-p" class="ti" list="tf-pl" value="${esc(t?t.personne:'')}" placeholder="laisser vide = à attribuer"><datalist id="tf-pl">${pers.map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
     <div style="display:flex;gap:6px;flex-wrap:wrap">${pers.slice(0,6).map(x=>`<button class="chip" data-tfp="${esc(x)}">${esc(x)}${x===op()?' (moi)':''}</button>`).join('')}</div>
     <div class="sh-act"><label class="fl">Début<input id="tf-d" class="ti" type="date" value="${esc(t?t.debut:iso())}"></label><label class="fl">Échéance<input id="tf-e" class="ti" type="date" value="${esc(t?t.ech:addJ(iso(),7))}"></label></div>
@@ -964,6 +974,45 @@ async function tAttrib(id,nom){const t=(S.taches||[]).find(x=>x.id===id);if(!t)r
 async function tSuppr(id){const t=(S.taches||[]).find(x=>x.id===id);if(!t)return;closeSheet();S.taches=S.taches.filter(x=>x!==t);render();
   try{await API().supprTache(t);toast('Tâche supprimée')}catch(e){S.taches.push(t);render();fail(e)}}
 
+/* ---------- lots : regroupements d'objets dans un dossier (chaque objet garde sa fiche) ---------- */
+const ENS=/^(Ensemble|Lot) — /;
+function estEns(o){return ENS.test(o&&o.d||'')}
+function nrBadge(o){return estEns(o)&&o.nr?`<em class="nrb">×${esc(o.nr)}</em>`:''}
+function lotsDe(objs){return [...new Set((objs||S.objs).map(o=>String(o.lot||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr',{numeric:true,sensitivity:'base'}))}
+function lotDe(o){return String(o.lot||'').trim()}
+function groupesLot(list){const L=lotsDe();if(!L.length)return null;
+  const g=L.map(n=>({n,objs:list.filter(o=>lotDe(o)===n)})).filter(x=>x.objs.length),sans=list.filter(o=>!lotDe(o));
+  if(sans.length)g.push({n:'',objs:sans});return g}
+function lotOuvert(n){const v=(view.lotPli||{})[n];return v==null?S.objs.length<=40:v}
+function lotHead(g){const ouv=lotOuvert(g.n),fin=g.objs.filter(o=>!next(o)).length,tous=g.objs.every(o=>view.dsel.has(o.id));
+  return `<div class="lotg"><button class="lotg-h" data-lotg="${esc(g.n)}" aria-expanded="${ouv}"><span class="car">${ouv?'▾':'▸'}</span><b>${g.n?esc(g.n):'Sans lot'}</b><em>${g.objs.length} objet${g.objs.length>1?'s':''}${fin?' · '+fin+' terminé'+(fin>1?'s':''):''}</em></button>
+    ${view.selMode?`<button class="link" data-lotsel="${esc(g.n)}">${tous?'Désélectionner':'Tout sélectionner'}</button>`:''}</div>`}
+function lotSetSheet(){const L=S.objs.filter(o=>view.dsel.has(o.id));if(!L.length)return;const lots=lotsDe(),pl=L.length>1?'s':'';
+  sheet(`<div class="sh-h"><small>${esc(S.d.num)} · ${L.length} objet${pl} sélectionné${pl}</small><b>Mettre dans un lot</b></div>
+    ${lots.length?`<div class="label">Lots de ce dossier</div><div class="chips cwrap">${lots.map(n=>`<button class="chip" data-lotset="${esc(n)}">${esc(n)}<em>${S.objs.filter(o=>lotDe(o)===n).length}</em></button>`).join('')}</div>`:''}
+    <label class="fl">${lots.length?'Ou un nouveau lot':'Nom du lot'}<input id="lot-new" class="ti" placeholder="Lot 1 — deniers"></label>
+    <p class="hint">Un objet n’appartient qu’à un seul lot : s’il était déjà rangé ailleurs, il change de lot. Les fiches, numéros et étiquettes QR ne changent pas.</p>
+    <div class="sh-act">${L.some(lotDe)?`<button class="big secondary" data-lotset="">Retirer de leur lot</button>`:`<button class="big secondary" data-a="close">Annuler</button>`}<button class="big primary" data-a="lotnew">${ICON.check}Ranger dans ce lot</button></div>`,'lotset')}
+async function rangerLot(nom){nom=String(nom||'').trim();closeSheet();
+  const L=S.objs.filter(o=>view.dsel.has(o.id)&&lotDe(o)!==nom);
+  if(!L.length){view.selMode=false;view.dsel=new Set();render();return toast(nom?'Ces objets sont déjà dans « '+nom+' »':'Ces objets ne sont dans aucun lot')}
+  let ok=0;const pl=n=>n>1?'s':'';
+  try{for(const o of L){busy=`Rangement ${ok+1} / ${L.length}…`;render();const prev=o.lot;o.lot=nom;
+      try{await API().setLot(o,nom)}catch(e){o.lot=prev;throw e}ok++;if(S.mode!=='demo')await sleep(340)}
+    busy=false;view.selMode=false;view.dsel=new Set();if(nom){view.lotPli={...(view.lotPli||{}),[nom]:true}}render();
+    toast(nom?`${ok} objet${pl(ok)} rangé${pl(ok)} dans « ${nom} »`:`${ok} objet${pl(ok)} retiré${pl(ok)} de leur lot`)}
+  catch(e){busy=false;render();fail(e);if(ok)toast(`${ok} objet${pl(ok)} rangé${pl(ok)} avant l’erreur`,0,1)}}
+function rowSel(o){return `<button class="lot-row" role="checkbox" aria-checked="${view.dsel.has(o.id)}" data-dsel="${o.id}">
+     <span class="box"></span><span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
+     <span class="d" style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${esc(o.d||o.nom)}${nrBadge(o)}</b><span style="font-size:11px;color:var(--txt2)">${short(o)?esc(short(o))+' · ':''}${esc(o.m)}</span></span></button>`}
+function rowObj(o){const n=next(o),r=n&&st(o,n.k)==='run';return `<button class="row" data-o="${o.id}">
+    <span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
+    <span class="d"><b>${esc(o.d||o.nom)}${nrBadge(o)}</b><span>${short(o)?short(o)+' · ':''}${esc(o.m)}${o.t?' · '+esc(o.t):''}</span>
+      <span class="dots">${STEPS.map(s=>{const x=st(o,s.k);return `<i class="${x==='run'?'run':n&&n.k===s.k?'next':x}"></i>`}).join('')}</span></span>
+    <span class="next ${n?(r?'run':''):'ok'}">${n?(r?(parseStep(o.steps[n.k]).app?BATH[parseStep(o.steps[n.k]).app].nom:'en cours'):n.n):'Terminé'}</span></button>`}
+function listeHtml(list){const f=view.selMode?rowSel:rowObj,g=groupesLot(list);
+  if(!g)return `<div class="list">${list.map(f).join('')}</div>`;
+  return g.map(x=>lotHead(x)+(lotOuvert(x.n)?`<div class="list">${x.objs.map(f).join('')}</div>`:'')).join('')}
 function listeDossier(){const objs=S.objs;return objs.filter(o=>view.filter==='all'||(next(o)?next(o).k:'fin')===view.filter)}
 function delSelSheet(){const L=S.objs.filter(o=>view.dsel.has(o.id));if(!L.length)return;
   sheet(`<div class="sh-h"><small>${esc(S.d.num)}</small><b>Supprimer ${L.length} objet${L.length>1?'s':''} ?</b></div>
@@ -1004,14 +1053,8 @@ function dossierV(){
     ${counts.fin?`<button class="chip" data-f="fin" aria-pressed="${view.filter==='fin'}">Terminés<em>${counts.fin}</em></button>`:''}
   </div>
   <div class="lot-tools">${view.selMode?`<button class="link" data-a="dselall">${list.length&&list.every(o=>view.dsel.has(o.id))?'Tout désélectionner':'Tout sélectionner ('+list.length+')'}</button><button class="link" data-a="dselx">Annuler</button>`
-    :`<span></span><button class="link" data-a="dselon">Sélectionner…</button>`}</div>
-  <div class="list">${view.selMode?list.map(o=>`<button class="lot-row" role="checkbox" aria-checked="${view.dsel.has(o.id)}" data-dsel="${o.id}">
-     <span class="box"></span><span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
-     <span class="d" style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${esc(o.d||o.nom)}</b><span style="font-size:11px;color:var(--txt2)">${short(o)?esc(short(o))+' · ':''}${esc(o.m)}</span></span></button>`).join(''):list.map(o=>{const n=next(o),r=n&&st(o,n.k)==='run';return `<button class="row" data-o="${o.id}">
-    <span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
-    <span class="d"><b>${esc(o.d||o.nom)}</b><span>${short(o)?short(o)+' · ':''}${esc(o.m)}${o.t?' · '+esc(o.t):''}</span>
-      <span class="dots">${STEPS.map(s=>{const x=st(o,s.k);return `<i class="${x==='run'?'run':n&&n.k===s.k?'next':x}"></i>`}).join('')}</span></span>
-    <span class="next ${n?(r?'run':''):'ok'}">${n?(r?(parseStep(o.steps[n.k]).app?BATH[parseStep(o.steps[n.k]).app].nom:'en cours'):n.n):'Terminé'}</span></button>`}).join('')}</div>
+    :`<span class="hint" style="margin:0">${lotsDe().length?'':'Pour grouper des objets en lots : Sélectionner…'}</span><button class="link" data-a="dselon">Sélectionner…</button>`}</div>
+  ${listeHtml(list)}
   <p class="foot"><button class="link" data-a="addobj">+ Ajouter des objets à ce dossier</button></p>
   ${tachesDossierV(d)}
   ${comV()}`;
@@ -1046,7 +1089,7 @@ function objetV(){
     <div class="obj-head"><div class="num"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</div>
       <div style="min-width:0;flex:1"><h2>${esc(o.d||o.nom)} <button class="link edit" data-a="editobj" aria-label="Modifier la fiche">Modifier</button></h2>
       ${o.inv&&!invSimple(o)?`<div class="inv-l">Inventaire : ${esc(o.inv)}</div>`:''}
-      <div class="tags">${o.idObj?`<span class="tag id">${esc(o.idObj)}</span>`:''}${o.m?`<span class="tag">${esc(o.m)}</span>`:''}${o.nr!=null&&o.nr!==''?`<span class="tag">NR ${o.nr}</span>`:''}${o.t?`<span class="tag t">${esc(o.t)}</span>`:''}</div></div></div>
+      <div class="tags">${o.idObj?`<span class="tag id">${esc(o.idObj)}</span>`:''}${lotDe(o)?`<span class="tag">${esc(lotDe(o))}</span>`:''}${estEns(o)?`<span class="tag">Ensemble${o.nr?' ×'+esc(o.nr):''}</span>`:''}${o.m?`<span class="tag">${esc(o.m)}</span>`:''}${o.nr!=null&&o.nr!==''?`<span class="tag">NR ${o.nr}</span>`:''}${o.t?`<span class="tag t">${esc(o.t)}</span>`:''}</div></div></div>
     ${photoBase(d,o)?`<div class="label" style="text-transform:none;letter-spacing:0">Photos : ${esc(photoBase(d,o))}_avant_1.jpg … _avant_n · ${esc(photoBase(d,o))}_post_1.jpg … _post_n</div>`:''}
   </section>
   ${go}
@@ -1082,9 +1125,10 @@ function lotV(){
   </section>
   <div class="lot-tools"><div class="label">2. Objets concernés</div>
     ${cand.length?`<button class="link" data-a="all">${view.sel.size===cand.length?'Tout désélectionner':'Tout sélectionner ('+cand.length+')'}</button>`:''}</div>
+  ${lotsDe(cand).length?`<div class="chips cwrap"><span class="label" style="align-self:center">Cocher un lot :</span>${lotsDe(cand).map(n=>`<button class="chip sm" data-lvl="${esc(n)}" aria-pressed="${cand.filter(o=>lotDe(o)===n).every(o=>view.sel.has(o.id))}">${esc(n)}<em>${cand.filter(o=>lotDe(o)===n).length}</em></button>`).join('')}</div>`:''}
   <div class="list">${cand.length?cand.map(o=>`<button class="lot-row" role="checkbox" aria-checked="${view.sel.has(o.id)}" data-t="${o.id}">
      <span class="box"></span><span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
-     <span class="d" style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${esc(o.d||o.nom)}</b><span style="font-size:11px;color:var(--txt2)">${esc(o.m)}${st(o,k)==='run'?' · en cours':''}</span></span></button>`).join('')
+     <span class="d" style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${esc(o.d||o.nom)}${nrBadge(o)}</b><span style="font-size:11px;color:var(--txt2)">${lotDe(o)?esc(lotDe(o))+' · ':''}${esc(o.m)}${st(o,k)==='run'?' · en cours':''}</span></span></button>`).join('')
      :'<p class="empty" style="padding:16px">Rien à faire pour cette étape.</p>'}</div>`;
 }
 function lotCand(){const k=view.step;return S.objs.filter(o=>view.lotSt==='en cours'?st(o,k)==='todo':['todo','run'].includes(st(o,k))&&!(k==='st'&&parseStep(o.steps.st).app))}
@@ -1096,7 +1140,7 @@ function render(){finirTaches();
   document.body.classList.add('compact');
   $('#app').innerHTML=view.v==='home'?home():view.v==='dossier'?dossierV():view.v==='obj'?objetV():lotV();
   const n=view.sel.size,k=view.step,verb=view.lotSt==='en cours'?'Commencer':view.lotSt==='na'?'Non applicable :':'Valider';
-  $('#dock').innerHTML=view.v==='dossier'&&view.selMode?`<div class="dock"><button class="big primary danger" data-a="delsel" ${view.dsel.size&&!busy?'':'disabled'}>${busy?busy:view.dsel.size?'Supprimer '+view.dsel.size+' objet'+(view.dsel.size>1?'s':''):'Sélectionnez des objets'}</button></div>`:view.v==='lot'?`<div class="dock"><button class="big primary" data-a="apply" ${n&&!busy?'':'disabled'}>${ICON.check}${busy?busy:n?(view.lotSt==='na'?`« ${sn(k)} » non applicable pour ${n} objet${n>1?'s':''}`:`${verb} « ${sn(k)} » pour ${n} objet${n>1?'s':''}`):'Sélectionnez des objets'}</button></div>`:'';
+  $('#dock').innerHTML=view.v==='dossier'&&view.selMode?(busy?`<div class="dock"><button class="big primary" disabled>${busy}</button></div>`:view.dsel.size?`<div class="dock"><div class="two-b"><button class="big secondary" data-a="lotset">Mettre dans un lot…</button><button class="big primary danger" data-a="delsel">Supprimer ${view.dsel.size}</button></div></div>`:`<div class="dock"><button class="big primary" disabled>Sélectionnez des objets</button></div>`):view.v==='lot'?`<div class="dock"><button class="big primary" data-a="apply" ${n&&!busy?'':'disabled'}>${ICON.check}${busy?busy:n?(view.lotSt==='na'?`« ${sn(k)} » non applicable pour ${n} objet${n>1?'s':''}`:`${verb} « ${sn(k)} » pour ${n} objet${n>1?'s':''}`):'Sélectionnez des objets'}</button></div>`:'';
   $('#opname').textContent=op();
   const q=$('#q');if(q)q.oninput=e=>{view.q=e.target.value;const p=e.target.selectionStart;render();const n=$('#q');n.focus();n.setSelectionRange(p,p)};
 }
@@ -1286,6 +1330,7 @@ function editSheet(){
   sheet(`<div class="sh-h"><small>${esc(o.idObj||'')}</small><b>Modifier la fiche objet</b></div>
     <label class="fl">Dénomination<input id="ed-d" class="ti" value="${esc(o.d||'')}"></label>
     <label class="fl">N° d'inventaire<input id="ed-inv" class="ti" value="${esc(o.inv||'')}" placeholder="OI 14, M.P.2004.17.42…"></label>
+    <label class="fl">Lot (facultatif)<input id="ed-lot" class="ti" list="ed-lots" value="${esc(o.lot||'')}" placeholder="aucun — ex. Lot 1 — deniers"><datalist id="ed-lots">${lotsDe().map(n=>`<option value="${esc(n)}">`).join('')}</datalist></label>
     <div class="label">Matériau</div>
     <div class="chips cwrap" id="ed-m">${MATS.concat(ms.filter(m=>!MATS.includes(m))).map(m=>`<button class="chip" data-edm="${esc(m)}" aria-pressed="${ms.includes(m)}">${esc(m)}</button>`).join('')}</div>
     <div class="sh-act" style="grid-template-columns:1fr 1fr 1fr">
@@ -1309,10 +1354,10 @@ async function supprimerObjet(){const o=cur(),d=S.d;closeSheet();if(!o)return;
   catch(e){fail(e)}}
 async function enregistrerObjet(){
   const o=cur();if(!o)return;const v=id=>($('#'+id)||{}).value||'';const nb=x=>{x=String(x).replace(',','.').trim();return x===''?null:Number(x)};
-  const x={d:v('ed-d').trim(),inv:v('ed-inv').trim(),us:v('ed-us').trim(),nr:nb(v('ed-nr')),masse:nb(v('ed-ma')),
+  const x={d:v('ed-d').trim(),inv:v('ed-inv').trim(),lot:v('ed-lot').trim(),us:v('ed-us').trim(),nr:nb(v('ed-nr')),masse:nb(v('ed-ma')),
     mats:[...document.querySelectorAll('#ed-m [aria-pressed="true"]')].map(b=>b.dataset.edm)};
-  const prev={d:o.d,inv:o.inv,us:o.us,nr:o.nr,masse:o.masse,m:o.m};
-  Object.assign(o,{d:x.d,inv:x.inv,us:x.us,nr:x.nr,masse:x.masse,m:x.mats.join(', ')});closeSheet();render();
+  const prev={d:o.d,inv:o.inv,lot:o.lot,us:o.us,nr:o.nr,masse:o.masse,m:o.m};
+  Object.assign(o,{d:x.d,inv:x.inv,lot:x.lot,us:x.us,nr:x.nr,masse:x.masse,m:x.mats.join(', ')});closeSheet();render();
   try{await API().majObjet(o,x);toast('Fiche enregistrée')}catch(e){Object.assign(o,prev);render();fail(e)}}
 function opSheet(){
   const ops=LS.get('argoslab:ops',[]);
@@ -1381,6 +1426,11 @@ document.addEventListener('click',async e=>{
   if(d.o!==undefined){if(d.o)openObj(d.o);return}
   if(d.d){openDossier(d.d);return}
   if(d.dsel){view.dsel.has(d.dsel)?view.dsel.delete(d.dsel):view.dsel.add(d.dsel);render();return}
+  if(d.lotg!=null){view.lotPli={...(view.lotPli||{}),[d.lotg]:!lotOuvert(d.lotg)};render();return}
+  if(d.lotsel!=null){const L=listeDossier().filter(o=>lotDe(o)===d.lotsel),tous=L.every(o=>view.dsel.has(o.id));L.forEach(o=>tous?view.dsel.delete(o.id):view.dsel.add(o.id));render();return}
+  if(d.lotset!=null){rangerLot(d.lotset);return}
+  if(d.tflot!=null){const c=[...document.querySelectorAll('[data-tfo]')].filter(x=>!x.disabled&&x.dataset.tfl===d.tflot),tous=c.every(x=>x.checked);c.forEach(x=>x.checked=!tous);tfCompte();return}
+  if(d.lvl!=null){const c=lotCand().filter(o=>lotDe(o)===d.lvl),tous=c.every(o=>view.sel.has(o.id));c.forEach(o=>tous?view.sel.delete(o.id):view.sel.add(o.id));render();return}
   if(d.tache){tacheSheet(d.tache);return}
   if(d.ttog){view.tOpen=view.tOpen===d.ttog?null:d.ttog;render();return}
   if(d.tme){tAttrib(d.tme,op());return}
@@ -1418,6 +1468,8 @@ document.addEventListener('click',async e=>{
     case 'dselx':view.selMode=false;view.dsel=new Set();render();break;
     case 'dselall':{const L=listeDossier();if(L.every(o=>view.dsel.has(o.id)))L.forEach(o=>view.dsel.delete(o.id));else L.forEach(o=>view.dsel.add(o.id));render();break}
     case 'delsel':delSelSheet();break;
+    case 'lotset':lotSetSheet();break;
+    case 'lotnew':{const v=(($('#lot-new')||{}).value||'').trim();if(!v){toast('Indiquez le nom du lot (ex. Lot 1 — deniers)',0,1);break}rangerLot(v);break}
     case 'delselok':supprimerSelection();break;
     case 'tnew':tacheForm(null);break;
     case 'tsave':tSave();break;
@@ -1568,32 +1620,35 @@ function parseListe(t){return String(t||'').split(/\r?\n/).map(l=>l.trim()).filt
 function creerV(d,vide){const b=baseId(d.num),n=view.cMode==='liste'?parseListe(view.cListe).length:view.cMode==='lot'?(view.clotdes?Math.max(1,parseInt(view.clotn)||1):0):(parseInt(view.cNb)||0),deb=nextNum();
   return `<section class="card creer"><div class="label">${vide?'Créer les fiches objets':'Ajouter des objets'}</div>
     ${vide?'<p class="hint">Ce dossier n’a pas encore de fiches objets dans Notion. Créez-les ici, elles seront numérotées automatiquement.</p>':''}
-    <div class="seg three"><button data-cm="nb" aria-pressed="${!view.cMode||view.cMode==='nb'}">Par nombre</button><button data-cm="liste" aria-pressed="${view.cMode==='liste'}">Coller une liste</button><button data-cm="lot" aria-pressed="${view.cMode==='lot'}">Lot</button></div>
-    ${view.cMode==='lot'?`<p class="hint">Un lot = une seule fiche pour un ensemble d’objets traités ensemble (clous, tessons, scories…), avec le nombre de restes (NR).</p>
+    <div class="seg three"><button data-cm="nb" aria-pressed="${!view.cMode||view.cMode==='nb'}">Par nombre</button><button data-cm="liste" aria-pressed="${view.cMode==='liste'}">Coller une liste</button><button data-cm="lot" aria-pressed="${view.cMode==='lot'}">Ensemble</button></div>
+    ${view.cMode==='lot'?`<p class="hint">Un ensemble = <b>une seule fiche</b> pour plusieurs objets traités ensemble, sans sous-numéro (clous, tessons, scories…), avec le nombre de restes (NR). Pour grouper des objets qui ont <b>chacun leur fiche</b> (ex. monnaies réparties en lots par le musée), utilisez plutôt « Ranger ces fiches dans le lot » ci-dessous.</p>
       <label class="fl">Désignation<input id="clotdes" class="ti" value="${esc(view.clotdes||'')}" placeholder="clous, tiges, tôles…"></label>
       <div class="sh-act" style="grid-template-columns:1fr 1fr"><label class="fl">Nombre de restes (NR)<input id="clotnr" class="ti" type="number" min="1" inputmode="numeric" value="${esc(view.clotnr||'')}"></label>
         <label class="fl">N° d’inventaire (facultatif)<input id="clotinv" class="ti" value="${esc(view.clotinv||'')}" placeholder="US 1003…"></label></div>
       <label class="fl">Matériau<select id="cmat" class="ti"><option value="">—</option>${MATS.map(m=>`<option ${view.cMat===m?'selected':''}>${m}</option>`).join('')}</select></label>
-      <label class="fl">Nombre de lots identiques à créer<input id="clotn" class="ti" type="number" min="1" max="50" inputmode="numeric" value="${esc(view.clotn||'1')}"></label>`
+      <label class="fl">Nombre d’ensembles identiques à créer<input id="clotn" class="ti" type="number" min="1" max="50" inputmode="numeric" value="${esc(view.clotn||'1')}"></label>`
     :view.cMode==='liste'?`<textarea id="cliste" class="ta" rows="7" placeholder="Une ligne par objet : N° inventaire ; désignation ; matériau ; NR&#10;Ex. : OI 12 ; fibule ; alliage cuivreux ; 1&#10;Un copier-coller depuis Excel (colonnes dans cet ordre) fonctionne aussi.">${esc(view.cListe||'')}</textarea>`
       :`<label class="fl">Nombre d'objets<input id="cnb" class="ti" type="number" min="1" max="500" inputmode="numeric" value="${esc(view.cNb||'')}"></label>
       <label class="fl">Matériau (facultatif, commun à tous)<select id="cmat" class="ti"><option value="">—</option>${MATS.map(m=>`<option ${view.cMat===m?'selected':''}>${m}</option>`).join('')}</select></label>`}
-    <p class="hint">${n?`<b>${n}</b> fiche${n>1?'s':''}${view.cMode==='lot'?' de lot':''} : <b>${esc(b)}_${String(deb).padStart(3,'0')}</b>${n>1?` à <b>${esc(b)}_${String(deb+n-1).padStart(3,'0')}</b>`:''}`:view.cMode==='lot'?'Indiquez la désignation du lot.':'Indiquez le nombre d’objets ou collez la liste.'}</p>
+    <label class="fl">Ranger ces fiches dans le lot (facultatif)<input id="clotgrp" class="ti" list="clotgrp-l" value="${esc(view.clotgrp||'')}" placeholder="aucun — ex. Lot 1 — deniers"><datalist id="clotgrp-l">${lotsDe().map(x=>`<option value="${esc(x)}">`).join('')}</datalist></label>
+    <p class="hint">${n?`<b>${n}</b> fiche${n>1?'s':''}${view.cMode==='lot'?' d’ensemble':''} : <b>${esc(b)}_${String(deb).padStart(3,'0')}</b>${n>1?` à <b>${esc(b)}_${String(deb+n-1).padStart(3,'0')}</b>`:''}`:view.cMode==='lot'?'Indiquez la désignation de l’ensemble.':'Indiquez le nombre d’objets ou collez la liste.'}</p>
     <button class="big primary" data-a="creer" ${n&&!busy?'':'disabled'}>${ICON.check}${busy||`Créer ${n||''} fiche${n>1?'s':''} dans Notion`}</button></section>`}
 function nextNum(){let m=0;S.objs.forEach(o=>{const x=String(o.idObj||'').match(/_(\d{3,})$/);if(x)m=Math.max(m,+x[1])});return m+1}
 async function creerFiches(){
   const d=S.d,b=baseId(d.num);let items;
   if(view.cMode==='liste')items=parseListe(view.cListe);
   else if(view.cMode==='lot'){const n=Math.max(1,parseInt(view.clotn)||1),des=String(view.clotdes||'').trim(),inv=String(view.clotinv||'').trim(),nr=parseInt(view.clotnr)||null;
-    if(!des)return toast('Indiquez la désignation du lot',0,1);
-    items=Array.from({length:n},(_,i)=>({inv:inv&&n>1?inv+' lot '+(i+1):inv,des:'Lot — '+des,mat:view.cMat?[view.cMat]:[],nr}))}
+    if(!des)return toast('Indiquez la désignation de l’ensemble',0,1);
+    items=Array.from({length:n},(_,i)=>({inv:inv&&n>1?inv+' ensemble '+(i+1):inv,des:'Ensemble — '+des,mat:view.cMat?[view.cMat]:[],nr}))}
   else{const n=parseInt(view.cNb)||0;items=Array.from({length:n},()=>({inv:'',des:'',mat:view.cMat?[view.cMat]:[],nr:null}))}
+  const grp=String(view.clotgrp||'').trim();items.forEach(x=>x.lot=grp);
   if(!items.length)return;if(items.length>300)return toast('300 objets maximum à la fois',0,1);
   let k=nextNum(),ok=0;
   try{for(const x of items){busy=`Création ${ok+1} / ${items.length}…`;document.querySelector('.csheet')?rerenderCreer():render();
       x.id=b+'_'+String(k++).padStart(3,'0');S.objs.push(await API().creerObjet(d,x));ok++;if(S.mode!=='demo')await sleep(340)}
-    busy=false;d.nObj=S.objs.length;view.cListe='';view.cNb='';view.clotdes='';view.clotnr='';view.clotinv='';view.clotn='';closeSheet();
-    toast(`${ok} fiche${ok>1?'s':''} objet créée${ok>1?'s':''} dans Notion`);render()}
+    busy=false;d.nObj=S.objs.length;view.cListe='';view.cNb='';view.clotdes='';view.clotnr='';view.clotinv='';view.clotn='';view.clotgrp='';closeSheet();
+    if(grp)view.lotPli={...(view.lotPli||{}),[grp]:true};
+    toast(`${ok} fiche${ok>1?'s':''} objet créée${ok>1?'s':''} dans Notion${grp?' (lot « '+grp+' »)':''}`);render()}
   catch(e){busy=false;render();fail(e);if(ok)toast(`${ok} fiche${ok>1?'s':''} créée${ok>1?'s':''} avant l’erreur`,0,1)}
 }
 
