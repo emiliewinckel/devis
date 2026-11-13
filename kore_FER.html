@@ -2580,7 +2580,7 @@ function plOuvrir() {
 })();
 
 // Carte d'étiquette d'un lot (QR + textes), pour impression immédiate ou pour la planche commune
-function carteLot(lid, cb) {
+function carteEtiquetteLot(lid, cb) {
   var lot = gL(lid); if (!lot) return;
   var tmp = document.createElement('div'); tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px'; document.body.appendChild(tmp);
   try { new QRCode(tmp, {text: APP_URL + '?lot=' + lot.id, width: 240, height: 240, colorDark: '#8B3A2A', colorLight: '#ffffff'}); } catch (e) {}
@@ -2596,9 +2596,9 @@ function imprimerEtiquette(lid) {
   if (!gL(lid)) return;
   var w = window.open('', '_blank', 'width=900,height=800'); if (!w) { alert('Fenêtre bloquée : autoriser les fenêtres surgissantes.'); return; }
   w.document.write('<p style="font-family:sans-serif;padding:20px">Préparation de l\'étiquette…</p>');
-  carteLot(lid, function(c, lot) { planche16({titre: 'Étiquette ' + (lot.ref || ''), couleur: '#8B3A2A', filet: '#E8D5D0', cartes: [c]}).ouvrir(w); });
+  carteEtiquetteLot(lid, function(c, lot) { planche16({titre: 'Étiquette ' + (lot.ref || ''), couleur: '#8B3A2A', filet: '#E8D5D0', cartes: [c]}).ouvrir(w); });
 }
-function planchelot(lid) { if (gL(lid)) carteLot(lid, function(c) { plAjouter([c]); }); }
+function planchelot(lid) { if (gL(lid)) carteEtiquetteLot(lid, function(c) { plAjouter([c]); }); }
 function addCal() {
   var lot = lotSel(); if (!lot) return; var ev = evalLot(lot); if (!ev.due) return;
   var d = ev.due.replace(/-/g, ''), d2 = addJours(ev.due, 1).replace(/-/g, '');

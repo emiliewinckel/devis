@@ -1963,7 +1963,7 @@ function plOuvrir() {
 })();
 
 // Carte d'étiquette d'un objet / lot (QR + textes), pour impression immédiate ou pour la planche commune
-function carteLot(lid, cb) {
+function carteEtiquetteLot(lid, cb) {
   var lot = lid ? gL(lid) : A.lots[A.lots.length - 1]; if (!lot) return;
   var tmp = document.createElement('div');
   tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:240px;height:240px';
@@ -1983,9 +1983,9 @@ function imprimerEtiquette(lid) {
   if (!(lid ? gL(lid) : A.lots[A.lots.length - 1])) return;
   var w = window.open('', '_blank', 'width=900,height=800'); if (!w) { alert('Fenêtre bloquée : autoriser les fenêtres surgissantes.'); return; }
   w.document.write('<p style="font-family:sans-serif;padding:20px">Préparation de l\'étiquette…</p>');
-  carteLot(lid, function(c) { planche16({titre: 'KERA — Étiquette', couleur: '#125c8a', filet: '#d8e4ee', cartes: [c]}).ouvrir(w); });
+  carteEtiquetteLot(lid, function(c) { planche16({titre: 'KERA — Étiquette', couleur: '#125c8a', filet: '#d8e4ee', cartes: [c]}).ouvrir(w); });
 }
-function planchelot(lid) { carteLot(lid, function(c) { plAjouter([c]); }); }
+function planchelot(lid) { carteEtiquetteLot(lid, function(c) { plAjouter([c]); }); }
 
 // Watch events
 document.addEventListener('change', function(e) {
