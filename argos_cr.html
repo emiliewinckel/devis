@@ -44,6 +44,8 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .pqte small{display:block;font-size:10.5px;font-weight:600}
 .pbadge{display:inline-block;font-size:10.5px;font-weight:700;border-radius:6px;padding:1px 6px;margin-left:6px;background:#FEE4E2;color:#B42318}
 .pbadge.amb{background:#FEF0C7;color:#93370D}
+.pinfo{display:flex;flex-direction:column;gap:6px;background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px}
+.pinfo small{display:block;font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--txt2)}
 .pqbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pqbar b{font-size:20px;font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
 .palert{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #FECDCA;background:#FFFBFA;width:100%;text-align:left}
@@ -1872,11 +1874,12 @@ function imprimerBordereau(){const d=S.d,v=id=>(($('#'+id)||{}).value||'').trim(
     <p class="pied">Document établi avec ARGOS CR — Pôle Conservation-Restauration, Éveha · ${fr(iso())}</p>`)}
 
 /* ---------- registre des produits du labo ---------- */
-const PR_CATS=['Solvant','Consolidant / adhésif','Réactif','Inhibiteur','Protection de surface','Consommable','Conditionnement','Autre'];
+const PR_CATS=['Solvant','Consolidant / adhésif','Réactif','Inhibiteur','Protection de surface','Gel / épaississant','Abrasif','Contrôle / analyse','Consommable','Conditionnement','Autre'];
 const PR_UNITES=['mL','L','g','kg','pièce','flacon','boîte','rouleau'];
 const PR_DANGERS=['Inflammable','Toxique','Corrosif','Nocif / irritant','CMR','Comburant',"Dangereux pour l'environnement",'Gaz sous pression'];
 function mapProduit(pg){const P=pg.properties;return {id:pg.id,nom:pv(P['Produit']),cat:pv(P['Catégorie']),four:pv(P['Fournisseur']),ref:pv(P['Référence']),empl:pv(P['Emplacement']),
-  q:pv(P['Quantité']),u:pv(P['Unité']),seuil:pv(P["Seuil d'alerte"]),ouv:pv(P["Date d'ouverture"]),per:pv(P['Péremption']),dang:pv(P['Dangers'])||[],fds:pv(P['FDS']),note:pv(P['Note'])}}
+  q:pv(P['Quantité']),u:pv(P['Unité']),seuil:pv(P["Seuil d'alerte"]),ouv:pv(P["Date d'ouverture"]),per:pv(P['Péremption']),dang:pv(P['Dangers'])||[],fds:pv(P['FDS']),note:pv(P['Note']),
+  fam:pv(P['Famille chimique']),usage:pv(P['Usage']),mats:pv(P['Matériaux concernés']),rev:pv(P['Réversibilité']),vig:pv(P['Vigilance']),lien:pv(P['Lien fournisseur']),ops:pv(P['Opérations'])}}
 function pEtat(p){const n=v=>v!=null&&v!=='',per=p.per&&p.per<iso(),bientot=p.per&&!per&&p.per<=addJ(iso(),30);
   return {cmd:n(p.q)&&n(p.seuil)&&Number(p.q)<=Number(p.seuil),per,bientot}}
 async function chargerProduits(){try{S.prod=await API().produits();S.prodErr=''}catch(e){S.prodErr=e.message||String(e)}if(view.v==='home'||view.v==='produits')render()}
@@ -1885,7 +1888,7 @@ function prodAlerteV(){const P=S.prod||[];if(!P.length)return '';const c=P.filte
 async function openProduits(){closeSheet();view={...view,v:'produits'};setUrl({produits:1});render();scrollTo(0,0);await chargerProduits()}
 function produitsV(){const P=S.prod||[],f=view.pf||'all',q=(view.pq||'').trim().toLowerCase();
   const nc=P.filter(p=>pEtat(p).cmd).length,np=P.filter(p=>pEtat(p).per||pEtat(p).bientot).length;
-  const L=P.filter(p=>(f==='all'||(f==='cmd'&&pEtat(p).cmd)||(f==='per'&&(pEtat(p).per||pEtat(p).bientot)))&&(!q||[p.nom,p.cat,p.empl,p.four,p.ref].join(' ').toLowerCase().includes(q)));
+  const L=P.filter(p=>(f==='all'||(f==='cmd'&&pEtat(p).cmd)||(f==='per'&&(pEtat(p).per||pEtat(p).bientot)))&&(!q||[p.nom,p.cat,p.empl,p.four,p.ref,p.usage,p.mats,p.fam,p.ops].join(' ').toLowerCase().includes(q)));
   return `<button class="back" data-a="home">‹ Dossiers</button>${topInfo()}
   <div class="hello"><div><div class="label">Labo CR</div><h1>Produits du labo</h1></div>
     <div class="tally"><span><b>${P.length}</b>produits</span><span class="t2"><b>${nc}</b>à commander</span></div></div>
@@ -1893,13 +1896,16 @@ function produitsV(){const P=S.prod||[],f=view.pf||'all',q=(view.pq||'').trim().
   <div class="chips"><button class="chip" data-prf="all" aria-pressed="${f==='all'}">Tous<em>${P.length}</em></button><button class="chip" data-prf="cmd" aria-pressed="${f==='cmd'}">À commander<em>${nc}</em></button><button class="chip" data-prf="per" aria-pressed="${f==='per'}">Péremption<em>${np}</em></button></div>
   <label class="search">${ICON.search}<input id="pq" type="search" placeholder="Produit, emplacement, fournisseur…" value="${esc(view.pq||'')}" autocomplete="off"></label>
   <div class="list">${L.length?L.map(p=>{const e=pEtat(p);return `<button class="row prow" data-prid="${p.id}"><span class="d"><b>${esc(p.nom)}${e.per?'<span class="pbadge">périmé</span>':e.bientot?'<span class="pbadge amb">périme le '+fr(p.per)+'</span>':''}</b>
-      <span>${esc([p.cat,p.empl].filter(Boolean).join(' · '))}${p.dang.length?' · ⚠ '+esc(p.dang.join(', ')):''}</span></span>
+      <span>${esc([p.usage||p.cat,p.empl].filter(Boolean).join(' · '))}${p.dang.length?' · ⚠ '+esc(p.dang.join(', ')):''}</span></span>
       <span class="pqte ${e.cmd?'late':''}">${p.q==null||p.q===''?'—':esc(p.q)+' '+esc(p.u||'')}${e.cmd?'<small>à commander</small>':''}</span></button>`}).join('')
     :`<p class="empty" style="padding:16px">${P.length?'Aucun produit ne correspond.':'Aucun produit enregistré : ajoutez le premier.'}</p>`}</div>
   <div class="actions"><button class="big primary" data-a="pnew">+ Nouveau produit</button><button class="big secondary" data-a="pprint">Imprimer le registre</button></div>`}
 function produitSheet(id){const p=id?(S.prod||[]).find(x=>x.id===id):null;if(id&&!p)return;view.pid=id;const x=p||{dang:[]};
   sheet(`<div class="sh-h"><small>${p?esc(p.cat||'Produit'):'Registre des produits'}</small><b>${p?esc(p.nom):'Nouveau produit'}</b></div>
     ${p?`<div class="pqbar"><button class="chip" data-prq="-1">− 1</button><b id="pf-qv">${p.q==null||p.q===''?'—':esc(p.q)} ${esc(p.u||'')}</b><button class="chip" data-prq="1">+ 1</button><button class="chip" data-a="pouv">Ouvert aujourd’hui</button></div>`:''}
+    ${p&&(p.usage||p.fam||p.mats||p.rev||p.vig||p.ops||p.lien)?`<div class="pinfo">${[['Usage',p.usage],['Famille chimique',p.fam],['Matériaux',p.mats],['Réversibilité',p.rev],['Vigilance',p.vig]].filter(x=>x[1]).map(x=>`<div><small>${x[0]}</small>${esc(x[1])}</div>`).join('')}
+      ${p.ops?`<div><small>Opérations</small>${p.ops.split('\n').map(esc).join('<br>')}</div>`:''}
+      ${/^https?:/i.test(p.lien||'')?`<a class="link" href="${esc(p.lien)}" target="_blank" rel="noopener">Page du fournisseur ${ICON.ext}</a>`:''}</div>`:''}
     <label class="fl">Produit<input id="pf-nom" class="ti" value="${esc(x.nom||'')}" placeholder="Paraloid B72, acétone…"></label>
     <label class="fl">Catégorie<select id="pf-cat" class="ti"><option value="">—</option>${PR_CATS.map(c=>`<option ${x.cat===c?'selected':''}>${c}</option>`).join('')}</select></label>
     <div class="sh-act three"><label class="fl">Quantité<input id="pf-q" class="ti" type="number" step="any" min="0" inputmode="decimal" value="${x.q==null?'':esc(x.q)}"></label>
@@ -1933,9 +1939,9 @@ async function pSuppr(){const p=(S.prod||[]).find(y=>y.id===view.pid);closeSheet
   try{await API().supprProduit(p);toast('Produit supprimé')}catch(e){S.prod.push(p);render();fail(e)}}
 function imprimerRegistre(){const P=S.prod||[];if(!P.length)return toast('Le registre est vide',0,1);
   const lignes=PR_CATS.concat(['']).map(c=>{const L=P.filter(p=>(p.cat||'')===c||(c===''&&!PR_CATS.includes(p.cat)));if(!L.length)return '';
-    return `<tr class="g"><td colspan="8">${c?esc(c):'Sans catégorie'}</td></tr>`+L.map(p=>{const e=pEtat(p);return `<tr><td><b>${esc(p.nom)}</b>${p.ref?'<br>'+esc(p.ref):''}</td><td>${esc(p.four||'')}</td><td>${esc(p.empl||'')}</td>
+    return `<tr class="g"><td colspan="8">${c?esc(c):'Sans catégorie'}</td></tr>`+L.map(p=>{const e=pEtat(p);return `<tr><td><b>${esc(p.nom)}</b>${p.usage?'<br><small>'+esc(p.usage)+'</small>':''}${p.ref?'<br>'+esc(p.ref):''}</td><td>${esc(p.four||'')}</td><td>${esc(p.empl||'')}</td>
       <td class="${e.cmd?'al':''}">${p.q==null||p.q===''?'—':esc(p.q)+' '+esc(p.u||'')}${p.seuil!=null&&p.seuil!==''?'<br><small>seuil '+esc(p.seuil)+'</small>':''}</td><td>${p.ouv?fr(p.ouv):''}</td>
-      <td class="${e.per?'al':e.bientot?'am':''}">${p.per?fr(p.per):''}</td><td>${esc(p.dang.join(', '))}</td><td>${p.fds?'oui':'<span class="nf">manquante</span>'}</td></tr>`}).join('')}).join('');
+      <td class="${e.per?'al':e.bientot?'am':''}">${p.per?fr(p.per):''}</td><td>${esc(p.dang.join(', '))}${p.vig?'<br><small>'+esc(p.vig)+'</small>':''}</td><td>${p.fds?'oui':'<span class="nf">manquante</span>'}</td></tr>`}).join('')}).join('');
   fenetreImpression('Registre des produits du labo',`<div class="tete">${eyeSvg()}<div class="t"><h1>Registre des produits du laboratoire</h1><small>Pôle Conservation-Restauration — Éveha</small></div><div style="text-align:right"><small>État au ${fr(iso())}</small></div></div>
     <table><thead><tr><th>Produit</th><th>Fournisseur</th><th>Emplacement</th><th>Quantité</th><th>Ouvert le</th><th>Péremption</th><th>Dangers</th><th>FDS</th></tr></thead><tbody>${lignes}</tbody></table>
     <p class="tot">${P.length} produits · ${P.filter(p=>pEtat(p).cmd).length} à commander · ${P.filter(p=>pEtat(p).per).length} périmé(s) · ${P.filter(p=>!p.fds).length} sans FDS.</p>
