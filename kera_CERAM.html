@@ -201,6 +201,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
     <button onclick="showPage('calcul')">K<sub style="font-size:8px">adj</sub></button>
     <button onclick="showPage('rapport')">Rapport</button>
     <button onclick="showPage('config')">⚙</button>
+    <button onclick="plOuvrir()" title="Planche d’étiquettes commune (ARGOS CR, KORE, KERA)">Étiquettes<span class="pl-n" style="display:none"></span></button>
   </div>
 </div>
 
@@ -236,7 +237,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
   <div class="card">
     <div class="card-title">QR code & étiquette</div>
     <div class="qr-zone"><div id="qr-out"></div><div class="lp" id="lp" style="display:none"><div id="lp-name" class="lp-name">-</div><div id="lp-ref" class="lp-ref">-</div><div id="lp-det" class="lp-det">-</div></div></div>
-    <div class="btn-row" style="justify-content:center"><button class="btn btn-p" onclick="creerLot()">Créer l'objet + QR code</button><button class="btn btn-sm" id="btn-print" style="display:none" onclick="imprimerEtiquette(A.lastLotId)">🖨 Étiquette</button></div>
+    <div class="btn-row" style="justify-content:center"><button class="btn btn-p" onclick="creerLot()">Créer l'objet + QR code</button><button class="btn btn-sm" id="btn-print" style="display:none" onclick="imprimerEtiquette(A.lastLotId)">🖨 Étiquette</button><button class="btn btn-sm" id="btn-pl" style="display:none" onclick="planchelot(A.lastLotId)">＋ Planche</button></div>
   </div>
 </div>
 
@@ -1006,6 +1007,7 @@ function majBoutonsLot(lot) {
   var b = gid('lot-ctx-btns'); if (!b) return;
   var fini = /termin/i.test(lot.statut || '');
   b.innerHTML = '<button class="btn btn-sm" onclick="imprimerEtiquette(gid(\'s-sel\').value)">🖨 Réimprimer l\'étiquette</button> ' +
+    '<button class="btn btn-sm" onclick="planchelot(gid(\'s-sel\').value)">＋ Planche</button> ' +
     (fini ? '<button class="btn btn-sm" onclick="rouvrirDessalement()">Rouvrir le dessalement</button>'
           : '<button class="btn btn-sm btn-p" onclick="terminerDessalement()">✓ Terminer le dessalement</button>');
 }
@@ -1345,7 +1347,7 @@ function creerLot() {
     new QRCode(qz, {text: APP_URL + '?lot=' + lot.id, width: 130, height: 130, colorDark: '#125c8a', colorLight: '#fff'});
     gid('lp-name').textContent = lot.int; gid('lp-ref').textContent = lot.ref;
     gid('lp-det').textContent = (lot.dateDebut || '-') + ' — ' + lot.poids + 'g / ' + lot.volume + 'L';
-    gid('lp').style.display = 'block'; gid('btn-print').style.display = 'inline-flex';
+    gid('lp').style.display = 'block'; gid('btn-print').style.display = 'inline-flex'; gid('btn-pl').style.display = 'inline-flex';
     hideLoading();
     alert('✅ Objet créé : ' + lot.ref);
     ref();
@@ -1818,7 +1820,7 @@ function planche16(o) {
   var cartes = (o.cartes || []).map(function(c) {
     // Chaque ligne du sous-texte (séparées par <br>) devient un bloc ajusté séparément à la largeur du cadre
     var dt = String(c.dt || '').split(/<br\s*\/?>/i).map(function(l) { return '<div>' + l + '</div>'; }).join('');
-    return '<div class="card">' + c.tete + '<div class="zq">' + (c.qr ? '<img class="qr" src="' + c.qr + '" alt="QR">' : '') + '</div>' +
+    return '<div class="card"' + (c.couleur ? ' style="--c:' + e(c.couleur) + ';--l:' + e(c.filet || L) + '"' : '') + '>' + c.tete + '<div class="zq">' + (c.qr ? '<img class="qr" src="' + c.qr + '" alt="QR">' : '') + '</div>' +
       '<div class="pied"><div class="sep"></div><div class="nm">' + e(c.nm) + '</div><div class="rf">' + e(c.rf) + '</div><div class="dt">' + dt + '</div></div></div>';
   });
   var css = '@page{size:A4;margin:0}*{box-sizing:border-box;margin:0;padding:0}html{-webkit-print-color-adjust:exact;print-color-adjust:exact}' +
@@ -1830,14 +1832,14 @@ function planche16(o) {
     '.go{padding:9px 22px;background:' + C + ';color:#fff;border:none;border-radius:8px;font:600 12px Montserrat,Arial,sans-serif;cursor:pointer}' +
     '.page{width:210mm;height:297mm;margin:14px auto;background:#fff;display:grid;grid-template-columns:repeat(4,52.5mm);grid-template-rows:repeat(4,74.25mm);box-shadow:0 2px 10px rgba(0,0,0,.15);overflow:hidden}' +
     '.cell{padding:2.5mm;display:flex;outline:1px dashed #ddd;outline-offset:-.5px}.cell.used{background:repeating-linear-gradient(135deg,#f3f3f3 0 4px,#fff 4px 8px)}' +
-    '.card{flex:1;min-width:0;border:1px solid ' + C + ';border-radius:3mm;padding:2.6mm 2.2mm 2mm;display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden}' +
+    '.card{flex:1;min-width:0;border:1px solid var(--c,' + C + ');border-radius:3mm;padding:2.6mm 2.2mm 2mm;display:flex;flex-direction:column;align-items:center;text-align:center;overflow:hidden}' +
     '.zq{flex:1;display:flex;align-items:center;justify-content:center;min-height:0}.pied{width:100%;flex:none}' +
-    '.kt{font-size:16px;font-weight:700;letter-spacing:3.5px;color:' + C + ';line-height:1;margin-top:1mm}' +
+    '.kt{font-size:16px;font-weight:700;letter-spacing:3.5px;color:var(--c,' + C + ');line-height:1;margin-top:1mm}' +
     '.kh{display:flex;flex-direction:column;align-items:center;gap:1mm}.kh svg{width:12.5mm;height:12.5mm;display:block}' +
-    '.kh b{font-size:7px;font-weight:700;letter-spacing:1.8px;color:' + C + ';line-height:1}.kh b span{color:#A8DDF0;font-size:.62em;letter-spacing:1px}' +
-    '.qr{width:27mm;height:27mm;display:block;flex:none}.sep{height:1px;background:' + L + ';width:100%;margin:0 0 1.6mm}' +
+    '.kh b{font-size:7px;font-weight:700;letter-spacing:1.8px;color:var(--c,' + C + ');line-height:1}.kh b span{color:#A8DDF0;font-size:.62em;letter-spacing:1px}' +
+    '.qr{width:27mm;height:27mm;display:block;flex:none}.sep{height:1px;background:var(--l,' + L + ');width:100%;margin:0 0 1.6mm}' +
     '.nm{font-size:8.5px;font-weight:600;line-height:1.25;margin-bottom:.8mm;max-height:7.4mm;overflow:hidden}' +
-    '.rf{font-size:8px;font-weight:700;color:' + C + ';margin-bottom:.6mm;white-space:nowrap;overflow:hidden}.dt{color:#777;line-height:1.3}.dt div{font-size:6.8px;white-space:nowrap;overflow:hidden}' +
+    '.rf{font-size:8px;font-weight:700;color:var(--c,' + C + ');margin-bottom:.6mm;white-space:nowrap;overflow:hidden}.dt{color:#777;line-height:1.3}.dt div{font-size:6.8px;white-space:nowrap;overflow:hidden}' +
     '@media print{body{background:#fff}.bar{display:none}.page{margin:0;box-shadow:none;break-after:page}.cell{outline:none}.cell.used{background:none}}';
   var doc = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>' + e(o.titre || 'Étiquettes') + '</title>' +
     '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>' + css + '</style></head><body>' +
@@ -1868,10 +1870,101 @@ function planche16(o) {
   return { html: doc, ouvrir: function(w) { w.document.open(); w.document.write(doc); w.document.close(); monter(w, 0); } };
 }
 
-function imprimerEtiquette(lid) {
+/* ---------- planche d'étiquettes commune à ARGOS CR, KORE et KERA ----------
+   Les étiquettes « ajoutées à la planche » sont gardées sur cet appareil (même site pour les trois outils),
+   puis imprimées ensemble sur une planche de 16. Chaque étiquette garde la couleur de son outil. */
+var PL_CLE = 'labo:planche-etiquettes', PL_SEL = null, PL_APRES = 0;
+function plLire() { try { return JSON.parse(localStorage.getItem(PL_CLE) || '[]') || []; } catch (e) { return []; } }
+function plEcrire(L) { try { localStorage.setItem(PL_CLE, JSON.stringify(L)); return true; } catch (e) { alert('Impossible d’enregistrer la planche sur cet appareil (mémoire du navigateur pleine ?).'); return false; } }
+function plEsc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function(c) { return {'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c]; }); }
+function plAjouter(cartes) {
+  var L = plLire(), n = 0;
+  cartes.forEach(function(c) { L = L.filter(function(x) { return x.cle !== c.cle; }); c.quand = Date.now(); L.push(c); n++; });
+  if (!plEcrire(L)) return;
+  PL_SEL = null; plBadge();
+  plToast(n + ' étiquette' + (n > 1 ? 's' : '') + ' ajoutée' + (n > 1 ? 's' : '') + ' à la planche · ' + L.length + ' en attente', true);
+}
+function plBadge() {
+  var n = plLire().length;
+  Array.prototype.forEach.call(document.querySelectorAll('.pl-n'), function(e) { e.textContent = n ? String(n) : ''; e.style.display = n ? '' : 'none'; });
+}
+function plToast(t, voir) {
+  var o = document.getElementById('pl-toast'); if (o) o.remove();
+  o = document.createElement('div'); o.id = 'pl-toast'; o.className = 'pl-toast';
+  o.innerHTML = '<span>' + plEsc(t) + '</span>' + (voir ? '<button type="button">Voir la planche</button>' : '');
+  document.body.appendChild(o);
+  if (voir) o.querySelector('button').onclick = function() { o.remove(); plOuvrir(); };
+  setTimeout(function() { if (o.parentNode) o.remove(); }, 5000);
+}
+window.addEventListener('storage', function(e) { if (e.key === PL_CLE) { PL_SEL = null; plBadge(); if (document.getElementById('pl-ov')) plOuvrir(); } });
+function plFermer() { var o = document.getElementById('pl-ov'); if (o) o.remove(); PL_APRES = 0; }
+function plOuvrir() {
+  var L = plLire();
+  if (!PL_SEL) { PL_SEL = {}; L.forEach(function(c) { PL_SEL[c.cle] = true; }); }
+  var nSel = L.filter(function(c) { return PL_SEL[c.cle]; }).length, P = Math.max(1, Math.ceil(nSel / 16));
+  var ov = document.getElementById('pl-ov');
+  if (!ov) { ov = document.createElement('div'); ov.id = 'pl-ov'; ov.className = 'pl-ov'; document.body.appendChild(ov);
+    ov.addEventListener('click', function(e) { if (e.target === ov) plFermer(); }); }
+  var corps;
+  if (PL_APRES) {
+    corps = '<p class="pl-p">Les ' + PL_APRES + ' étiquette' + (PL_APRES > 1 ? 's' : '') + ' cochée' + (PL_APRES > 1 ? 's' : '') + ' ont-elles bien été imprimées ?</p>' +
+      '<div class="pl-act"><button type="button" class="pl-btn" data-pl="garder">Les garder sur la planche</button><button type="button" class="pl-btn pl-pri" data-pl="retirer">Les retirer de la planche</button></div>';
+  } else if (!L.length) {
+    corps = '<p class="pl-p">Aucune étiquette en attente.<br>Utilisez « Ajouter à la planche » dans ARGOS CR (objet, lot, sélection), KORE ou KERA (lot), puis revenez ici pour tout imprimer sur une même planche.</p>' +
+      '<div class="pl-act"><button type="button" class="pl-btn" data-pl="fermer">Fermer</button></div>';
+  } else {
+    corps = '<div class="pl-outils"><button type="button" class="pl-lk" data-pl="tout">' + (nSel === L.length ? 'Tout décocher' : 'Tout cocher') + '</button><button type="button" class="pl-lk pl-danger" data-pl="vider">Vider la planche</button></div>' +
+      '<div class="pl-liste">' + L.map(function(c) {
+        return '<label class="pl-it"><input type="checkbox" data-plc="' + plEsc(c.cle) + '"' + (PL_SEL[c.cle] ? ' checked' : '') + '>' +
+          '<span class="pl-app" style="background:' + plEsc(c.couleur || '#2E3192') + '">' + plEsc(c.app || '') + '</span>' +
+          '<span class="pl-tx"><b>' + plEsc(c.rf || '') + '</b><small>' + plEsc(c.nm || '') + '</small></span>' +
+          '<button type="button" class="pl-x" data-plx="' + plEsc(c.cle) + '" title="Retirer de la planche">×</button></label>';
+      }).join('') + '</div>' +
+      '<p class="pl-p pl-sm">' + nSel + ' étiquette' + (nSel > 1 ? 's' : '') + ' cochée' + (nSel > 1 ? 's' : '') + ' · ' + (nSel ? P + ' planche' + (P > 1 ? 's' : '') + ' de 16 (case de départ au choix pour une planche entamée)' : 'cochez les étiquettes à imprimer') + '</p>' +
+      '<div class="pl-act"><button type="button" class="pl-btn" data-pl="fermer">Fermer</button><button type="button" class="pl-btn pl-pri" data-pl="imprimer"' + (nSel ? '' : ' disabled') + '>🖨 Imprimer la sélection</button></div>';
+  }
+  ov.innerHTML = '<div class="pl-box" role="dialog" aria-label="Planche d’étiquettes"><div class="pl-h"><b>Planche d’étiquettes</b><small>En attente sur cet appareil · ARGOS CR, KORE et KERA</small></div>' + corps + '</div>';
+  Array.prototype.forEach.call(ov.querySelectorAll('[data-plc]'), function(i) { i.onchange = function() { PL_SEL[i.getAttribute('data-plc')] = i.checked; plOuvrir(); }; });
+  Array.prototype.forEach.call(ov.querySelectorAll('[data-plx]'), function(b) { b.onclick = function(e) { e.preventDefault(); var k = b.getAttribute('data-plx'); plEcrire(plLire().filter(function(c) { return c.cle !== k; })); delete PL_SEL[k]; plBadge(); plOuvrir(); }; });
+  Array.prototype.forEach.call(ov.querySelectorAll('[data-pl]'), function(b) { b.onclick = function() {
+    var a = b.getAttribute('data-pl'), L2 = plLire();
+    if (a === 'fermer') return plFermer();
+    if (a === 'tout') { var tous = L2.every(function(c) { return PL_SEL[c.cle]; }); L2.forEach(function(c) { PL_SEL[c.cle] = !tous; }); return plOuvrir(); }
+    if (a === 'vider') { if (confirm('Retirer les ' + L2.length + ' étiquettes de la planche ?')) { plEcrire([]); PL_SEL = null; plBadge(); } return plOuvrir(); }
+    if (a === 'garder') { PL_APRES = 0; return plOuvrir(); }
+    if (a === 'retirer') { plEcrire(L2.filter(function(c) { return !PL_SEL[c.cle]; })); PL_SEL = null; PL_APRES = 0; plBadge(); return plOuvrir(); }
+    if (a === 'imprimer') {
+      var sel = L2.filter(function(c) { return PL_SEL[c.cle]; }); if (!sel.length) return;
+      var w = window.open('', '_blank', 'width=900,height=800'); if (!w) { alert('Fenêtre bloquée : autorisez les fenêtres surgissantes.'); return; }
+      planche16({titre: 'Planche d’étiquettes', cartes: sel}).ouvrir(w);
+      PL_APRES = sel.length; plOuvrir();
+    }
+  }; });
+}
+(function() {
+  var st = document.createElement('style');
+  st.textContent = '.pl-ov{position:fixed;inset:0;z-index:9999;background:rgba(20,20,30,.45);display:flex;align-items:flex-start;justify-content:center;padding:6vh 14px;overflow:auto;font-family:Montserrat,system-ui,sans-serif}' +
+    '.pl-box{background:#fff;color:#2C2C2A;border-radius:14px;box-shadow:0 20px 60px rgba(0,0,0,.3);width:min(560px,100%);padding:16px 18px;display:flex;flex-direction:column;gap:10px}' +
+    '.pl-h b{display:block;font-size:17px;color:#2E3192}.pl-h small{font-size:11.5px;color:#6B6966}' +
+    '.pl-liste{display:flex;flex-direction:column;gap:4px;max-height:52vh;overflow:auto;border:1px solid #E1E4EC;border-radius:10px;padding:6px}' +
+    '.pl-it{display:grid;grid-template-columns:20px auto minmax(0,1fr) 26px;gap:8px;align-items:center;padding:6px 6px;border-radius:8px;cursor:pointer;font-size:13px}.pl-it:hover{background:#F5F6FB}' +
+    '.pl-it input{width:16px;height:16px;margin:0}.pl-app{color:#fff;font-size:10px;font-weight:700;letter-spacing:.04em;border-radius:6px;padding:2px 7px;white-space:nowrap}' +
+    '.pl-tx{min-width:0;display:flex;flex-direction:column}.pl-tx b{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pl-tx small{font-size:11px;color:#6B6966;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}' +
+    '.pl-x{border:0;background:none;color:#9B9895;font-size:18px;cursor:pointer;padding:0}.pl-x:hover{color:#B42318}' +
+    '.pl-outils{display:flex;justify-content:space-between}.pl-lk{border:0;background:none;color:#2E3192;font-weight:600;font-size:12px;cursor:pointer;padding:2px 0}.pl-danger{color:#B42318}' +
+    '.pl-p{margin:0;font-size:13px;line-height:1.45}.pl-sm{font-size:12px;color:#6B6966}' +
+    '.pl-act{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap}.pl-btn{border:1px solid #E1E4EC;background:#fff;color:#2E3192;border-radius:9px;padding:9px 14px;font:600 13px Montserrat,system-ui,sans-serif;cursor:pointer}' +
+    '.pl-btn.pl-pri{background:#2E3192;border-color:#2E3192;color:#fff}.pl-btn:disabled{opacity:.45;cursor:default}' +
+    '.pl-toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%);z-index:9998;background:#2C2C2A;color:#fff;border-radius:10px;padding:10px 14px;display:flex;gap:12px;align-items:center;font:500 13px Montserrat,system-ui,sans-serif;box-shadow:0 6px 20px rgba(0,0,0,.25);max-width:92vw}' +
+    '.pl-toast button{border:0;background:#A8DDF0;color:#2E3192;border-radius:7px;padding:6px 10px;font:700 12px Montserrat,system-ui,sans-serif;cursor:pointer;white-space:nowrap}' +
+    '.pl-n{display:inline-block;min-width:17px;height:17px;line-height:17px;border-radius:9px;background:#E8962C;color:#fff;font-size:10px;font-weight:700;text-align:center;padding:0 4px;margin-left:4px}';
+  document.head.appendChild(st);
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', plBadge); else plBadge();
+})();
+
+// Carte d'étiquette d'un objet / lot (QR + textes), pour impression immédiate ou pour la planche commune
+function carteLot(lid, cb) {
   var lot = lid ? gL(lid) : A.lots[A.lots.length - 1]; if (!lot) return;
-  var w = window.open('', '_blank', 'width=900,height=800'); if (!w) { alert('Fenêtre bloquée : autoriser les fenêtres surgissantes.'); return; }
-  w.document.write('<p style="font-family:sans-serif;padding:20px">Préparation de l\'étiquette…</p>');
   var tmp = document.createElement('div');
   tmp.style.cssText = 'position:absolute;left:-9999px;top:-9999px;width:240px;height:240px';
   document.body.appendChild(tmp);
@@ -1881,11 +1974,18 @@ function imprimerEtiquette(lid) {
     var src = el ? (el.tagName === 'CANVAS' ? el.toDataURL('image/png') : el.src) : '';
     document.body.removeChild(tmp);
     var x = function(v) { return String(v == null ? '' : v).replace(/[<>&]/g, function(c) { return {'<': '&lt;', '>': '&gt;', '&': '&amp;'}[c]; }); };
-    planche16({titre: 'KERA — Étiquette', couleur: '#125c8a', filet: '#d8e4ee', cartes: [{
+    cb({cle: 'kera:' + lot.id, app: 'KERA', couleur: '#125c8a', filet: '#d8e4ee',
       tete: '<div class="kt">KERA</div>', qr: src, nm: lot.int, rf: lot.ref,
-      dt: x(lot.dateDebut || '—') + ' · ' + x(lot.poids || '—') + ' g · ' + x(lot.volume || '—') + ' L'}]}).ouvrir(w);
+      dt: x(lot.dateDebut || '—') + ' · ' + x(lot.poids || '—') + ' g · ' + x(lot.volume || '—') + ' L'}, lot);
   }, 300);
 }
+function imprimerEtiquette(lid) {
+  if (!(lid ? gL(lid) : A.lots[A.lots.length - 1])) return;
+  var w = window.open('', '_blank', 'width=900,height=800'); if (!w) { alert('Fenêtre bloquée : autoriser les fenêtres surgissantes.'); return; }
+  w.document.write('<p style="font-family:sans-serif;padding:20px">Préparation de l\'étiquette…</p>');
+  carteLot(lid, function(c) { planche16({titre: 'KERA — Étiquette', couleur: '#125c8a', filet: '#d8e4ee', cartes: [c]}).ouvrir(w); });
+}
+function planchelot(lid) { carteLot(lid, function(c) { plAjouter([c]); }); }
 
 // Watch events
 document.addEventListener('change', function(e) {
