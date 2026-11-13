@@ -46,6 +46,8 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .pbadge.amb{background:#FEF0C7;color:#93370D}
 .pinfo{display:flex;flex-direction:column;gap:6px;background:var(--bg);border-radius:10px;padding:10px 12px;font-size:13px}
 .pinfo small{display:block;font-size:10.5px;font-weight:600;letter-spacing:.4px;text-transform:uppercase;color:var(--txt2)}
+.etq-ghs{display:flex;align-items:flex-end;gap:6px;flex-wrap:wrap}
+.etq-ghs .ghs{width:46px;height:46px}
 .pqbar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .pqbar b{font-size:20px;font-variant-numeric:tabular-nums;min-width:70px;text-align:center}
 .palert{display:flex;justify-content:space-between;align-items:center;gap:10px;border:1px solid #FECDCA;background:#FFFBFA;width:100%;text-align:left}
@@ -751,6 +753,7 @@ const Notion={
       'Dangers':{multi_select:(x.dang||[]).map(name=>({name}))},'FDS':{url:x.fds||null},'Note':t(x.note)}},
   async creerProduit(x){return mapProduit(await nfetch('/pages','POST',{parent:{database_id:DB.produits},properties:this._prProps(x)}))},
   majProduit(p,x){return nfetch('/pages/'+p.id,'PATCH',{properties:this._prProps(x)})},
+  setSecu(p,x){const t=v=>({rich_text:v?[{type:'text',text:{content:String(v).slice(0,1900)}}]:[]});return nfetch('/pages/'+p.id,'PATCH',{properties:{"Mention d'avertissement":{select:x.mav?{name:x.mav}:null},'Mentions de danger (H)':t(x.h),'Conseils de prudence (P)':t(x.pp)}})},
   supprProduit(p){return nfetch('/pages/'+p.id,'PATCH',{archived:true})},
   setLot(o,lot){return nfetch('/pages/'+o.id,'PATCH',{properties:{'Lot':{rich_text:lot?[{type:'text',text:{content:String(lot).slice(0,200)}}]:[]}}})},
   async creerObjet(d,x){const P={'Nom':{title:[{text:{content:x.id+(x.inv?' · '+x.inv:'')}}]},'ID objet':{rich_text:[{text:{content:x.id}}]},
@@ -781,7 +784,7 @@ function demoFresh(){return {
     STEPS.forEach(s=>o.steps[s.k]=o.na.includes(s.n)?'n/a':'');return o}),
   journal:{},kore:[{id:'demo-k1',int:'WITRY-LES-REIMS - Les Cabouzets',ref:'2026_8249-8 lot fer 1',statut:'En cours'},{id:'demo-k2',int:'SAINT-LEONARD - Centre Bourg',ref:'2026-8870-01 lot 2',statut:'En cours'}],
   kera:[{id:'demo-c1',int:'Saint-Léonard - Centre Bourg',ref:'2026_8870-01 céramiques',statut:'En cours',kid:'KDEMO1'}],
-  produits:[{id:'demo-p1',nom:'Acétone',cat:'Solvant',four:'VWR',ref:'',empl:'Armoire solvants',q:2,u:'L',seuil:1,ouv:'2026-09-02',per:'',dang:['Inflammable','Nocif / irritant'],fds:'',note:''},
+  produits:[{id:'demo-p1',nom:'Acétone',cat:'Solvant',four:'VWR',ref:'',empl:'Armoire solvants',q:2,u:'L',seuil:1,ouv:'2026-09-02',per:'',dang:['Inflammable','Nocif / irritant'],fds:'',note:'',mav:'Danger',h:'H225 — Liquide et vapeurs très inflammables.\nH319 — Provoque une sévère irritation des yeux.\nH336 — Peut provoquer somnolence ou vertiges.',pp:'P210 — Tenir à l’écart de la chaleur, des surfaces chaudes, des étincelles, des flammes nues et de toute autre source d’inflammation. Ne pas fumer.\nP233 — Maintenir le récipient fermé de manière étanche.'},
     {id:'demo-p2',nom:'Paraloid B72',cat:'Consolidant / adhésif',four:'CTS',ref:'',empl:'Étagère 2',q:250,u:'g',seuil:500,ouv:'',per:'',dang:[],fds:'',note:'Commander 1 kg'},
     {id:'demo-p3',nom:'Acide tannique',cat:'Inhibiteur',four:'',ref:'',empl:'Étagère 1',q:400,u:'g',seuil:100,ouv:'2026-03-10',per:addJ(iso(),20),dang:['Nocif / irritant'],fds:'',note:''},
     {id:'demo-p4',nom:'Hydroxyde de sodium (pastilles)',cat:'Réactif',four:'',ref:'',empl:'Armoire bases',q:900,u:'g',seuil:200,ouv:'2026-05-14',per:addJ(iso(),-15),dang:['Corrosif'],fds:'',note:''},
@@ -812,6 +815,7 @@ const Demo={
   async produits(){return JSON.parse(JSON.stringify(DEMO.produits||[])).sort((a,b)=>a.nom.localeCompare(b.nom,'fr'))},
   async creerProduit(x){const p={...JSON.parse(JSON.stringify(x)),id:'demo-p'+Date.now()};(DEMO.produits=DEMO.produits||[]).push(p);dsave();return JSON.parse(JSON.stringify(p))},
   async majProduit(p,x){const y=(DEMO.produits||[]).find(z=>z.id===p.id);if(y)Object.assign(y,JSON.parse(JSON.stringify(x)));dsave()},
+  async setSecu(p,x){const y=(DEMO.produits||[]).find(z=>z.id===p.id);if(y)Object.assign(y,x);dsave()},
   async supprProduit(p){DEMO.produits=(DEMO.produits||[]).filter(z=>z.id!==p.id);dsave()},
   async taches(){return JSON.parse(JSON.stringify((DEMO.taches||[]).filter(t=>!t.fini)))},
   async objetsTaches(){const ids=new Set((DEMO.taches||[]).flatMap(t=>t.objets));return JSON.parse(JSON.stringify(DEMO.objets.filter(o=>ids.has(o.id))))},
@@ -1479,6 +1483,8 @@ document.addEventListener('click',async e=>{
   if(d.d){openDossier(d.d);return}
   if(d.dsel){view.dsel.has(d.dsel)?view.dsel.delete(d.dsel):view.dsel.add(d.dsel);render();return}
   if(d.prid){produitSheet(d.prid);return}
+  if(d.etqt){const E=view.etq;E.t=d.etqt;E.hEdit=E.pEdit=E.mEdit=false;etqPrep(E);etqRender();return}
+  if(d.etqrec!=null){const r=LS.get('argoslab:etqrec',[])[+d.etqrec];if(r){Object.assign(view.etq,r,{date:iso(),hEdit:false,pEdit:false,mEdit:false});etqPrep(view.etq);etqRender()}return}
   if(d.prf){view.pf=d.prf;render();return}
   if(d.prq){pQte(Number(d.prq));return}
   if(d.prdg){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');return}
@@ -1534,6 +1540,10 @@ document.addEventListener('click',async e=>{
     case 'pdel':pDelSheet();break;
     case 'pdelok':pSuppr();break;
     case 'pprint':imprimerRegistre();break;
+    case 'etq':etqSheet(view.pid);break;
+    case 'etqnew':etqSheet(null);break;
+    case 'etqsave':etqSave();break;
+    case 'etqprint':etqImprimer();break;
     case 'lotnew':{const v=(($('#lot-new')||{}).value||'').trim();if(!v){toast('Indiquez le nom du lot (ex. Lot 1 — deniers)',0,1);break}rangerLot(v);break}
     case 'delselok':supprimerSelection();break;
     case 'tnew':tacheForm(null);break;
@@ -1879,7 +1889,8 @@ const PR_UNITES=['mL','L','g','kg','pièce','flacon','boîte','rouleau'];
 const PR_DANGERS=['Inflammable','Toxique','Corrosif','Nocif / irritant','CMR','Comburant',"Dangereux pour l'environnement",'Gaz sous pression'];
 function mapProduit(pg){const P=pg.properties;return {id:pg.id,nom:pv(P['Produit']),cat:pv(P['Catégorie']),four:pv(P['Fournisseur']),ref:pv(P['Référence']),empl:pv(P['Emplacement']),
   q:pv(P['Quantité']),u:pv(P['Unité']),seuil:pv(P["Seuil d'alerte"]),ouv:pv(P["Date d'ouverture"]),per:pv(P['Péremption']),dang:pv(P['Dangers'])||[],fds:pv(P['FDS']),note:pv(P['Note']),
-  fam:pv(P['Famille chimique']),usage:pv(P['Usage']),mats:pv(P['Matériaux concernés']),rev:pv(P['Réversibilité']),vig:pv(P['Vigilance']),lien:pv(P['Lien fournisseur']),ops:pv(P['Opérations'])}}
+  fam:pv(P['Famille chimique']),usage:pv(P['Usage']),mats:pv(P['Matériaux concernés']),rev:pv(P['Réversibilité']),vig:pv(P['Vigilance']),lien:pv(P['Lien fournisseur']),ops:pv(P['Opérations']),
+  mav:pv(P["Mention d'avertissement"]),h:pv(P['Mentions de danger (H)']),pp:pv(P['Conseils de prudence (P)'])}}
 function pEtat(p){const n=v=>v!=null&&v!=='',per=p.per&&p.per<iso(),bientot=p.per&&!per&&p.per<=addJ(iso(),30);
   return {cmd:n(p.q)&&n(p.seuil)&&Number(p.q)<=Number(p.seuil),per,bientot}}
 async function chargerProduits(){try{S.prod=await API().produits();S.prodErr=''}catch(e){S.prodErr=e.message||String(e)}if(view.v==='home'||view.v==='produits')render()}
@@ -1899,10 +1910,11 @@ function produitsV(){const P=S.prod||[],f=view.pf||'all',q=(view.pq||'').trim().
       <span>${esc([p.usage||p.cat,p.empl].filter(Boolean).join(' · '))}${p.dang.length?' · ⚠ '+esc(p.dang.join(', ')):''}</span></span>
       <span class="pqte ${e.cmd?'late':''}">${p.q==null||p.q===''?'—':esc(p.q)+' '+esc(p.u||'')}${e.cmd?'<small>à commander</small>':''}</span></button>`}).join('')
     :`<p class="empty" style="padding:16px">${P.length?'Aucun produit ne correspond.':'Aucun produit enregistré : ajoutez le premier.'}</p>`}</div>
-  <div class="actions"><button class="big primary" data-a="pnew">+ Nouveau produit</button><button class="big secondary" data-a="pprint">Imprimer le registre</button></div>`}
+  <div class="actions"><button class="big primary" data-a="pnew">+ Nouveau produit</button><button class="big secondary" data-a="pprint">Imprimer le registre</button></div>
+  <button class="big secondary" data-a="etqnew" style="width:100%">Étiquette de flacon (transvasement, solution)</button>`}
 function produitSheet(id){const p=id?(S.prod||[]).find(x=>x.id===id):null;if(id&&!p)return;view.pid=id;const x=p||{dang:[]};
   sheet(`<div class="sh-h"><small>${p?esc(p.cat||'Produit'):'Registre des produits'}</small><b>${p?esc(p.nom):'Nouveau produit'}</b></div>
-    ${p?`<div class="pqbar"><button class="chip" data-prq="-1">− 1</button><b id="pf-qv">${p.q==null||p.q===''?'—':esc(p.q)} ${esc(p.u||'')}</b><button class="chip" data-prq="1">+ 1</button><button class="chip" data-a="pouv">Ouvert aujourd’hui</button></div>`:''}
+    ${p?`<div class="pqbar"><button class="chip" data-prq="-1">− 1</button><b id="pf-qv">${p.q==null||p.q===''?'—':esc(p.q)} ${esc(p.u||'')}</b><button class="chip" data-prq="1">+ 1</button><button class="chip" data-a="pouv">Ouvert aujourd’hui</button><button class="chip" data-a="etq">Étiquette de flacon</button></div>`:''}
     ${p&&(p.usage||p.fam||p.mats||p.rev||p.vig||p.ops||p.lien)?`<div class="pinfo">${[['Usage',p.usage],['Famille chimique',p.fam],['Matériaux',p.mats],['Réversibilité',p.rev],['Vigilance',p.vig]].filter(x=>x[1]).map(x=>`<div><small>${x[0]}</small>${esc(x[1])}</div>`).join('')}
       ${p.ops?`<div><small>Opérations</small>${p.ops.split('\n').map(esc).join('<br>')}</div>`:''}
       ${/^https?:/i.test(p.lien||'')?`<a class="link" href="${esc(p.lien)}" target="_blank" rel="noopener">Page du fournisseur ${ICON.ext}</a>`:''}</div>`:''}
@@ -1946,6 +1958,115 @@ function imprimerRegistre(){const P=S.prod||[];if(!P.length)return toast('Le reg
     <table><thead><tr><th>Produit</th><th>Fournisseur</th><th>Emplacement</th><th>Quantité</th><th>Ouvert le</th><th>Péremption</th><th>Dangers</th><th>FDS</th></tr></thead><tbody>${lignes}</tbody></table>
     <p class="tot">${P.length} produits · ${P.filter(p=>pEtat(p).cmd).length} à commander · ${P.filter(p=>pEtat(p).per).length} périmé(s) · ${P.filter(p=>!p.fds).length} sans FDS.</p>
     <p class="pied">Document établi avec ARGOS CR — Pôle Conservation-Restauration, Éveha</p>`)}
+
+
+/* ---------- étiquettes de sécurité pour le flaconnage (transvasement, solution) ---------- */
+// Pictogrammes SGH/CLP : d'après le champ « Dangers » et les codes H de la fiche produit (mélange : union des composants).
+const GHS_DANGER={'Inflammable':'GHS02','Comburant':'GHS03','Gaz sous pression':'GHS04','Corrosif':'GHS05','Toxique':'GHS06','Nocif / irritant':'GHS07','CMR':'GHS08',"Dangereux pour l'environnement":'GHS09'};
+const GHS_NOM={GHS02:'Inflammable',GHS03:'Comburant',GHS04:'Gaz sous pression',GHS05:'Corrosif',GHS06:'Toxicité aiguë',GHS07:'Nocif, irritant',GHS08:'Danger pour la santé',GHS09:'Danger pour l’environnement'};
+function ghsDeH(txt){const out=new Set(),codes=String(txt||'').match(/H\d{3}/g)||[];
+  codes.forEach(c=>{const n=+c.slice(1);
+    if(n>=220&&n<=242||n===250||n===251||n===252||n===260||n===261)out.add('GHS02');
+    if(n>=270&&n<=272)out.add('GHS03');if(n===280||n===281)out.add('GHS04');
+    if(n===290||n===314||n===318)out.add('GHS05');
+    if([300,301,310,311,330,331].includes(n))out.add('GHS06');
+    if([302,312,315,317,319,332,335,336].includes(n))out.add('GHS07');
+    if([304,334,340,341,350,351,360,361,362,370,371,372,373].includes(n))out.add('GHS08');
+    if([400,410,411].includes(n))out.add('GHS09')});
+  return out}
+function ghsDe(prods){const s=new Set();prods.forEach(p=>{(p.dang||[]).forEach(d=>GHS_DANGER[d]&&s.add(GHS_DANGER[d]));ghsDeH(p.h).forEach(g=>s.add(g))});
+  if(s.has('GHS06'))s.delete('GHS07');                // règle de préséance CLP
+  return [...s].sort()}
+function ghsSvg(g,mm){const sym={
+  GHS02:'<path d="M50 18C55 31 67 36 65 53 64 63 58 69 50 69 41 69 35 63 35 54 35 46 40 41 43 34 45 41 47 44 49 46 47 37 47 27 50 18Z" fill="#000"/><path d="M50 50c2 4 6 6 5 11-1 3-3 5-5 5-3 0-5-2-5-5 0-3 2-5 3-7 0 2 1 3 2 4 0-3 0-5 0-8z" fill="#fff"/><rect x="31" y="72" width="38" height="5" fill="#000"/>',
+  GHS03:'<circle cx="50" cy="60" r="9" fill="none" stroke="#000" stroke-width="5"/><path d="M50 22c2 7 10 10 10 20 0 6-4 10-10 10s-10-4-10-10c0-4 2-6 4-9 0 4 2 5 3 6 0-7 1-12 3-17z" fill="#000"/><rect x="31" y="73" width="38" height="4" fill="#000"/>',
+  GHS04:'<rect x="40" y="34" width="20" height="40" rx="9" fill="#000"/><rect x="46" y="26" width="8" height="9" fill="#000"/>',
+  GHS05:'<path d="M24 31l15-9 3 5-15 9zM55 31l15-9 3 5-15 9z" fill="#000"/><circle cx="33" cy="42" r="2.3" fill="#000"/><circle cx="33" cy="50" r="2.3" fill="#000"/><circle cx="63" cy="42" r="2.3" fill="#000"/><circle cx="63" cy="50" r="2.3" fill="#000"/><path d="M23 56h21v9h-7l-2-4-2 4H23z" fill="#000"/><path d="M53 56h15c3 0 5 2 5 5v4H64l-2-4-2 4h-7z" fill="#000"/><rect x="22" y="70" width="56" height="5" fill="#000"/>',
+  GHS06:'<ellipse cx="50" cy="40" rx="13" ry="12" fill="#000"/><rect x="43" y="47" width="14" height="7" rx="2" fill="#000"/><circle cx="45" cy="39" r="3.5" fill="#fff"/><circle cx="55" cy="39" r="3.5" fill="#fff"/><path d="M30 58l40 14M30 72l40-14" stroke="#000" stroke-width="5" stroke-linecap="round"/>',
+  GHS07:'<rect x="46" y="26" width="8" height="32" rx="3" fill="#000"/><circle cx="50" cy="68" r="5" fill="#000"/>',
+  GHS08:'<circle cx="50" cy="29" r="6" fill="#000"/><path d="M38 38h24l-4 38H42z" fill="#000"/><path d="M50 46l3 6 6 1-5 4 2 6-6-3-6 3 2-6-5-4 6-1z" fill="#fff"/>',
+  GHS09:'<path d="M34 30v38M34 40l-8-8M34 48l9-7" stroke="#000" stroke-width="4" fill="none"/><path d="M48 62c6-6 14-6 20 0-6 6-14 6-20 0zM68 62l6-5v10z" fill="#000"/><rect x="26" y="70" width="48" height="4" fill="#000"/>'}[g]||'';
+  return `<svg class="ghs" viewBox="0 0 100 100" width="${mm}mm" height="${mm}mm" role="img" aria-label="${esc(GHS_NOM[g]||g)}"><path d="M50 4 96 50 50 96 4 50z" fill="#fff" stroke="#E00000" stroke-width="7" stroke-linejoin="round"/>${sym}</svg>`}
+const ETQ_FMT={S:{l:'Petit flacon — 70 × 37 mm (24 par page)',w:70,h:37,col:3,lig:8},M:{l:'Flacon — 105 × 74 mm (8 par page)',w:105,h:74,col:2,lig:4},L:{l:'Bidon — 148 × 105 mm (4 par page)',w:148,h:105,col:2,lig:2}};
+const ETQ_UNITES=['% (m/v)','% (m/m)','% (v/v)','g/L','mol/L'];
+function lignesTxt(t){return String(t||'').split(/\n+/).map(x=>x.trim()).filter(Boolean)}
+function unionLignes(L){const vu=new Set(),out=[];L.forEach(t=>lignesTxt(t).forEach(x=>{const k=(x.match(/^[HP]\d{3}(\+P\d{3})*/)||[x])[0];if(!vu.has(k)){vu.add(k);out.push(x)}}));return out.join('\n')}
+function etqComposants(E){const P=S.prod||[],a=P.find(x=>x.id===E.a),b=E.t==='sol'?P.find(x=>x.id===E.b):null;return [a,b].filter(Boolean)}
+function etqNomAuto(E){const P=S.prod||[],a=P.find(x=>x.id===E.a),b=P.find(x=>x.id===E.b);if(!a)return '';
+  if(E.t!=='sol')return a.nom;const sv=b?b.nom.toLowerCase():'',art=/^[aeiouyhéèêàâîôû]/i.test(sv)?'l’':'le ';
+  return `${a.nom}${E.c?' à '+String(E.c).replace('.',',')+' '+(E.cu||''):''}${b?' dans '+art+sv:''}`.replace(/\s+/g,' ').trim()}
+function etqPrep(E,force){const C=etqComposants(E);if(!C.length)return;
+  if(force||!E.hEdit)E.h=unionLignes(C.map(p=>p.h));if(force||!E.pEdit)E.pp=unionLignes(C.map(p=>p.pp));
+  if(force||!E.mEdit){const ms=C.map(p=>p.mav).filter(Boolean),g=ghsDe(C);E.mav=ms.includes('Danger')?'Danger':ms.includes('Attention')?'Attention':g.some(x=>['GHS02','GHS05','GHS06','GHS08'].includes(x))?'Danger':g.length?'Attention':''}
+  if(force||!E.nEdit)E.nom=etqNomAuto(E)}
+function etqSheet(pid){const P=(S.prod||[]).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));if(!P.length)return toast('Le registre des produits est vide',0,1);
+  const p=pid?P.find(x=>x.id===pid):null,solv=P.filter(x=>x.cat==='Solvant');
+  view.etq={t:p&&p.cat!=='Solvant'?'sol':'transv',a:p?p.id:P[0].id,b:(solv.find(x=>/ac[ée]tone/i.test(x.nom))||solv[0]||P[0]).id,c:'',cu:'% (m/v)',vol:'',vu:'mL',fmt:LS.get('argoslab:etqfmt','M'),nb:1,date:iso(),dlu:''};
+  etqPrep(view.etq,true);etqRender()}
+function etqRender(){const E=view.etq,P=(S.prod||[]).slice().sort((a,b)=>a.nom.localeCompare(b.nom,'fr')),C=etqComposants(E),g=ghsDe(C),rec=LS.get('argoslab:etqrec',[]);
+  const opt=id=>P.map(x=>`<option value="${x.id}" ${x.id===id?'selected':''}>${esc(x.nom)}</option>`).join('');
+  const manque=C.filter(p=>!p.h&&!(p.dang||[]).length);
+  sheet(`<div class="sh-h"><small>Produits du labo</small><b>Étiquette de flacon</b></div>
+    ${rec.length?`<div class="label">Préparations récentes</div><div class="chips cwrap">${rec.map((r,i)=>`<button class="chip sm" data-etqrec="${i}">${esc(r.nom)}</button>`).join('')}</div>`:''}
+    <div class="seg two"><button data-etqt="transv" aria-pressed="${E.t==='transv'}">Transvasement</button><button data-etqt="sol" aria-pressed="${E.t==='sol'}">Solution / mélange</button></div>
+    <p class="hint">${E.t==='transv'?'Produit pur transvasé de son contenant d’origine (bidon → flacon) : l’étiquette reprend les dangers du produit.':'Produit dissous ou dilué dans un solvant : l’étiquette cumule les dangers des deux composants.'}</p>
+    <label class="fl">${E.t==='sol'?'Produit dissous / dilué':'Produit'}<select class="ti" data-etq="a">${opt(E.a)}</select></label>
+    ${E.t==='sol'?`<div class="sh-act"><label class="fl">Concentration<input class="ti" data-etqi="c" inputmode="decimal" value="${esc(E.c)}" placeholder="40"></label><label class="fl">Unité<select class="ti" data-etq="cu">${ETQ_UNITES.map(u=>`<option ${u===E.cu?'selected':''}>${u}</option>`).join('')}</select></label></div>
+      <label class="fl">Solvant<select class="ti" data-etq="b">${opt(E.b)}</select></label>`:''}
+    <label class="fl">Nom sur l’étiquette<input class="ti" data-etqi="nom" value="${esc(E.nom)}"></label>
+    <div class="sh-act three"><label class="fl">Contenance<input class="ti" data-etqi="vol" inputmode="decimal" value="${esc(E.vol)}" placeholder="500"></label><label class="fl">Unité<select class="ti" data-etq="vu">${['mL','L','g','kg'].map(u=>`<option ${u===E.vu?'selected':''}>${u}</option>`).join('')}</select></label>
+      <label class="fl">Étiquettes<input class="ti" type="number" min="1" max="48" data-etqi="nb" value="${esc(E.nb)}"></label></div>
+    <div class="sh-act"><label class="fl">Préparé le<input class="ti" type="date" data-etqi="date" value="${esc(E.date)}"></label><label class="fl">À utiliser avant (facultatif)<input class="ti" type="date" data-etqi="dlu" value="${esc(E.dlu)}"></label></div>
+    <div class="label">Dangers</div>
+    <div class="etq-ghs">${g.length?g.map(x=>ghsSvg(x,12)).join(''):'<span class="hint">Aucun pictogramme d’après les fiches.</span>'}
+      <label class="fl" style="flex:1;min-width:140px">Mention d’avertissement<select class="ti" data-etq="mav"><option value="" ${!E.mav?'selected':''}>—</option><option ${E.mav==='Danger'?'selected':''}>Danger</option><option ${E.mav==='Attention'?'selected':''}>Attention</option></select></label></div>
+    ${manque.length?`<p class="hint late">Pas de dangers renseignés pour ${manque.map(p=>'« '+esc(p.nom)+' »').join(' et ')} : complétez d’après la FDS (section 2) ci-dessous.</p>`:''}
+    <label class="fl">Mentions de danger (H) — une par ligne<textarea class="ta" rows="3" data-etqi="h" placeholder="H225 — Liquide et vapeurs très inflammables">${esc(E.h)}</textarea></label>
+    <label class="fl">Conseils de prudence (P) — un par ligne<textarea class="ta" rows="3" data-etqi="pp" placeholder="P210 — Tenir à l’écart de la chaleur, des surfaces chaudes, des étincelles et de toute flamme nue">${esc(E.pp)}</textarea></label>
+    ${E.t==='transv'&&C[0]&&(E.h!==(C[0].h||'')||E.pp!==(C[0].pp||'')||E.mav!==(C[0].mav||''))?`<button class="link" data-a="etqsave">Enregistrer ces dangers dans la fiche « ${esc(C[0].nom)} »</button>`:''}
+    <label class="fl">Format<select class="ti" data-etq="fmt">${Object.keys(ETQ_FMT).map(k=>`<option value="${k}" ${k===E.fmt?'selected':''}>${ETQ_FMT[k].l}</option>`).join('')}</select></label>
+    <p class="hint">Les pictogrammes, la mention et les phrases H/P viennent des fiches produits : vérifiez-les avec la FDS du fournisseur avant le premier usage.</p>
+    <div class="sh-act"><button class="big secondary" data-a="close">Annuler</button><button class="big primary" data-a="etqprint">${ICON.check}Imprimer</button></div>`,'etq')}
+document.addEventListener('input',e=>{const t=e.target,k=t.dataset&&t.dataset.etqi;if(!k||!view.etq)return;view.etq[k]=t.value;
+  if(k==='h')view.etq.hEdit=true;if(k==='pp')view.etq.pEdit=true;if(k==='nom')view.etq.nEdit=true;
+  if(k==='c'&&!view.etq.nEdit){view.etq.nom=etqNomAuto(view.etq);const n=document.querySelector('[data-etqi="nom"]');if(n)n.value=view.etq.nom}});
+document.addEventListener('change',e=>{const t=e.target,k=t.dataset&&t.dataset.etq;if(!k||!view.etq)return;view.etq[k]=t.value;
+  if(k==='mav')view.etq.mEdit=true;if(k==='fmt')LS.set('argoslab:etqfmt',t.value);
+  if(k==='a'||k==='b'){view.etq.hEdit=view.etq.pEdit=view.etq.mEdit=false;etqPrep(view.etq)}
+  if(k==='cu'&&!view.etq.nEdit)view.etq.nom=etqNomAuto(view.etq);
+  const y=document.querySelector('.sheet .sheet-in');const sc=y?y.scrollTop:0;etqRender();const z=document.querySelector('.sheet .sheet-in');if(z)z.scrollTop=sc});
+async function etqSave(){const E=view.etq,p=(S.prod||[]).find(x=>x.id===E.a);if(!p)return;const prev={h:p.h,pp:p.pp,mav:p.mav};
+  Object.assign(p,{h:E.h,pp:E.pp,mav:E.mav});etqRender();
+  try{await API().setSecu(p,{h:E.h,pp:E.pp,mav:E.mav});toast('Dangers enregistrés dans la fiche « '+p.nom+' »')}catch(err){Object.assign(p,prev);etqRender();fail(err)}}
+function etqImprimer(){const E=view.etq,F=ETQ_FMT[E.fmt]||ETQ_FMT.M,C=etqComposants(E),g=ghsDe(C);if(!E.nom)return toast('Indiquez le nom du contenu',0,1);
+  const nb=Math.max(1,Math.min(48,parseInt(E.nb)||1)),H=lignesTxt(E.h),Pp=lignesTxt(E.pp),petit=E.fmt==='S',grand=E.fmt==='L';
+  const code=x=>(x.match(/^(EUH|H|P)\d{3}(\s*\+\s*P\d{3})*/)||[x])[0];
+  const comp=E.t==='sol'&&C.length?C.map((p,i)=>i===0?`${esc(p.nom)}${E.c?' : '+esc(String(E.c).replace('.',','))+' '+esc(E.cu):''}`:`solvant : ${esc(p.nom)}`).join(' · '):C[0]?`Transvasé du contenant d’origine${C[0].four?' ('+esc(C[0].four)+(C[0].ref?' — '+esc(C[0].ref):'')+')':''}`:'';
+  const pic=g.map(x=>ghsSvg(x,petit?9:grand?20:14)).join('');
+  const hTxt=petit?esc(H.map(code).join(', ')):H.map(esc).join('<br>');
+  const pTxt=petit?esc(Pp.map(code).join(', ')):grand?Pp.map(esc).join('<br>'):esc(Pp.map(code).join(', '));
+  const une=`<div class="et ${E.fmt}"><div class="eh"><b>${esc(E.nom)}</b>${E.vol?`<span>${esc(String(E.vol).replace('.',','))} ${esc(E.vu)}</span>`:''}</div>
+    ${comp?`<div class="ec">${comp}</div>`:''}
+    <div class="eg">${pic}${E.mav?`<b class="mav">${esc(E.mav.toUpperCase())}</b>`:''}</div>
+    ${H.length?`<div class="eph">${hTxt}</div>`:''}${Pp.length?`<div class="epp">${pTxt}</div>`:''}
+    <div class="ef"><span>Préparé le ${fr(E.date||iso())} par ${esc(op())}</span>${E.dlu?`<span>À utiliser avant le ${fr(E.dlu)}</span>`:''}<span>Labo CR Éveha${petit?'':' · FDS : classeur sécurité'}</span></div></div>`;
+  const parPage=F.col*F.lig,pages=[];for(let i=0;i<nb;i+=parPage)pages.push(`<div class="page" style="grid-template-columns:repeat(${F.col},${F.w}mm);grid-auto-rows:${F.h}mm">${Array(Math.min(parPage,nb-i)).fill(une).join('')}</div>`);
+  const w=window.open('','_blank');if(!w)return toast('Fenêtre bloquée : autorisez les fenêtres surgissantes.',0,1);
+  w.document.open();w.document.write(`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Étiquettes — ${esc(E.nom)}</title><style>
+  @page{size:A4;margin:0}*{box-sizing:border-box}body{margin:0;font-family:Arial,Helvetica,sans-serif;color:#000;background:#eee}
+  .page{width:210mm;min-height:297mm;background:#fff;display:grid;align-content:start;justify-content:center;padding:4mm 0;margin:0 auto 8mm;page-break-after:always}
+  .et{border:.3mm dashed #999;padding:2mm 2.5mm;display:flex;flex-direction:column;gap:1mm;overflow:hidden}
+  .et.S{padding:1.2mm 1.6mm;gap:.5mm}
+  .eh{display:flex;justify-content:space-between;align-items:baseline;gap:2mm;border-bottom:.5mm solid #E00000;padding-bottom:.6mm}
+  .eh b{font-size:12pt;line-height:1.1}.S .eh b{font-size:8pt}.L .eh b{font-size:17pt}.eh span{font-size:9pt;font-weight:700;white-space:nowrap}.S .eh span{font-size:7pt}
+  .ec{font-size:7.5pt}.S .ec{font-size:5.5pt}.L .ec{font-size:10pt}
+  .eg{display:flex;align-items:center;gap:1mm;flex-wrap:wrap}.mav{font-size:11pt;color:#E00000;margin-left:1.5mm;letter-spacing:.3mm}.S .mav{font-size:7pt}.L .mav{font-size:16pt}
+  .eph{font-size:6.5pt;line-height:1.2}.epp{font-size:6pt;line-height:1.2;color:#222}.S .eph,.S .epp{font-size:5pt}.L .eph{font-size:9pt}.L .epp{font-size:8pt}
+  .ef{margin-top:auto;display:flex;flex-wrap:wrap;justify-content:space-between;gap:0 2mm;font-size:6pt;color:#333;border-top:.2mm solid #ccc;padding-top:.5mm}.S .ef{font-size:4.6pt}.L .ef{font-size:8pt}
+  .imp{position:fixed;top:12px;right:12px;background:#2E3192;color:#fff;border:0;border-radius:8px;padding:10px 16px;font-size:11pt;cursor:pointer}
+  @media print{body{background:#fff}.imp{display:none}.page{margin:0}.et{border-color:#ccc}}
+  </style></head><body><button class="imp" onclick="print()">Imprimer</button>${pages.join('')}</body></html>`);w.document.close();
+  const rec=LS.get('argoslab:etqrec',[]).filter(r=>r.nom!==E.nom);rec.unshift({t:E.t,a:E.a,b:E.b,c:E.c,cu:E.cu,vol:E.vol,vu:E.vu,fmt:E.fmt,nom:E.nom,nEdit:E.nEdit});LS.set('argoslab:etqrec',rec.slice(0,8))}
 
 /* ---------- menu des outils (logo) ---------- */
 function menuOutils(ouvrir){const m=$('#outils'),b=$('#brandb');if(!m||!b)return;if(ouvrir==null)ouvrir=m.hidden;m.hidden=!ouvrir;b.setAttribute('aria-expanded',ouvrir)}
