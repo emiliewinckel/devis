@@ -100,6 +100,46 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .row .d b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .d span{font-size:11px;color:var(--txt2)}
 .dots{display:flex;gap:3px;margin-top:5px}
+#app.wide{max-width:1100px}
+.objg{display:flex;flex-direction:column;gap:14px}.objc{display:flex;flex-direction:column;gap:14px;min-width:0}
+@media(min-width:900px){.objg{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:start}.objg>.objc:first-child{position:sticky;top:76px}}
+.ohead{display:flex;flex-direction:column;gap:12px}
+.oact{display:flex;gap:8px}
+.oact button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border);background:var(--card);border-radius:10px;padding:9px 6px;font:inherit;font-weight:600;font-size:13px;color:var(--navy);cursor:pointer;white-space:nowrap}
+.oact button:hover{border-color:var(--navy)}
+.oact button.medt[aria-pressed="true"]{background:#FBF3D9;border-color:#C9A227;color:#8A6D10}
+.phinfo summary{font-size:12px;color:var(--txt2);cursor:pointer;width:max-content}
+.phinfo p{font-size:12px;color:var(--txt2);margin:6px 0 0;word-break:break-all;font-variant-numeric:tabular-nums}
+.cst summary{display:flex;flex-direction:column;gap:4px;cursor:pointer;list-style:none}.cst summary::-webkit-details-marker{display:none}
+.cst summary .label::after{content:' ▾';color:var(--txt3)}.cst[open] summary .label::after{content:' ▴'}
+.cst-r{font-size:13px;color:var(--txt)}.cst-r i{color:var(--txt3)}
+.cst dl{margin:12px 0;display:flex;flex-direction:column;gap:8px}.cst dl div{display:grid;grid-template-columns:130px minmax(0,1fr);gap:10px;font-size:13px}
+.cst dt{color:var(--txt2)}.cst dd{margin:0}
+.cst-g{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.otl{list-style:none;margin:8px 0 0;padding:0}
+.otl li{position:relative;display:grid;grid-template-columns:24px minmax(0,1fr);gap:10px;padding-bottom:8px}
+.otl li::before{content:'';position:absolute;left:11px;top:24px;bottom:-2px;width:2px;background:var(--border)}
+.otl li:last-child::before{display:none}.otl li.done::before{background:var(--green)}
+.otl .dot{width:24px;height:24px;border-radius:50%;border:2px solid var(--border);background:var(--card);display:grid;place-items:center;font-size:11px;font-weight:700;color:var(--txt3);position:relative;z-index:1;margin-top:8px}
+.otl .dot svg{width:13px;height:13px}
+.otl li.done .dot{background:var(--green);border-color:var(--green);color:#fff}
+.otl li.cur .dot{background:var(--sky);border-color:var(--navy);color:var(--navy)}
+.otl li.run .dot{background:var(--sky-l);border-color:var(--navy);color:var(--navy)}
+.otl li.na .dot{border-style:dashed;width:16px;height:16px;margin:12px 4px 0;font-size:9px}
+.otl .bx{border:1px solid var(--border);border-radius:12px;padding:10px 12px;cursor:pointer;background:var(--card);min-width:0}
+.otl .bx:hover{border-color:var(--navy)}
+.otl li.cur .bx{border-color:var(--sky);box-shadow:0 0 0 3px var(--sky-l)}
+.otl li.done .bx{background:var(--green-l);border-color:transparent}
+.otl li.na .bx{border-style:dashed;background:transparent;padding:6px 12px}
+.otl li.na b{color:var(--txt3);font-weight:500;text-decoration:line-through;text-decoration-thickness:1px}
+.tlh{display:flex;align-items:baseline;justify-content:space-between;gap:10px}.tlh b{font-size:14px}
+.tls{font-size:11px;color:var(--txt2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.otl li.done .tls,.otl li.done b{color:var(--green)}.otl li.cur .tls{color:var(--navy);font-weight:700}
+.otl .ev,.journal .ev{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;font-size:12px;padding-top:6px;margin-top:6px;border-top:1px dashed rgba(0,0,0,.08)}
+.otl .ev time,.journal .ev time{color:var(--txt3);white-space:nowrap;font-variant-numeric:tabular-nums}
+.otl .ev .del,.journal .ev .del{border:1px solid var(--border);background:#fff;color:var(--txt2);border-radius:8px;width:26px;height:26px;display:grid;place-items:center;cursor:pointer;padding:0}
+.sh-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+@media(max-width:899px){#app.wide .nav{position:sticky;bottom:0;z-index:6;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom));margin-bottom:-8px}}
 .medb{font-style:normal;color:#C9A227;margin-left:6px;font-size:.9em}
 .link.medt[aria-pressed="true"]{color:#A8861A}
 .lk.rxl{display:flex;align-items:center;gap:8px;text-decoration:none}
@@ -640,6 +680,7 @@ const fr=s=>s?s.slice(8,10)+'/'+s.slice(5,7)+'/'+s.slice(0,4):'';
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const hex=id=>String(id||'').replace(/-/g,'').toLowerCase();
 const ICON={
+  edit:'<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16z"/><path d="m13 7 4 4"/></svg>',
   rx:'<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 6v12M8 9h8M8 12h8M8 15h8"/></svg>',
  scan:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 8V5a1 1 0 0 1 1-1h3M16 4h3a1 1 0 0 1 1 1v3M20 16v3a1 1 0 0 1-1 1h-3M8 20H5a1 1 0 0 1-1-1v-3M4 12h16"/></svg>',
  lot:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="7" height="7" rx="1.5"/><rect x="14" y="4" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><path d="m15 17.5 2 2 4-4"/></svg>',
@@ -683,7 +724,8 @@ function mapDossier(pg){const P=pg.properties;return {id:pg.id,num:pv(P['N° lab
 function mapObjet(pg){const P=pg.properties,o={id:pg.id,nom:pv(P['Nom']),idObj:pv(P['ID objet']),inv:pv(P['N° inventaire']),us:pv(P['US']),
   d:pv(P['Description']),m:(pv(P['Matériau'])||[]).join(', '),nr:pv(P['NR']),t:pv(P["Description de l'intervention"]),
   na:pv(P['Étapes non applicables'])||[],kore:pv(P['Bain KORE'])||[],koreStat:pv(P['Statut KORE']),kera:pv(P['Lot KERA'])||[],keraStat:pv(P['Statut KERA']),masse:pv(P['Masse (g)']),lot:pv(P['Lot'])||'',cont:pv(P['Contenant'])||[],cal:pv(P['Protection / calage'])||[],tamp:pv(P['Tampon hygroscopique'])||[],hr:pv(P['HR cible stockage'])||'',etatC:pv(P['État de conservation'])||'',dossier:(pv(P['Dossier'])||[])[0],steps:{}};
-  o.med=!!pv(P['Intérêt médiation']);o.dnum=pv(P['N° labo dossier']);o.dcom=pv(P['Commune']);
+  o.med=!!pv(P['Intérêt médiation']);o.altM=pv(P['Altérations mécaniques'])||[];o.altP=pv(P['Altérations physico-chimique'])||[];o.altB=pv(P['Altérations biologiques'])||[];
+  o.dL=pv(P['Longueur (mm) ']);o.dl=pv(P['Largeur (mm)']);o.dH=pv(P['Hauteur (mm)']);o.dD=pv(P['Diamètre (mm)']);o.dnum=pv(P['N° labo dossier']);o.dcom=pv(P['Commune']);
   STEPS.forEach(s=>o.steps[s.k]=pv(P[s.col]));return o}
 function mapTache(pg){const P=pg.properties;return {id:pg.id,titre:pv(P['Titre']),dossier:(pv(P['Dossier'])||[])[0]||'',objets:pv(P['Objets'])||[],
   etape:pv(P['Étape']),personne:pv(P['Personne']),debut:pv(P['Début']),ech:pv(P['Échéance']),note:pv(P['Note']),par:pv(P['Créée par'])}}
@@ -763,6 +805,10 @@ const Notion={
       'Nom':{title:[{type:'text',text:{content:[o.idObj,x.inv].filter(Boolean).join(' · ')||x.d||'objet'}}]}}})},
   setRetour(d,date){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Date de retour':{date:date?{start:date}:null}}})},
   setRxDrive(d,url){return nfetch('/pages/'+d.id,'PATCH',{properties:{'Lien Drive radiographies':{url:url||null}}})},
+  setConstat(o,x){const num=v=>({number:v==null||v===''?null:Number(v)}),ms=a=>({multi_select:a.map(name=>({name}))});
+    return nfetch('/pages/'+o.id,'PATCH',{properties:{'État de conservation':{select:x.etatC?{name:x.etatC}:null},
+      'Altérations mécaniques':ms(x.altM),'Altérations physico-chimique':ms(x.altP),'Altérations biologiques':ms(x.altB),
+      'Longueur (mm) ':num(x.dL),'Largeur (mm)':num(x.dl),'Hauteur (mm)':num(x.dH),'Diamètre (mm)':num(x.dD),'Masse (g)':num(x.masse)}})},
   setMed(o,v){return nfetch('/pages/'+o.id,'PATCH',{properties:{'Intérêt médiation':{checkbox:!!v}}})},
   async mediation(){return (await queryAll(DB.objets,{filter:{property:'Intérêt médiation',checkbox:{equals:true}},
     sorts:[{property:'ID objet',direction:'ascending'}]})).map(mapObjet)},
@@ -833,6 +879,7 @@ const Demo={
     {app:'kore',id:'demo-k2',ref:'2026-8870-01 lot 2',int:'Saint-Léonard - Centre Bourg',act:'Titrage du bain 1',due:addJ(t,4),kid:''}].map((x,i,a)=>(a.lus=3,a.err=[],x))},
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
   async setRxDrive(d,url){const x=DEMO.dossiers.find(y=>y.id===d.id);x.rxDrive=url;dsave()},
+  async setConstat(o,x){this._sync(o);dsave()},
   async setMed(o,v){const x=DEMO.objets.find(y=>y.id===o.id);if(x)x.med=!!v;dsave()},
   async mediation(){return DEMO.objets.filter(o=>o.med).map(o=>{const d=DEMO.dossiers.find(y=>y.id===o.dossier)||{};return {...JSON.parse(JSON.stringify(o)),dnum:d.num,dcom:d.commune}})},
   async majObjet(o,x){this._sync(o);dsave()},
@@ -1156,6 +1203,17 @@ function stepLine(o,k){
   if(x==='run')return p.app?'en cours · '+BATH[p.app].nom:'en cours';
   return x==='na'?'non applicable':'à faire';
 }
+const ALT={altM:['Eclatement','Lacune','Déformation','Fissure/fêlure','Cassure'],altP:['sels','écaillage','concrétion','oxydation','corrosion active'],altB:['biodépôts','Insectes','Moisissure']};
+const ALT_T={altM:'Mécaniques',altP:'Physico-chimiques',altB:'Biologiques'};
+const vide=v=>v==null||v==='';
+function dims(o){const L=[o.dL,o.dl,o.dH].filter(v=>!vide(v));return [L.length?L.join(' × ')+' mm':'',vide(o.dD)?'':'Ø '+o.dD+' mm',vide(o.masse)?'':o.masse+' g'].filter(Boolean).join(' · ')}
+function constatResume(o){const alt=[...(o.altM||[]),...(o.altP||[]),...(o.altB||[])];return [o.etatC,alt.join(', '),dims(o)].filter(Boolean).join(' · ')}
+function constatV(o){const r=constatResume(o),cond=[(o.cont||[]).join(', '),(o.cal||[]).join(', '),(o.tamp||[]).join(', '),o.hr?'HR '+o.hr:''].filter(Boolean).join(' · ');
+  const li=(t,v)=>v?`<div><dt>${t}</dt><dd>${esc(v)}</dd></div>`:'';
+  return `<details class="card cst"${view.cstOpen?' open':''}><summary><span class="label">Constat</span><span class="cst-r">${r?esc(r):'<i>à compléter</i>'}</span></summary>
+    <dl>${li('État',o.etatC)}${Object.keys(ALT).map(k=>li('Altérations '+ALT_T[k].toLowerCase(),(o[k]||[]).join(', '))).join('')}${li('Dimensions',dims(o))}${li('US',o.us)}${li('Conditionnement',cond)}</dl>
+    <button class="big secondary" data-a="constat" style="width:100%">${r?'Modifier le constat':'Compléter le constat'}</button></details>`}
+function evLine(l){return `<div class="ev"><time>${fr(l.date)}</time><span>${l.etape?esc(l.statut||''):'Observation'}${pj(l.proto)?' · '+esc(pj(l.proto)):''}${l.note?' — '+esc(l.note):''}${l.op?' · <i>'+esc(l.op)+'</i>':''}</span><button class="del" data-del="${l.id}" aria-label="Supprimer cette saisie" title="Supprimer cette saisie"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>`}
 function objetV(){
   const i=S.objs.findIndex(o=>o.id===view.oid),o=S.objs[i],n=next(o),r=n&&st(o,n.k)==='run',d=S.d;
   let go;
@@ -1166,28 +1224,55 @@ function objetV(){
       ${S.mode==='demo'?`<button class="link sim" data-a="bainfin" data-app="${a}">Démo : simuler la fin du ${B.lot} dans ${B.nom}</button>`:''}`}
   else if(r)go=`<button class="go" data-fin="${n.k}"><span><small>En cours</small><b>Terminer : ${n.n}</b></span><span class="ck">${ICON.check}</span></button>`;
   else go=`<button class="go" data-go="${n.k}"><span><small>Étape suivante</small><b>${n.n}</b></span><span class="ck">${hasP(o,n.k)?ICON.clock:ICON.check}</span></button>`;
+  const J=S.loading==='journal'?null:S.journal.slice().reverse(),obs=J?J.filter(l=>!l.etape):[];
+  const tl=STEPS.map((s,j)=>{const x=st(o,s.k),cu=n&&n.k===s.k,ev=J?J.filter(l=>l.etape===s.n):[];
+    const lab=x==='done'?(parseStep(o.steps[s.k]).d||'fait'):x==='na'?'non applicable':x==='run'?stepLine(o,s.k):cu?'à faire · suivante':'à faire';
+    return `<li class="${x}${cu?' cur':''}"><span class="dot">${x==='done'?ICON.check:x==='na'?'–':j+1}</span>
+      <div class="bx" data-s="${s.k}" role="button" tabindex="0" aria-label="${s.n} : ${esc(lab)}"><div class="tlh"><b>${s.n}</b><span class="tls">${esc(lab)}</span></div>${ev.map(evLine).join('')}</div></li>`}).join('');
+  const pb=photoBase(d,o);
   return `<button class="back" data-a="dossier">‹ ${esc(d.num)} · ${esc(d.commune)}</button>${topInfo()}
-  <section class="card" style="display:flex;flex-direction:column;gap:14px">
+  <div class="objg"><div class="objc">
+  <section class="card ohead">
     <div class="obj-head"><div class="num"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</div>
-      <div style="min-width:0;flex:1"><h2>${esc(o.d||o.nom)} <button class="link edit" data-a="editobj" aria-label="Modifier la fiche">Modifier</button> <button class="link edit" data-a="labelq1" title="Ajouter l’étiquette de cet objet à la planche commune">+ Planche</button> <button class="link edit medt" data-a="med" aria-pressed="${!!o.med}" title="Objet à valoriser (réseaux sociaux, documents de référence du labo)">${o.med?'★':'☆'} Médiation</button></h2>
+      <div style="min-width:0;flex:1"><h2>${esc(o.d||o.nom)}${o.med?' <span class="medb" title="Intérêt médiation">★</span>':''}</h2>
       ${o.inv&&!invSimple(o)?`<div class="inv-l">Inventaire : ${esc(o.inv)}</div>`:''}
-      <div class="tags">${o.idObj?`<span class="tag id">${esc(o.idObj)}</span>`:''}${lotDe(o)?`<span class="tag">${esc(lotDe(o))}</span>`:''}${estEns(o)?`<span class="tag">Ensemble${o.nr?' ×'+esc(o.nr):''}</span>`:''}${o.m?`<span class="tag">${esc(o.m)}</span>`:''}${o.nr!=null&&o.nr!==''?`<span class="tag">NR ${o.nr}</span>`:''}${o.t?`<span class="tag t">${esc(o.t)}</span>`:''}</div></div></div>
-    ${photoBase(d,o)?`<div class="label" style="text-transform:none;letter-spacing:0">Photos : ${esc(photoBase(d,o))}_avant_1.jpg … _avant_n · ${esc(photoBase(d,o))}_post_1.jpg … _post_n</div>`:''}
+      <div class="tags">${o.idObj?`<span class="tag id">${esc(o.idObj)}</span>`:''}${o.m?`<span class="tag">${esc(o.m)}</span>`:''}${o.nr!=null&&o.nr!==''?`<span class="tag">NR ${o.nr}</span>`:''}${lotDe(o)?`<span class="tag">${esc(lotDe(o))}</span>`:''}${estEns(o)?`<span class="tag">Ensemble${o.nr?' ×'+esc(o.nr):''}</span>`:''}${o.t?`<span class="tag t">${esc(o.t)}</span>`:''}</div></div></div>
+    <div class="oact"><button data-a="editobj">${ICON.edit}Modifier</button><button data-a="labelq1" title="Ajouter l’étiquette de cet objet à la planche commune">🏷 Étiquette</button><button data-a="med" class="medt" aria-pressed="${!!o.med}" title="Objet à valoriser (réseaux sociaux, documents de référence du labo)">${o.med?'★':'☆'} Médiation</button></div>
+    ${pb?`<details class="phinfo"><summary>Nommage des photos</summary><p>${esc(pb)}_avant_1.jpg … _avant_n<br>${esc(pb)}_post_1.jpg … _post_n</p></details>`:''}
   </section>
+  ${constatV(o)}
+  </div><div class="objc">
   ${go}
-  <div class="steps">${STEPS.map((s,j)=>{const x=st(o,s.k);
-    return `<div class="step ${x} ${n&&n.k===s.k&&x==='todo'?'cur':''}" data-s="${s.k}" role="button" tabindex="0" aria-label="${s.n} : ${stepLine(o,s.k)}">
-      <span class="n">${j+1}</span><b>${s.n}</b><span class="s">${stepLine(o,s.k)}</span>
-      <button class="na-btn" data-na="${s.k}" aria-label="${s.n} non applicable">n/a</button></div>`}).join('')}</div>
+  <section class="card"><div class="label">Traitement</div><ol class="otl">${tl}</ol>${J?'':'<p class="empty">Chargement du journal…</p>'}</section>
   <section class="card" style="display:flex;flex-direction:column;gap:10px">
-    <div class="label">Observation</div>
+    <div class="label">Observations</div>
     <div class="note"><textarea id="obs" rows="2" placeholder="Ex. : fissure sur la lame, à consolider avant protection"></textarea><button data-a="obs">Ajouter</button></div>
-    <div class="label" style="margin-top:6px">Journal</div>
-    <div class="journal">${S.loading==='journal'?'<p class="empty">Chargement…</p>':S.journal.length?S.journal.map(l=>`<div><time>${fr(l.date)}</time><span>${l.etape?esc(l.etape)+' '+esc(l.statut||''):'Observation'}${pj(l.proto)?' · '+esc(pj(l.proto)):''}${l.note?' — '+esc(l.note):''} · <i>${esc(l.op||'')}</i></span><button class="del" data-del="${l.id}" aria-label="Supprimer cette saisie" title="Supprimer cette saisie"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>`).join(''):'<p class="empty">Aucune intervention enregistrée pour cet objet.</p>'}</div>
+    ${obs.length?`<div class="journal">${obs.slice().reverse().map(evLine).join('')}</div>`:''}
   </section>
+  </div></div>
   <div class="nav"><button data-o="${i>0?S.objs[i-1].id:''}" ${i>0?'':'disabled'}>‹ ${i>0?esc(label(S.objs[i-1])):''}</button>
     <button data-o="${i<S.objs.length-1?S.objs[i+1].id:''}" ${i<S.objs.length-1?'':'disabled'}>${i<S.objs.length-1?esc(label(S.objs[i+1])):''} ›</button></div>`;
 }
+function constatSheet(){const o=cur();if(!o)return;
+  const num=(id,lab,v,u)=>`<label class="fl">${lab}<input id="${id}" class="ti" type="number" inputmode="decimal" min="0" step="any" value="${vide(v)?'':esc(v)}" placeholder="${u}"></label>`;
+  sheet(`<div class="sh-h"><small>${esc(o.inv||'')}${o.idObj?' · '+esc(o.idObj):''}</small><b>Constat d’état</b></div>
+    <div class="label">État de conservation</div>
+    <div class="seg three">${['stable','instable','critique'].map(v=>`<button data-cet="${v}" aria-pressed="${o.etatC===v}">${v}</button>`).join('')}</div>
+    ${Object.keys(ALT).map(k=>`<div class="label">Altérations ${ALT_T[k].toLowerCase()}</div><div class="chips cwrap">${ALT[k].map(v=>`<button class="chip" data-calt="${k}" data-v="${esc(v)}" aria-pressed="${(o[k]||[]).includes(v)}">${esc(v)}</button>`).join('')}</div>`).join('')}
+    <div class="label">Dimensions et masse</div>
+    <div class="cst-g">${num('c-lo','Long. (mm)',o.dL,'')}${num('c-la','Larg. (mm)',o.dl,'')}${num('c-ha','Haut. (mm)',o.dH,'')}${num('c-di','Diam. (mm)',o.dD,'')}${num('c-ma','Masse (g)',o.masse,'')}</div>
+    <div class="sh-act"><button class="big primary" data-a="constatok">Enregistrer</button></div>
+    <button class="link" data-a="close" style="align-self:center">Fermer</button>`)}
+async function enregistrerConstat(){const o=cur();if(!o)return;const l=$('#layer');
+  const g=id=>{const v=(l.querySelector('#'+id)||{}).value;return v===''||v==null?'':Number(String(v).replace(',','.'))};
+  const x={etatC:(l.querySelector('[data-cet][aria-pressed="true"]')||{dataset:{}}).dataset.cet||'',dL:g('c-lo'),dl:g('c-la'),dH:g('c-ha'),dD:g('c-di'),masse:g('c-ma')};
+  Object.keys(ALT).forEach(k=>x[k]=[...l.querySelectorAll(`[data-calt="${k}"][aria-pressed="true"]`)].map(b=>b.dataset.v));
+  const prev={};Object.keys(x).forEach(k=>prev[k]=o[k]);Object.assign(o,x);closeSheet();view.cstOpen=true;render();
+  try{await API().setConstat(o,x);toast('Constat enregistré')}catch(e){Object.assign(o,prev);render();fail(e)}}
+function naSheet(o,k){sheet(`<div class="sh-h"><small>${esc(o.inv||'')}${o.idObj?' · '+esc(o.idObj):''}</small><b>${sn(k)}</b></div>
+    <p class="hint">Cette étape est marquée non applicable pour cet objet.</p>
+    <div class="sh-act"><button class="big primary" data-na="${k}">Remettre à faire</button></div>
+    <button class="link" data-a="close" style="align-self:center">Fermer</button>`)}
 
 function lotV(){
   if(!view.step){const f=STEPS.find(s=>S.objs.some(o=>['todo','run'].includes(st(o,s.k))));view.step=f?f.k:'pa'}
@@ -1220,6 +1305,7 @@ function render(){finirTaches();
   if(S.loading&&S.loading!=='journal'){$('#app').innerHTML=loadingV(S.loading);$('#dock').innerHTML='';return}
   // Œil seul dans le bandeau sur toutes les pages ; logo paysage en grand sous le bandeau sur l'accueil
   document.body.classList.add('compact');
+  $('#app').classList.toggle('wide',view.v==='obj');
   $('#app').innerHTML=view.v==='home'?home():view.v==='produits'?produitsV():view.v==='med'?medV():view.v==='dossier'?dossierV():view.v==='obj'?objetV():lotV();
   const n=view.sel.size,k=view.step,verb=view.lotSt==='en cours'?'Commencer':view.lotSt==='na'?'Non applicable :':'Valider';
   $('#dock').innerHTML=view.v==='dossier'&&view.selMode?(busy?`<div class="dock"><button class="big primary" disabled>${busy}</button></div>`:view.dsel.size?`<div class="dock"><div class="two-b"><button class="big secondary" data-a="lotset">Mettre dans un lot…</button><button class="big primary danger" data-a="delsel">Supprimer ${view.dsel.size}</button></div></div>`:`<div class="dock"><button class="big primary" disabled>Sélectionnez des objets</button></div>`):view.v==='lot'?`<div class="dock"><button class="big primary" data-a="apply" ${n&&!busy?'':'disabled'}>${ICON.check}${busy?busy:n?(view.lotSt==='na'?`« ${sn(k)} » non applicable pour ${n} objet${n>1?'s':''}`:`${verb} « ${sn(k)} » pour ${n} objet${n>1?'s':''}`):'Sélectionnez des objets'}</button></div>`:'';
@@ -1369,7 +1455,7 @@ function stepSheet(o,k){
       <div class="kb" id="kb"><span class="empty">Chargement des ${B.lot}s ${B.nom}…</span></div></div>`:''}
     <div class="sh-act">${st(o,k)==='todo'?`<button class="big secondary" data-sv="en cours">${ICON.clock}Commencé</button>`:''}
       <button class="big primary" data-sv="terminé">${ICON.check}Terminé</button></div>
-    <button class="link" data-a="close" style="align-self:center">Fermer</button>`,k);
+    <div class="sh-foot">${st(o,k)==='todo'?`<button class="link" data-na="${k}">Non applicable pour cet objet</button>`:''}<button class="link" data-a="close">Fermer</button></div>`,k);
   if(B)lotsOf(app).then(lots=>{
     const kb=l.querySelector('#kb');if(!kb)return;
     kb.innerHTML=lotPicker(app,b=>`<button data-bain="${b.id}" data-app="${app}">${esc(b.ref||b.int)}<small>${esc(b.int)}</small></button>`,'kbl1')+
@@ -1501,12 +1587,14 @@ document.addEventListener('click',async e=>{
     try{await API().setBain(o,app,d.bain);const id=await API().add(o,'st','en cours',[B.proto]);
       undo={ids:[id],bain:{o,app,prev:prevK},prev:[{o,s:prev}],k:'st',restore:()=>{o[app]=prevK?[prevK]:[]}};bainName(o);toast(`Objet relié au ${B.lot} ${B.nom}`,true);
       S.journal=await API().journal(o.id).catch(()=>S.journal);render()}catch(err){o[app]=prevK?[prevK]:[];o.steps.st=prev;render();fail(err)}return}
-  if(d.na){e.stopPropagation();const o=cur(),n=sn(d.na),on=!o.na.includes(n),prevNa=[...o.na],prev=o.steps[d.na];
+  if(d.cet!==undefined){const on=b.getAttribute('aria-pressed')!=='true';b.parentNode.querySelectorAll('[data-cet]').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed',on);return}
+  if(d.calt){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');return}
+  if(d.na){e.stopPropagation();closeSheet();const o=cur(),n=sn(d.na),on=!o.na.includes(n),prevNa=[...o.na],prev=o.steps[d.na];
     o.na=on?[...o.na,n]:o.na.filter(x=>x!==n);o.steps[d.na]=on?'n/a':'';render();
     try{await API().setNA(o,o.na);undo={na:{o,prev:prevNa},prev:[{o,s:prev}],k:d.na,restore:()=>{o.na=prevNa}};toast(`${n} ${on?'non applicable':'remis à faire'}`,true)}
     catch(err){o.na=prevNa;o.steps[d.na]=prev;render();fail(err)}return}
-  if(d.s){const o=cur(),k=d.s,x=st(o,k);if(x==='na'||x==='done')return x==='done'&&toast('Déjà fait : utilisez « Annuler » juste après une saisie, ou corrigez dans Notion.');
-    if(x==='run'&&parseStep(o.steps[k]).app)return;if(hasP(o,k))return stepSheet(o,k);return record([o],k,'terminé')}
+  if(d.s){const o=cur(),k=d.s,x=st(o,k);if(x==='na')return naSheet(o,k);if(x==='done')return x==='done'&&toast('Déjà fait : utilisez « Annuler » juste après une saisie, ou corrigez dans Notion.');
+    if(x==='run'&&parseStep(o.steps[k]).app)return;return stepSheet(o,k)}
   if(d.go){const o=cur();if(hasP(o,d.go))return stepSheet(o,d.go);return record([o],d.go,'terminé')}
   if(d.fin){return stepSheet(cur(),d.fin)}
   if(d.o!==undefined){if(d.o)openObj(d.o);return}
@@ -1557,6 +1645,8 @@ document.addEventListener('click',async e=>{
     case 'renphotos':renSheet();break;
     case 'rendl':telechargerRenommage(d.os);break;
     case 'editok':enregistrerObjet();break;
+    case 'constat':constatSheet();break;
+    case 'constatok':enregistrerConstat();break;
     case 'dselon':view.selMode=true;view.dsel=new Set();render();break;
     case 'dselx':view.selMode=false;view.dsel=new Set();render();break;
     case 'dselall':{const L=listeDossier();if(L.every(o=>view.dsel.has(o.id)))L.forEach(o=>view.dsel.delete(o.id));else L.forEach(o=>view.dsel.add(o.id));render();break}
@@ -1619,6 +1709,7 @@ document.addEventListener('click',async e=>{
     case 'reset':DEMO=demoFresh();dsave();loadHome();toast('Démo remise à zéro');break;
   }
 });
+document.addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('details.cst'))view.cstOpen=e.target.open},true);
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-s]')){e.preventDefault();e.target.click()}
   if(e.key==='Enter'&&e.target.id==='newop'){e.preventDefault();$('[data-a="addop"]').click()}});
 document.addEventListener('click',e=>{if(e.target.classList.contains('sheet'))closeSheet()});
@@ -2204,8 +2295,8 @@ var PLANCHE = (function() {
   function badge() {
     var L = lire(), b = document.getElementById('pl-badge');
     if (!b) { b = document.createElement('button'); b.id = 'pl-badge'; b.type = 'button'; b.onclick = ouvrir; document.body.appendChild(b); }
-    b.style.bottom = opt.bas + 'px'; b.style.display = L.length || opt.source ? '' : 'none';
-    b.innerHTML = '<span aria-hidden="true">🏷</span> Planche <b>' + L.length + '</b>';
+    b.style.bottom = opt.bas + 'px'; b.style.display = L.length ? '' : 'none'; b.title = 'Planche d’étiquettes'; b.setAttribute('aria-label', 'Planche d’étiquettes : ' + L.length);
+    b.innerHTML = '<span aria-hidden="true">🏷</span><b>' + L.length + '</b>';
   }
   function srcHtml(L) {
     if (!opt.source) return '';
@@ -2256,7 +2347,7 @@ var PLANCHE = (function() {
     m.onchange = function(ev) { var id = ev.target.getAttribute('data-plc'); if (id) { sel[id] = ev.target.checked; ouvrir(); } };
   }
   var st = document.createElement('style');
-  st.textContent = '#pl-badge{position:fixed;left:14px;z-index:95;display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:22px;border:1px solid #2E3192;background:#fff;color:#2E3192;font:600 13px Montserrat,system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.15);cursor:pointer}' +
+  st.textContent = '#pl-badge{position:fixed;right:14px;z-index:95;display:flex;align-items:center;gap:6px;padding:9px 14px;border-radius:22px;border:1px solid #2E3192;background:#fff;color:#2E3192;font:600 13px Montserrat,system-ui,sans-serif;box-shadow:0 4px 14px rgba(0,0,0,.15);cursor:pointer}' +
     '#pl-badge b{background:#2E3192;color:#fff;border-radius:10px;padding:0 7px;font-size:12px}' +
     '#pl-mask{position:fixed;inset:0;z-index:300;background:rgba(20,22,50,.38);display:flex;align-items:flex-end;justify-content:center;font-family:Montserrat,system-ui,sans-serif}' +
     '@media(min-width:700px){#pl-mask{align-items:center}}' +
