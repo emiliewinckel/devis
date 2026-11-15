@@ -597,7 +597,7 @@ const URLS={rapport:BASE+'rapports_traitement.html',kore:BASE+'kore_FER.html',ke
 
 const STEPS=[
   {k:'pa',n:'Photo avant',col:'① Photo avant'},{k:'ce',n:"Constat d'état",col:"② Constat d'état"},
-  {k:'ne',n:'Nettoyage',col:'③ Nettoyage'},{k:'st',n:'Stabilisation',col:'④ Stabilisation'},
+  {k:'rx',n:'Radiographie',col:'②b Radiographie'},{k:'ne',n:'Nettoyage',col:'③ Nettoyage'},{k:'st',n:'Stabilisation',col:'④ Stabilisation'},
   {k:'pr',n:'Protection',col:'⑤ Protection'},{k:'re',n:'Retouche',col:'⑥ Retouche'},
   {k:'pp',n:'Photo après',col:'⑦ Photo après'},{k:'co',n:'Conditionnement',col:'⑧ Conditionnement'}];
 // Protocoles proposés selon le matériau de l'objet (même vocabulaire que le module de rapports).
@@ -620,6 +620,9 @@ function protosLot(k){const out=[];S.objs.forEach(o=>protos(o,k).forEach(p=>{if(
 const hasP=(o,k)=>protos(o,k).length>0;
 const pj=p=>Array.isArray(p)?p.join(' + '):(p||'');
 const sn=k=>STEPS.find(s=>s.k===k).n;
+// Radiographie : non applicable par défaut aux objets non métalliques (même règle que la colonne Notion)
+const METAL=/fer|cuivr|bronze|laiton|argent|plomb|monnaie|tôle|frette|(^|,\s*)or(\s*,|$)/i;
+const rxDefaut=o=>!o.m||METAL.test(o.m)?'':'n/a';
 const kOf=n=>(STEPS.find(s=>s.n===n)||{}).k;
 
 /* ---------- petits outils ---------- */
@@ -787,7 +790,7 @@ function demoFresh(){return {
   dossiers:[{id:'demo-witry',etat:'en cours',num:'2026_8249-8',commune:'Witry-lès-Reims',site:'Les Cabouzets',ro:'S. Bündgen',nb:20,av:0,fin:0,rapport:'à rédiger',retour:'',arrivee:'2026-10-12',types:['Déchloruration','Nettoyage pour étude','Radiographie X'],nObj:20},
     {id:'demo-autre',etat:'à faire',num:'2026_8870-01',commune:'Saint-Léonard (51)',site:'Centre Bourg',ro:'M-A Thierry',nb:0,av:0,fin:0,rapport:'',retour:'',arrivee:'2026-07-23',types:['Déchloruration'],nObj:0}],
   objets:SEED.map(([oi,d,m,t,nr],i)=>{const o={id:'demo-o'+i,dossier:'demo-witry',nom:'',idObj:'2026_8249-8_'+String(i+1).padStart(3,'0'),inv:'OI '+oi,d,m,nr,t:DTR[t],na:[...DNA[t]],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
-    STEPS.forEach(s=>o.steps[s.k]=o.na.includes(s.n)?'n/a':'');return o}),
+    STEPS.forEach(s=>o.steps[s.k]=o.na.includes(s.n)?'n/a':s.k==='rx'?rxDefaut(o):'');return o}),
   journal:{},kore:[{id:'demo-k1',int:'WITRY-LES-REIMS - Les Cabouzets',ref:'2026_8249-8 lot fer 1',statut:'En cours'},{id:'demo-k2',int:'SAINT-LEONARD - Centre Bourg',ref:'2026-8870-01 lot 2',statut:'En cours'}],
   kera:[{id:'demo-c1',int:'Saint-Léonard - Centre Bourg',ref:'2026_8870-01 céramiques',statut:'En cours',kid:'KDEMO1'}],
   produits:[{id:'demo-p1',nom:'Acétone',cat:'Solvant',four:'VWR',ref:'',empl:'Armoire solvants',q:2,u:'L',seuil:1,ouv:'2026-09-02',per:'',dang:['Inflammable','Nocif / irritant'],fds:'',note:'',mav:'Danger',h:'H225 — Liquide et vapeurs très inflammables.\nH319 — Provoque une sévère irritation des yeux.\nH336 — Peut provoquer somnolence ou vertiges.',pp:'P210 — Tenir à l’écart de la chaleur, des surfaces chaudes, des étincelles, des flammes nues et de toute autre source d’inflammation. Ne pas fumer.\nP233 — Maintenir le récipient fermé de manière étanche.'},
@@ -797,6 +800,8 @@ function demoFresh(){return {
     {id:'demo-p5',nom:'L-cystéine',cat:'Inhibiteur',four:'',ref:'',empl:'Étagère 1',q:100,u:'g',seuil:50,ouv:'',per:'',dang:[],fds:'',note:''},
     {id:'demo-p6',nom:'Sachets Minigrip® 8×12',cat:'Conditionnement',four:'',ref:'',empl:'Réserve',q:3,u:'boîte',seuil:2,ouv:'',per:'',dang:[],fds:'',note:''}]}}
 let DEMO=LS.get('argoslab:demo2',null)||demoFresh();
+// démo enregistrée avant l'ajout de l'étape Radiographie
+(DEMO.objets||[]).forEach(o=>{if(o.steps&&!('rx' in o.steps))o.steps.rx=rxDefaut(o)});
 if(!DEMO.kera)DEMO.kera=demoFresh().kera;if(!DEMO.produits)DEMO.produits=demoFresh().produits;DEMO.objets.forEach(o=>{if(!o.kera)o.kera=[]});
 const dsave=()=>LS.set('argoslab:demo2',DEMO);
 const Demo={
@@ -834,7 +839,7 @@ const Demo={
   async comments(did){return ((DEMO.com||{})[did]||[]).slice()},
   async addComment(did,txt){const c={id:'demo-c'+Date.now(),head:op()+' · '+fr(iso())+' '+new Date().toTimeString().slice(0,5),txt};DEMO.com=DEMO.com||{};(DEMO.com[did]=DEMO.com[did]||[]).push(c);dsave();return c},
   async creerObjet(d,x){const o={id:'demo-n'+Date.now()+Math.random(),dossier:d.id,nom:x.id,idObj:x.id,inv:x.inv,d:x.des,m:x.mat.join(', '),nr:x.nr,lot:x.lot||'',t:x.trait||'',na:[],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
-    STEPS.forEach(st=>o.steps[st.k]='');DEMO.objets.push(o);const dd=DEMO.dossiers.find(y=>y.id===d.id);if(dd)dd.nObj=(dd.nObj||0)+1;dsave();return JSON.parse(JSON.stringify(o))},
+    STEPS.forEach(st=>o.steps[st.k]=st.k==='rx'?rxDefaut(o):'');DEMO.objets.push(o);const dd=DEMO.dossiers.find(y=>y.id===d.id);if(dd)dd.nObj=(dd.nObj||0)+1;dsave();return JSON.parse(JSON.stringify(o))},
   _sync(o){const i=DEMO.objets.findIndex(x=>x.id===o.id);DEMO.objets[i]=JSON.parse(JSON.stringify(o))},
   async bainFin(o,app){const B=BATH[app];o[app]=[];o.steps.st='✓ '+fr(iso());this._sync(o);(DEMO.journal[o.id]=DEMO.journal[o.id]||[]).unshift({id:'k'+Date.now(),etape:'Stabilisation',statut:'terminé',date:iso(),op:B.nom,proto:[B.proto],note:'Fin du '+B.lot+' dans '+B.nom});dsave()}
 };
@@ -1175,7 +1180,7 @@ function lotV(){
   return `<button class="back" data-a="dossier">‹ ${esc(S.d.num)} · ${esc(S.d.commune)}</button>${topInfo()}
   <section class="card" style="display:flex;flex-direction:column;gap:12px">
     <div class="label">1. Étape</div>
-    <div class="seg">${STEPS.map(s=>`<button data-step="${s.k}" aria-pressed="${k===s.k}">${s.n}<em>${S.objs.filter(o=>['todo','run'].includes(st(o,s.k))).length}</em></button>`).join('')}</div>
+    <div class="seg three">${STEPS.map(s=>`<button data-step="${s.k}" aria-pressed="${k===s.k}">${s.n}<em>${S.objs.filter(o=>['todo','run'].includes(st(o,s.k))).length}</em></button>`).join('')}</div>
     <div class="label">Statut</div>
     <div class="seg ${P.length?'three':'two'}">${P.length?`<button data-ls="en cours" aria-pressed="${view.lotSt==='en cours'}">Commencé</button>`:''}<button data-ls="terminé" aria-pressed="${view.lotSt==='terminé'}">Terminé</button><button data-ls="na" aria-pressed="${view.lotSt==='na'}">Non applicable</button></div>
     ${P.length&&view.lotSt!=='na'?`<div class="label">Protocole · plusieurs choix possibles</div>
