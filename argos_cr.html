@@ -92,7 +92,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .chip em{font-style:normal;opacity:.7;margin-left:4px}
 
 .list{display:flex;flex-direction:column;background:var(--card);border:1px solid var(--border);border-radius:12px;overflow:hidden}
-.row{display:grid;grid-template-columns:58px minmax(0,1fr) auto;gap:12px;align-items:center;padding:12px 14px;border:0;border-top:1px solid var(--border);background:none;text-align:left;width:100%}
+.row{display:grid;grid-template-columns:58px minmax(0,1fr) auto auto;gap:12px;align-items:center;padding:12px 14px;border:0;border-top:1px solid var(--border);background:none;text-align:left;width:100%}
 .row:first-child{border-top:0}
 .row:active{background:var(--navy-l)}
 .oi{font-size:17px;font-weight:800;color:var(--navy);font-variant-numeric:tabular-nums;white-space:nowrap}
@@ -131,7 +131,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .oact{display:flex;gap:8px}
 .oact button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--border);background:var(--card);border-radius:10px;padding:9px 6px;font:inherit;font-weight:600;font-size:13px;color:var(--navy);cursor:pointer;white-space:nowrap}
 .oact button:hover{border-color:var(--navy)}
-.oact button.medt[aria-pressed="true"]{background:#FBF3D9;border-color:#C9A227;color:#8A6D10}
+.oact button.medt[aria-pressed="true"]{background:var(--sky-l);border-color:var(--sky);color:var(--navy)}
 .phinfo summary{font-size:12px;color:var(--txt2);cursor:pointer;width:max-content}
 .phinfo p{font-size:12px;color:var(--txt2);margin:6px 0 0;word-break:break-all;font-variant-numeric:tabular-nums}
 .cst summary{display:flex;flex-direction:column;gap:4px;cursor:pointer;list-style:none}.cst summary::-webkit-details-marker{display:none}
@@ -164,8 +164,13 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .otl .ev .del,.journal .ev .del{border:1px solid var(--border);background:#fff;color:var(--txt2);border-radius:8px;width:26px;height:26px;display:grid;place-items:center;cursor:pointer;padding:0}
 .sh-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 @media(max-width:899px){#app.wide .nav{position:sticky;bottom:0;z-index:6;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom));margin-bottom:-8px}}
-.medb{font-style:normal;color:#C9A227;margin-left:6px;font-size:.9em}
-.link.medt[aria-pressed="true"]{color:#A8861A}
+.medb{font-style:normal;color:var(--sky);-webkit-text-stroke:.6px #5AAFD0;margin-left:6px;font-size:.9em}
+.selbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--sky-l);border:1px solid var(--sky);border-radius:10px;padding:8px 12px;font-size:13px}.selbar span{flex:1 1 220px}
+.rstar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;cursor:pointer;color:#9AA3B5}
+.rstar svg path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
+.rstar:hover{background:var(--sky-l);color:#5AAFD0}
+.rstar[aria-pressed="true"]{color:#5AAFD0}.rstar[aria-pressed="true"] svg path{fill:var(--sky);stroke:#5AAFD0}
+.link.medt[aria-pressed="true"]{color:var(--navy)}
 .lk.rxl{display:flex;align-items:center;gap:8px;text-decoration:none}
 .dots i{width:11px;height:5px;border-radius:2px;background:var(--border)}
 .dots i.done{background:var(--green)}
@@ -408,7 +413,7 @@ div.bains{cursor:default}
       <hr>
       <button data-a="produits" data-menu class="ml"><svg aria-hidden="true" viewBox="0 0 32 32" width="30" height="30" class="mi"><circle cx="16" cy="16" r="16" fill="#1F7A8C"/><g transform="translate(4 4)" fill="none" stroke="#fff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" style="color:#fff"><path d="M9.5 3.5h5M10.5 3.5v5.2L5.8 17.6a1.6 1.6 0 0 0 1.4 2.4h9.6a1.6 1.6 0 0 0 1.4-2.4l-4.7-8.9V3.5"/><path d="M7.6 14.2h8.8"/><circle cx="11" cy="16.8" r=".7" fill="currentColor"/><circle cx="13.6" cy="17.6" r=".5" fill="currentColor"/></g></svg><span>Produits du labo<small>Stock, péremption, FDS</small></span></button>
       <a href="argos_terrain.html" target="_blank" rel="noopener" class="ml"><img class="mi" alt="" src="data:image/webp;base64,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"><span>ARGOS TERRAIN<small>Aide à la décision sur le terrain</small></span></a>
-      <button data-a="medpage" data-menu class="ml"><svg aria-hidden="true" viewBox="0 0 32 32" width="30" height="30" class="mi"><circle cx="16" cy="16" r="16" fill="#C9A227"/><path d="M16 7.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill="#fff"/></svg><span>Intérêt médiation<small>Objets à valoriser</small></span></button>
+      <button data-a="medpage" data-menu class="ml"><svg aria-hidden="true" viewBox="0 0 32 32" width="30" height="30" class="mi"><circle cx="16" cy="16" r="16" fill="#A8DDF0"/><path d="M16 7.5l2.6 5.3 5.8.8-4.2 4.1 1 5.8-5.2-2.7-5.2 2.7 1-5.8-4.2-4.1 5.8-.8z" fill="#2E3192"/></svg><span>Intérêt médiation<small>Objets à valoriser</small></span></button>
     </nav></div>
   <button class="op" data-a="op" aria-label="Changer d’opérateur"><small>Opérateur</small><span id="opname">—</span></button>
 </div></header>
@@ -1136,7 +1141,7 @@ async function tSuppr(id){const t=(S.taches||[]).find(x=>x.id===id);if(!t)return
 /* ---------- lots : regroupements d'objets dans un dossier (chaque objet garde sa fiche) ---------- */
 const ENS=/^(Ensemble|Lot) — /;
 function estEns(o){return ENS.test(o&&o.d||'')}
-function nrBadge(o){return (estEns(o)&&o.nr?`<em class="nrb">×${esc(o.nr)}</em>`:'')+(o.med?'<em class="medb" title="Intérêt médiation">★</em>':'')}
+function nrBadge(o){return (estEns(o)&&o.nr?`<em class="nrb">×${esc(o.nr)}</em>`:'')}
 function lotsDe(objs){return [...new Set((objs||S.objs).map(o=>String(o.lot||'').trim()).filter(Boolean))].sort((a,b)=>a.localeCompare(b,'fr',{numeric:true,sensitivity:'base'}))}
 function lotDe(o){return String(o.lot||'').trim()}
 function groupesLot(list){const L=lotsDe();if(!L.length)return null;
@@ -1164,11 +1169,13 @@ async function rangerLot(nom){nom=String(nom||'').trim();closeSheet();
 function rowSel(o){return `<button class="lot-row" role="checkbox" aria-checked="${view.dsel.has(o.id)}" data-dsel="${o.id}">
      <span class="box"></span><span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
      <span class="d" style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${esc(o.d||o.nom)}${nrBadge(o)}</b><span style="font-size:11px;color:var(--txt2)">${short(o)?esc(short(o))+' · ':''}${esc(o.m)}</span></span></button>`}
+const STAR='<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path d="M12 3.2l2.7 5.5 6 .9-4.35 4.25 1 6-5.35-2.8-5.35 2.8 1-6L3.3 9.6l6-.9z"/></svg>';
+function starMed(o){return `<span class="rstar" role="button" tabindex="0" data-rmed="${o.id}" aria-pressed="${!!o.med}" title="Intérêt médiation" aria-label="Intérêt médiation">${STAR}</span>`}
 function rowObj(o){const n=next(o),r=n&&st(o,n.k)==='run';return `<button class="row" data-o="${o.id}">
     <span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
     <span class="d"><b>${esc(o.d||o.nom)}${nrBadge(o)}</b><span>${short(o)?short(o)+' · ':''}${esc(o.m)}${o.t?' · '+esc(o.t):''}</span>
       <span class="dots">${STEPS.map(s=>{const x=st(o,s.k);return `<i class="${x==='run'?'run':n&&n.k===s.k?'next':x}"></i>`}).join('')}</span></span>
-    <span class="next ${n?(r?'run':''):'ok'}">${n?(r?(parseStep(o.steps[n.k]).app?BATH[parseStep(o.steps[n.k]).app].nom:'en cours'):n.n):'Terminé'}</span></button>`}
+    <span class="next ${n?(r?'run':''):'ok'}">${n?(r?(parseStep(o.steps[n.k]).app?BATH[parseStep(o.steps[n.k]).app].nom:'en cours'):n.n):'Terminé'}</span>${starMed(o)}</button>`}
 function listeHtml(list){const f=view.selMode?rowSel:rowObj,g=groupesLot(list);
   if(!g)return `<div class="list">${list.map(f).join('')}</div>`;
   return g.map(x=>lotHead(x)+(lotOuvert(x.n)?`<div class="list">${x.objs.map(f).join('')}</div>`:'')).join('')}
@@ -1244,7 +1251,7 @@ function dossierV(){
     ${view.selMode?'':`<button class="chip" data-a="dselon">Sélectionner</button>`}
   </div>
   ${mats.length>1?`<div class="chips cwrap"><span class="label" style="align-self:center">Matériau</span>${mats.map(m=>`<button class="chip sm" data-om="${esc(m)}" aria-pressed="${view.om===m}">${esc(m)}<em>${objs.filter(o=>aMat(o,m)).length}</em></button>`).join('')}</div>`:''}
-  ${view.selMode?`<div class="lot-tools"><button class="link" data-a="dselall">${list.length&&list.every(o=>view.dsel.has(o.id))?'Tout désélectionner':'Tout sélectionner ('+list.length+')'}</button><button class="link" data-a="dselx">Annuler</button></div>`:''}
+  ${view.selMode?`<div class="selbar"><span><b>Mode sélection</b> · touchez les objets à cocher (${view.dsel.size} coché${view.dsel.size>1?'s':''})</span><button class="link" data-a="dselall">${list.length&&list.every(o=>view.dsel.has(o.id))?'Tout décocher':'Tout cocher ('+list.length+')'}</button><button class="chip" data-a="dselx">Quitter la sélection</button></div>`:''}
   ${fl||view.om||q?`<p class="hint" style="margin:0">${list.length} objet${list.length>1?'s':''}${fl?' '+fl:''}${view.om?' · '+esc(view.om):''}${q?' · « '+esc(view.oq)+' »':''} · <button class="link" data-a="ofx">tout afficher</button></p>`:''}
   ${list.length?listeHtml(list):'<p class="empty card">Aucun objet ne correspond.</p>'}
   <p class="foot"><button class="link" data-a="addobj">+ Ajouter des objets à ce dossier</button></p>`}`;
@@ -1644,6 +1651,9 @@ async function scan(){
 
 /* ---------- événements ---------- */
 document.addEventListener('click',async e=>{
+  const rs=e.target.closest('[data-rmed]');if(rs){e.preventDefault();e.stopPropagation();const o=S.objs.find(x=>x.id===rs.dataset.rmed)||(S.med||[]).find(x=>x.id===rs.dataset.rmed);if(!o)return;const v=!o.med;o.med=v;
+    const so=S.objs.find(x=>x.id===o.id);if(so)so.med=v;if(view.v==='med'&&!v)S.med=S.med.filter(x=>x.id!==o.id);render();
+    try{await API().setMed(o,v);toast(v?'Intérêt médiation : ajouté':'Intérêt médiation : retiré')}catch(err){o.med=!v;render();fail(err)}return}
   const b=e.target.closest('button,[data-s]');if(!b)return;const d=b.dataset;
   if(d.del){delSheet(d.del);return}
   if(d.delok){supprimerSaisie(d.delok,d.delapp||null);return}
@@ -1786,7 +1796,7 @@ document.addEventListener('click',async e=>{
   }
 });
 document.addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('details.cst'))view.cstOpen=e.target.open},true);
-document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-s]')){e.preventDefault();e.target.click()}
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-s],[data-rmed]')){e.preventDefault();e.target.click()}
   if(e.key==='Enter'&&e.target.id==='newop'){e.preventDefault();$('[data-a="addop"]').click()}});
 document.addEventListener('click',e=>{if(e.target.classList.contains('sheet'))closeSheet()});
 
@@ -2120,7 +2130,7 @@ function medV(){const L=S.med;
     <div class="list">${g[k].map(o=>{const f=STEPS.filter(s=>st(o,s.k)==='done').length,n=STEPS.filter(s=>st(o,s.k)!=='na').length;
       return `<button class="row" data-o="${o.id}"><span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
       <span class="d"><b>${esc(o.d||o.nom)}</b><span>${esc([o.idObj,o.m].filter(Boolean).join(' · '))}</span></span>
-      <span class="next ${f===n?'ok':''}">${f===n?'Terminé':f+' / '+n+' étapes'}</span></button>`}).join('')}</div>`).join('')+
+      <span class="next ${f===n?'ok':''}">${f===n?'Terminé':f+' / '+n+' étapes'}</span>${starMed(o)}</button>`}).join('')}</div>`).join('')+
   `<div class="actions"><button class="big secondary" data-a="medcsv">Exporter la liste (CSV)</button></div>`}
 function medCsv(){const L=S.med||[],q=v=>'"'+String(v==null?'':v).replace(/"/g,'""')+'"';
   const lignes=[['Dossier','Commune','ID objet','N° inventaire','Description','Matériau','NR','Étapes faites'].map(q).join(';')]
