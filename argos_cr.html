@@ -1000,7 +1000,6 @@ function home(){
   <div class="hello"><div><div class="label">Labo CR · ${esc(op())}</div><h1>Dossiers</h1></div>
     <div class="tally"><span><b>${nEnc}</b>en cours</span><span class="t2"><b>${nTodo}</b>à faire</span></div></div>
   ${aujV()}
-  ${prodAlerteV()}
   ${planningV()}
   <button class="big primary" data-a="scan">${ICON.scan}Scanner un objet</button>
   <label class="search">${ICON.search}<input id="q" type="search" placeholder="N° labo, commune, RO…" value="${esc(view.q)}" autocomplete="off"></label>
@@ -1202,7 +1201,7 @@ function avancementV(objs){
   const nxt={};objs.forEach(o=>{const n=next(o);const k=n?n.k:'fin';nxt[k]=(nxt[k]||0)+1});
   const rows=STEPS.map(s=>{const app=objs.filter(o=>st(o,s.k)!=='na').length;if(!app)return '';const done=objs.filter(o=>st(o,s.k)==='done').length,n=nxt[s.k]||0;
     return `<button class="av-r${view.filter===s.k?' on':''}" data-f="${view.filter===s.k?'all':s.k}" aria-pressed="${view.filter===s.k}"><span class="av-n">${s.n}</span><span class="av-b"><i style="width:${Math.round(done/app*100)}%"></i></span><span class="av-c">${done}/${app}</span><span class="av-x">${n?n+' en attente':''}</span></button>`}).join('');
-  return `<section class="card av"><div class="av-h"><div class="label">Où en est le dossier</div>${view.filter!=='all'?`<button class="link" data-f="all">Voir tous les objets</button>`:''}</div>
+  return `<section class="card av"><div class="av-h"><div class="label">État d’avancement</div>${view.filter!=='all'?`<button class="link" data-f="all">Voir tous les objets</button>`:''}</div>
     <div class="av-l">${rows}</div>${nxt.fin?`<button class="av-fin${view.filter==='fin'?' on':''}" data-f="${view.filter==='fin'?'all':'fin'}">${nxt.fin} objet${nxt.fin>1?'s':''} terminé${nxt.fin>1?'s':''}</button>`:''}
     <p class="hint" style="margin:6px 0 0">Touchez une étape pour voir les objets qui l’attendent.</p></section>`}
 function dossierV(){
