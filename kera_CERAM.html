@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KERA — Suivi dessalement céramique</title>
+<title>KERA - Suivi dessalement céramique</title>
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
@@ -183,7 +183,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 <body>
 <div id="keygate" style="display:none;position:fixed;inset:0;background:rgba(14,40,64,.92);z-index:9999;align-items:center;justify-content:center;padding:20px">
   <div style="background:#fff;border-radius:12px;max-width:420px;width:100%;padding:22px">
-    <div style="font-size:16px;font-weight:800;margin-bottom:8px">KERA — accès au laboratoire</div>
+    <div style="font-size:16px;font-weight:800;margin-bottom:8px">KERA - accès au laboratoire</div>
     <div id="keygate-msg" style="font-size:12px;line-height:1.6;color:#4A5F72;margin-bottom:12px"></div>
     <input type="password" id="keygate-input" autocomplete="off" placeholder="Clé d'accès de cet appareil" onkeydown="if(event.key==='Enter')validerAppKey()" style="width:100%;padding:9px;border:1px solid #C9D6E2;border-radius:7px;font-size:14px;margin-bottom:6px;box-sizing:border-box">
     <div id="keygate-err" style="font-size:11px;color:#791F1F;min-height:14px;margin-bottom:8px"></div>
@@ -224,15 +224,15 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
     <div class="card-title">Identification</div>
     <div class="row"><div><label>Type</label><select id="lot-type"><option value="objet">Objet unique</option><option value="lot">Lot de fragments</option></select></div><div><label>Numéro d'inventaire</label><input type="text" id="lot-ref" placeholder="ex : M.P.2004.17.42"></div></div>
     <div class="row solo"><div><label>Désignation</label><input type="text" id="lot-int" placeholder="ex : Cône funéraire, terre cuite, Égypte"></div></div>
-    <div class="row"><div><label>Opération / Collection</label><input type="text" id="lot-op" placeholder="Musée de Picardie — Lot 4"></div><div><label>Responsable</label><input type="text" id="lot-resp" placeholder="Nom restauratrice"></div></div>
+    <div class="row"><div><label>Opération / Collection</label><input type="text" id="lot-op" placeholder="Musée de Picardie - Lot 4"></div><div><label>Responsable</label><input type="text" id="lot-resp" placeholder="Nom restauratrice"></div></div>
     <div class="row trio"><div><label>Date début</label><input type="date" id="lot-dd"></div><div><label>Poids sec (g)</label><input type="number" id="lot-poids" placeholder="ex : 145" step="0.1" oninput="updKadjInfo();suggererVolume()"></div><div><label>Volume bain (L)</label><input type="number" id="lot-vol" placeholder="ex : 2" step="0.1" oninput="updKadjInfo()"></div></div>
     <div id="ratio-info" style="font-size:10px;color:#4A5F72;margin-bottom:4px"></div>
     <div id="vol-suggestion" style="display:none;background:#eef4e8;border:1px solid #c0dd97;border-radius:6px;padding:7px 10px;font-size:11px;color:#27500a;margin-bottom:8px">
       <span id="vol-suggestion-txt"></span>
       <button class="btn btn-sm" style="margin-left:8px;padding:2px 8px;font-size:11px;background:#4a7c2f;color:#fff;border-color:#4a7c2f" onclick="appliquerVolumeSuggere()">Appliquer</button>
     </div>
-    <div class="row"><div><label>Type d'eau bain 1</label><select id="lot-eau1"><option value="robinet">Eau du robinet (bain 1 — éviter choc osmotique)</option><option value="demi">Eau déminéralisée dès le départ</option></select></div><div><label>Consolidation préalable</label><select id="lot-consol"><option value="non">Non</option><option value="b72">Paraloid B-72</option><option value="teos">Silicate d'éthyle (TEOS)</option><option value="cyclododecane">Cyclododécane</option><option value="autre">Autre</option></select></div></div>
-    <div class="row"><div><label>Niveau de fragilité</label><select id="lot-fragilite"><option value="standard">Standard</option><option value="fragile">Fragile — engobe ou polychromie</option><option value="trescuite">Très fragile — terres cuites basse temp.</option><option value="argile-crue">Argile crue (tablette cunéiforme)</option></select></div><div><label>Fréquence relevés</label><select id="lot-freq"><option value="1">Quotidien (J1–J5)</option><option value="3">Tous les 3 jours</option><option value="7">Hebdomadaire</option></select></div></div>
+    <div class="row"><div><label>Type d'eau bain 1</label><select id="lot-eau1"><option value="robinet">Eau du robinet (bain 1 - éviter choc osmotique)</option><option value="demi">Eau déminéralisée dès le départ</option></select></div><div><label>Consolidation préalable</label><select id="lot-consol"><option value="non">Non</option><option value="b72">Paraloid B-72</option><option value="teos">Silicate d'éthyle (TEOS)</option><option value="cyclododecane">Cyclododécane</option><option value="autre">Autre</option></select></div></div>
+    <div class="row"><div><label>Niveau de fragilité</label><select id="lot-fragilite"><option value="standard">Standard</option><option value="fragile">Fragile - engobe ou polychromie</option><option value="trescuite">Très fragile - terres cuites basse temp.</option><option value="argile-crue">Argile crue (tablette cunéiforme)</option></select></div><div><label>Fréquence relevés</label><select id="lot-freq"><option value="1">Quotidien (J1-J5)</option><option value="3">Tous les 3 jours</option><option value="7">Hebdomadaire</option></select></div></div>
   </div>
   <div class="card">
     <div class="card-title">QR code & étiquette</div>
@@ -244,7 +244,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 <!-- SAISIE -->
 <div class="page" id="page-saisie">
   <div class="sh"><h2>Saisir un bain</h2><button class="btn btn-sm" onclick="showPage('accueil')">← Retour</button></div>
-  <div class="card" style="margin-bottom:9px"><div class="card-title">Objet concerné</div><select id="s-sel" onchange="chargerLot()"><option value="">— Sélectionner —</option></select><div id="lot-ctx" style="display:none;margin-top:8px;font-size:11px;line-height:1.7"></div><div id="lot-ctx-btns" style="display:none;margin-top:8px"></div><div id="lot-argos"></div></div>
+  <div class="card" style="margin-bottom:9px"><div class="card-title">Objet concerné</div><select id="s-sel" onchange="chargerLot()"><option value="">- Sélectionner -</option></select><div id="lot-ctx" style="display:none;margin-top:8px;font-size:11px;line-height:1.7"></div><div id="lot-ctx-btns" style="display:none;margin-top:8px"></div><div id="lot-argos"></div></div>
   <div id="s-zone" style="display:none">
     <div class="tabs">
       <button class="active" id="tab-bain" onclick="swTab('bain')">Bain</button>
@@ -264,17 +264,17 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
           </div>
           <div class="card">
             <div class="card-title">Conductivité <span class="tip-btn" onclick="swTip('tc')">i</span></div>
-            <div class="tip" id="tc">Mesurée en µS/cm avec un conductimètre portable. Pour les non-marins, les valeurs baissent souvent vite (quelques heures à quelques jours). La valeur de fond de l'eau déminéralisée est ~1–5 µS/cm — ne pas viser 0.</div>
-            <div class="row"><div><label>Conductivité (µS/cm)</label><input type="number" id="b-cond" step="0.1" oninput="calcKadj()"></div><div><label>Conductivité eau neuve (µS/cm)</label><input type="number" id="b-cond0" step="0.1" placeholder="eau démi ~1–5" oninput="calcKadj()"></div></div>
+            <div class="tip" id="tc">Mesurée en µS/cm avec un conductimètre portable. Pour les non-marins, les valeurs baissent souvent vite (quelques heures à quelques jours). La valeur de fond de l'eau déminéralisée est ~1-5 µS/cm - ne pas viser 0.</div>
+            <div class="row"><div><label>Conductivité (µS/cm)</label><input type="number" id="b-cond" step="0.1" oninput="calcKadj()"></div><div><label>Conductivité eau neuve (µS/cm)</label><input type="number" id="b-cond0" step="0.1" placeholder="eau démi ~1-5" oninput="calcKadj()"></div></div>
             <div id="kadj-display"></div>
           </div>
           <div class="card">
             <div class="card-title">Tests anioniques <span class="tip-btn" onclick="swTip('ta')">i</span></div>
             <div class="tip" id="ta">Bandelettes semi-quantitatives (Quantofix / Merck / Hach) ou chromatographie ionique. Arrêt validé si Cl⁻, NO₃⁻ et SO₄²⁻ négatifs sur 3 bains consécutifs.</div>
             <div class="row trio">
-              <div><label>Cl⁻ (chlorures)</label><select id="b-cl"><option value="">—</option><option value="++">++ fort</option><option value="+">+ présent</option><option value="tr">traces</option><option value="-">− négatif</option><option value="ND">Non fait</option></select></div>
-              <div><label>NO₃⁻ (nitrates)</label><select id="b-no3"><option value="">—</option><option value="++">++ fort</option><option value="+">+ présent</option><option value="tr">traces</option><option value="-">− négatif</option><option value="ND">Non fait</option></select></div>
-              <div><label>SO₄²⁻ (sulfates)</label><select id="b-so4"><option value="">—</option><option value="++">++ fort</option><option value="+">+ présent</option><option value="tr">traces</option><option value="-">− négatif</option><option value="ND">Non fait</option></select></div>
+              <div><label>Cl⁻ (chlorures)</label><select id="b-cl"><option value="">-</option><option value="++">++ fort</option><option value="+">+ présent</option><option value="tr">traces</option><option value="-">− négatif</option><option value="ND">Non fait</option></select></div>
+              <div><label>NO₃⁻ (nitrates)</label><select id="b-no3"><option value="">-</option><option value="++">++ fort</option><option value="+">+ présent</option><option value="tr">traces</option><option value="-">− négatif</option><option value="ND">Non fait</option></select></div>
+              <div><label>SO₄²⁻ (sulfates)</label><select id="b-so4"><option value="">-</option><option value="++">++ fort</option><option value="+">+ présent</option><option value="tr">traces</option><option value="-">− négatif</option><option value="ND">Non fait</option></select></div>
             </div>
             <div id="anion-eval"></div>
           </div>
@@ -290,9 +290,9 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
             <div class="row"><div><label>Date</label><input type="date" id="r-date"></div><div><label>J+ après sortie du bain</label><input type="number" id="r-n" value="1" min="1"></div></div>
             <div class="row"><div><label>Cond. eau résiduelle (µS/cm)</label><input type="number" id="r-cond" step="0.1" oninput="evalSech()"></div><div><label>HR ambiante (%)</label><input type="number" id="r-hr" step="1" min="0" max="100" oninput="evalSech()"></div></div>
             <div class="row trio">
-              <div><label>Re-cristallisation surface ?</label><select id="r-cryst" onchange="evalSech()"><option value="">—</option><option value="non">Non visible</option><option value="traces">Traces</option><option value="oui">Oui — efflorescences</option></select></div>
-              <div><label>Cl⁻ eau résiduelle</label><select id="r-cl" onchange="evalSech()"><option value="">—</option><option value="-">− négatif</option><option value="tr">traces</option><option value="+">+ présent</option></select></div>
-              <div><label>NO₃⁻ eau résiduelle</label><select id="r-no3" onchange="evalSech()"><option value="">—</option><option value="-">− négatif</option><option value="tr">traces</option><option value="+">+ présent</option></select></div>
+              <div><label>Re-cristallisation surface ?</label><select id="r-cryst" onchange="evalSech()"><option value="">-</option><option value="non">Non visible</option><option value="traces">Traces</option><option value="oui">Oui - efflorescences</option></select></div>
+              <div><label>Cl⁻ eau résiduelle</label><select id="r-cl" onchange="evalSech()"><option value="">-</option><option value="-">− négatif</option><option value="tr">traces</option><option value="+">+ présent</option></select></div>
+              <div><label>NO₃⁻ eau résiduelle</label><select id="r-no3" onchange="evalSech()"><option value="">-</option><option value="-">− négatif</option><option value="tr">traces</option><option value="+">+ présent</option></select></div>
             </div>
             <div id="r-eval"></div>
             <div style="margin-top:8px"><label>Observations</label><input type="text" id="r-obs" placeholder="Aspect de surface, dépôts, état général..."></div>
@@ -321,42 +321,42 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 <div class="page" id="page-calcul">
   <div class="sh"><h2>Calculatrice K<sub>adj</sub></h2></div>
   <div class="card">
-    <div class="card-title">Formule K<sub>adj</sub> — Conductivité ajustée <span class="tip-btn" onclick="swTip('ck')">i</span></div>
+    <div class="card-title">Formule K<sub>adj</sub> - Conductivité ajustée <span class="tip-btn" onclick="swTip('ck')">i</span></div>
     <div class="tip" id="ck">K<sub>adj</sub> = (Conductivité − C₀) × Volume / Poids. Normalise les mesures selon la masse de l'objet et le volume du bain. La courbe K<sub>adj</sub> doit devenir horizontale (plateau ≤ 2) pour valider l'arrêt. Source : Unruh 2001 ; White, Pool &amp; Carroll 2010.</div>
     <div class="row trio"><div><label>Conductivité bain (µS/cm)</label><input type="number" id="c-cond" step="0.1" oninput="calcC()"></div><div><label>C₀ eau neuve (µS/cm)</label><input type="number" id="c-c0" value="3" step="0.1" oninput="calcC()"></div><div><label>Volume (L)</label><input type="number" id="c-vol" step="0.1" oninput="calcC()"></div></div>
     <div class="row"><div><label>Poids sec objet (g)</label><input type="number" id="c-poids" step="0.1" oninput="calcC()"></div><div></div></div>
-    <div class="result-box"><div class="result-val" id="c-val">— </div><div class="result-sub" id="c-int">K<sub>adj</sub> = (cond − C₀) × V / poids</div></div>
+    <div class="result-box"><div class="result-val" id="c-val">- </div><div class="result-sub" id="c-int">K<sub>adj</sub> = (cond − C₀) × V / poids</div></div>
     <div id="c-al"></div>
   </div>
   <div class="card">
     <div class="card-title">Références protocole dessalement céramiques archéologiques</div>
-    <div class="info-row"><span class="info-lbl">Critère d'arrêt — K<sub>adj</sub></span><span class="info-val">Plateau ≤ 2 sur 3 bains consécutifs</span></div>
-    <div class="info-row"><span class="info-lbl">Critère d'arrêt — chimique</span><span class="info-val">Cl⁻, NO₃⁻, SO₄²⁻ négatifs × 3 consécutifs</span></div>
-    <div class="info-row"><span class="info-lbl">Conductivité résiduelle normale</span><span class="info-val">25–100 µS/cm (≠ métal — ne pas viser 0)</span></div>
+    <div class="info-row"><span class="info-lbl">Critère d'arrêt - K<sub>adj</sub></span><span class="info-val">Plateau ≤ 2 sur 3 bains consécutifs</span></div>
+    <div class="info-row"><span class="info-lbl">Critère d'arrêt - chimique</span><span class="info-val">Cl⁻, NO₃⁻, SO₄²⁻ négatifs × 3 consécutifs</span></div>
+    <div class="info-row"><span class="info-lbl">Conductivité résiduelle normale</span><span class="info-val">25-100 µS/cm (≠ métal - ne pas viser 0)</span></div>
     <div class="info-row"><span class="info-lbl">Eau bain 1</span><span class="info-val">Robinet (éviter choc osmotique)</span></div>
     <div class="info-row"><span class="info-lbl">Eau bains suivants</span><span class="info-val">Déminéralisée / distillée</span></div>
-    <div class="info-row"><span class="info-lbl">Fréquence J1–J5</span><span class="info-val">Quotidien (80–90 % des sels extraits)</span></div>
+    <div class="info-row"><span class="info-lbl">Fréquence J1-J5</span><span class="info-val">Quotidien (80-90 % des sels extraits)</span></div>
     <div class="info-row"><span class="info-lbl">Ensuite</span><span class="info-val">3×/semaine jusqu'au plateau</span></div>
     <div class="info-row"><span class="info-lbl">Fragile / engobe</label><span class="info-val">Pré-consolider B-72 avant immersion</span></div>
-    <div class="info-row"><span class="info-lbl">Argile crue</span><span class="info-val">TEOS obligatoire — séchage 3 sem. avant bain</span></div>
+    <div class="info-row"><span class="info-lbl">Argile crue</span><span class="info-val">TEOS obligatoire - séchage 3 sem. avant bain</span></div>
     <div class="info-row"><span class="info-lbl">Sources</span><span class="info-val">Unruh 2001 · Liégey 2012 · Montana 2018</span></div>
   </div>
   <div class="card">
     <div class="card-title">Protocole étape par étape</div>
     <div class="proto-step"><div class="proto-num">1</div><div class="proto-txt"><strong>Diagnostic &amp; nettoyage mécanique.</strong> Évaluer cohésion, décors, sels visibles. Enlever dépôts non adhérents à sec (brosses, pinceau, scalpel). Ne jamais nettoyer à HCl avant dessalement (risque de chlorures).</div></div>
-    <div class="proto-step"><div class="proto-num">2</div><div class="proto-txt"><strong>Pré-consolidation si fragile.</strong> B-72 5% dans acétone/toluène (céramiques fragiles / engobe) · Silicate d'éthyle TEOS (argile crue — sécher 3 semaines avant bain) · Cyclododécane (protection décors peints temporaire).</div></div>
-    <div class="proto-step"><div class="proto-num">3</div><div class="proto-txt"><strong>Humidification préalable (optionnel).</strong> 24h en chambre humide (HR 100%). Les cristaux passent en solution, l'eau pénètre par vapeur — moins de choc mécanique.</div></div>
+    <div class="proto-step"><div class="proto-num">2</div><div class="proto-txt"><strong>Pré-consolidation si fragile.</strong> B-72 5% dans acétone/toluène (céramiques fragiles / engobe) · Silicate d'éthyle TEOS (argile crue - sécher 3 semaines avant bain) · Cyclododécane (protection décors peints temporaire).</div></div>
+    <div class="proto-step"><div class="proto-num">3</div><div class="proto-txt"><strong>Humidification préalable (optionnel).</strong> 24h en chambre humide (HR 100%). Les cristaux passent en solution, l'eau pénètre par vapeur - moins de choc mécanique.</div></div>
     <div class="proto-step"><div class="proto-num">4</div><div class="proto-txt"><strong>Immersion.</strong> Objet surélevé sur grille (sels extraits coulent). Ajouter l'eau progressivement. Bain 1 = eau du robinet. Bains suivants = eau déminéralisée. Ne pas agiter mécaniquement.</div></div>
-    <div class="proto-step"><div class="proto-num">5</div><div class="proto-txt"><strong>Suivi &amp; renouvellements.</strong> Mesurer conductivité + tests bandelettes à chaque changement. Calculer K<sub>adj</sub>. Changer quotidiennement J1–J5, puis 3×/semaine.</div></div>
+    <div class="proto-step"><div class="proto-num">5</div><div class="proto-txt"><strong>Suivi &amp; renouvellements.</strong> Mesurer conductivité + tests bandelettes à chaque changement. Calculer K<sub>adj</sub>. Changer quotidiennement J1-J5, puis 3×/semaine.</div></div>
     <div class="proto-step"><div class="proto-num">6</div><div class="proto-txt"><strong>Arrêt.</strong> Courbe K<sub>adj</sub> horizontale (≤ 2) ET Cl⁻ / NO₃⁻ / SO₄²⁻ négatifs × 3 consécutifs. Ne pas viser conductivité = 0 (risque de dissoudre la matrice).</div></div>
-    <div class="proto-step"><div class="proto-num">7</div><div class="proto-txt"><strong>Séchage lent.</strong> Sortir, sécher à l'air libre. Surveiller ré-efflorescences. Si présentes → reprendre un bain. Consolidation finale B-72 5% si surface pulvérulente. Stocker 45–55% HR.</div></div>
+    <div class="proto-step"><div class="proto-num">7</div><div class="proto-txt"><strong>Séchage lent.</strong> Sortir, sécher à l'air libre. Surveiller ré-efflorescences. Si présentes → reprendre un bain. Consolidation finale B-72 5% si surface pulvérulente. Stocker 45-55% HR.</div></div>
   </div>
 </div>
 
 <!-- RAPPORT -->
 <div class="page" id="page-rapport">
   <div class="sh"><h2>Rapport de traitement</h2></div>
-  <div class="card"><div class="card-title">Objet</div><select id="r-sel" onchange="loadRap()"><option value="">— Sélectionner —</option></select></div>
+  <div class="card"><div class="card-title">Objet</div><select id="r-sel" onchange="loadRap()"><option value="">- Sélectionner -</option></select></div>
   <div id="r-cont" style="display:none">
     <div class="card"><div class="card-title">Synthèse</div><div id="r-info"></div><div class="metrics" id="r-met"></div></div>
     <div class="card"><div class="card-title">Évolution K<sub>adj</sub></div><div class="chart-wrap"><canvas id="r-chart"></canvas></div></div>
@@ -379,7 +379,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
     <div class="card-title">🔗 Connexion Notion</div>
     <div id="cfg-a" class="alert a-warn" style="margin-bottom:9px">⚠ Token Notion non configuré.</div>
     <div id="notion-status" class="alert a-info" style="display:none;margin-bottom:9px"></div>
-    <div style="font-size:12px;color:#27623A;margin-bottom:8px">✅ Proxy Cloudflare configuré — connexion sécurisée</div>
+    <div style="font-size:12px;color:#27623A;margin-bottom:8px">✅ Proxy Cloudflare configuré - connexion sécurisée</div>
     <div style="font-size:11px;color:#4A5F72;line-height:1.6">
       Le token Notion est stocké en sécurité dans le proxy Cloudflare. La clé d'accès de cet appareil n'est enregistrée que dans ce navigateur.
     </div>
@@ -404,7 +404,7 @@ input:focus,select:focus{border-color:#125c8a;box-shadow:0 0 0 2px rgba(18,92,13
 <script>
 
 // ============================================================
-// KERA — Notion API Backend
+// KERA - Notion API Backend
 // Remplace localStorage par deux bases Notion synchronisées :
 //   - "KERA Objets" : une ligne par objet en dessalement
 //   - "KERA Bains"  : une ligne par bain/séchage
@@ -511,7 +511,7 @@ function demarrerNotion() {
 }
 
 // ============================================================
-// NOTION — SETUP (trouver ou créer les bases)
+// NOTION - SETUP (trouver ou créer les bases)
 // ============================================================
 function notionSetup() {
   return findOrCreateDb(DB_OBJETS_NAME, SCHEMA_OBJETS).then(function(id) {
@@ -565,7 +565,7 @@ var SCHEMA_BAINS = {
 };
 
 // ============================================================
-// NOTION — API HELPERS
+// NOTION - API HELPERS
 // ============================================================
 function notionFetch(path, method, body) {
   var opts = {
@@ -626,7 +626,7 @@ function createDb(name, parentId, schema) {
 }
 
 // ============================================================
-// NOTION — CHARGER LES OBJETS
+// NOTION - CHARGER LES OBJETS
 // ============================================================
 function loadObjetsFromNotion() {
   A.chargeOk = false;
@@ -751,7 +751,7 @@ function loadAllBains() {
 }
 
 // ============================================================
-// NOTION — CRÉER UN OBJET
+// NOTION - CRÉER UN OBJET
 // ============================================================
 function createLotInNotion(lot) {
   if (!A.dbObjetsId) return Promise.reject(new Error('Base Notion non configurée'));
@@ -781,11 +781,11 @@ function createLotInNotion(lot) {
 }
 
 // ============================================================
-// NOTION — CRÉER UN BAIN
+// NOTION - CRÉER UN BAIN
 // ============================================================
 function createBainInNotion(lot, mesure) {
   if (!A.dbBainsId) return Promise.reject(new Error('Base Notion non configurée'));
-  var nom = 'Bain ' + (mesure.cycle || '?') + ' — ' + (lot.ref || lot.int);
+  var nom = 'Bain ' + (mesure.cycle || '?') + ' - ' + (lot.ref || lot.int);
   var props = {
     'Nom':               {title: [{text: {content: nom}}]},
     'KERA ID Bain':      {rich_text: [{text: {content: 'B' + Date.now().toString(36).toUpperCase()}}]},
@@ -816,11 +816,11 @@ function createBainInNotion(lot, mesure) {
 }
 
 // ============================================================
-// NOTION — CRÉER UN SÉCHAGE
+// NOTION - CRÉER UN SÉCHAGE
 // ============================================================
 function createSechageInNotion(lot, sechage) {
   if (!A.dbBainsId) return Promise.reject(new Error('Base Notion non configurée'));
-  var nom = 'Séchage J+' + (sechage.num || '?') + ' — ' + (lot.ref || lot.int);
+  var nom = 'Séchage J+' + (sechage.num || '?') + ' - ' + (lot.ref || lot.int);
   var props = {
     'Nom':               {title: [{text: {content: nom}}]},
     'KERA ID Bain':      {rich_text: [{text: {content: 'S' + Date.now().toString(36).toUpperCase()}}]},
@@ -844,7 +844,7 @@ function createSechageInNotion(lot, sechage) {
 }
 
 // ============================================================
-// NOTION — SUPPRIMER (archiver une page)
+// NOTION - SUPPRIMER (archiver une page)
 // ============================================================
 function archiveNotionPage(pageId) {
   if (!pageId || !A.notionToken) return Promise.resolve();
@@ -911,8 +911,8 @@ function isoLocal(d) { return d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '
 function aujourdhui() { return isoLocal(new Date()); }
 function addJours(iso, n) { if (!iso) return ''; var d = new Date(iso + 'T12:00:00'); d.setDate(d.getDate() + n); return isoLocal(d); }
 function joursEntre(a, b) { if (!a || !b) return null; return Math.round((new Date(b + 'T12:00:00') - new Date(a + 'T12:00:00')) / 864e5); }
-function fDate(iso) { if (!iso) return '—'; var p = String(iso).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso; }
-// Intervalle entre relevés : « Quotidien (J1–J5) » passe à tous les 3 jours après J5
+function fDate(iso) { if (!iso) return '-'; var p = String(iso).slice(0, 10).split('-'); return p.length === 3 ? p[2] + '/' + p[1] + '/' + p[0] : iso; }
+// Intervalle entre relevés : « Quotidien (J1-J5) » passe à tous les 3 jours après J5
 function intervalleLot(lot) {
   var f = parseInt(lot.freq || '3', 10) || 3, ms = lot.mesures || [], last = ms[ms.length - 1];
   if (f === 1 && last && ((last.jplus || 0) >= 5 || joursEntre(lot.dateDebut, last.date) >= 5)) return 3;
@@ -968,7 +968,7 @@ function _echRun() {
 function ref() {
   var c = gid('lots-list'), ct = gid('lots-termines'), rs = gid('accueil-resume');
   if (!A.lots.length) {
-    c.innerHTML = '<div class="empty-s"><div style="font-size:32px;opacity:0.3;margin-bottom:9px">🏺</div><p style="font-size:12px;font-weight:500">' + (A.notionToken ? 'Aucun objet — créez-en un !' : '⚠ Configurez votre token Notion dans ⚙ Config.') + '</p></div>';
+    c.innerHTML = '<div class="empty-s"><div style="font-size:32px;opacity:0.3;margin-bottom:9px">🏺</div><p style="font-size:12px;font-weight:500">' + (A.notionToken ? 'Aucun objet - créez-en un !' : '⚠ Configurez votre token Notion dans ⚙ Config.') + '</p></div>';
     if (ct) ct.innerHTML = ''; if (rs) rs.innerHTML = ''; return;
   }
   var today = aujourdhui(), enCours = [], termines = [];
@@ -992,11 +992,11 @@ function ref() {
 }
 function carteLot(lot, ev) {
   var nb = lot.mesures ? lot.mesures.length : 0, l = nb ? lot.mesures[nb - 1] : null, k = l ? computeKadj(l, lot) : null;
-  var meta = nb ? 'K<sub>adj</sub> ' + (k != null ? k.toFixed(2) : '—') + ' · ' + nb + ' bain' + (nb > 1 ? 's' : '') + '<br>dernier relevé ' + fDate(l.date) : 'aucun bain';
+  var meta = nb ? 'K<sub>adj</sub> ' + (k != null ? k.toFixed(2) : '-') + ' · ' + nb + ' bain' + (nb > 1 ? 's' : '') + '<br>dernier relevé ' + fDate(l.date) : 'aucun bain';
   var quand = '';
-  if (ev.code !== 'aucune' && ev.due) quand = ev.retard > 0 ? ' — <span class="late">en retard de ' + ev.retard + ' j (prévu le ' + fDate(ev.due) + ')</span>' : ev.due <= aujourdhui() ? ' — <b>aujourd\'hui</b>' : ' — le ' + fDate(ev.due);
+  if (ev.code !== 'aucune' && ev.due) quand = ev.retard > 0 ? ' - <span class="late">en retard de ' + ev.retard + ' j (prévu le ' + fDate(ev.due) + ')</span>' : ev.due <= aujourdhui() ? ' - <b>aujourd\'hui</b>' : ' - le ' + fDate(ev.due);
   var id = esc(lot.id);
-  return '<div class="lot-item planning"><div class="lot-click" onclick="ouvrirLot(\'' + id + '\')"><div class="lot-name">' + esc(lot.int) + '</div><div class="lot-sub">' + esc(lot.ref) + (lot.operation ? ' — ' + esc(lot.operation) : '') + '</div>' +
+  return '<div class="lot-item planning"><div class="lot-click" onclick="ouvrirLot(\'' + id + '\')"><div class="lot-name">' + esc(lot.int) + '</div><div class="lot-sub">' + esc(lot.ref) + (lot.operation ? ' - ' + esc(lot.operation) : '') + '</div>' +
     (ev.code !== 'aucune' ? '<div class="lot-next">▶ <b>' + esc(ev.label) + '</b>' + quand + '</div>' : '') + '</div>' +
     '<div class="lot-right"><span class="badge ' + ev.cls + '">' + esc(ev.statut) + '</span><div class="lot-meta">' + meta + '</div>' +
     '<button class="x-btn" title="Supprimer" onclick="event.stopPropagation();delLot(\'' + id + '\')">✕</button></div></div>';
@@ -1061,9 +1061,9 @@ function computeKadj(m, lot) {
 
 function fillS() {
   var s1 = gid('s-sel'), s2 = gid('r-sel');
-  var opts = A.lots.map(function(l) { return '<option value="' + l.id + '">' + l.ref + ' — ' + l.int + '</option>'; }).join('');
-  if (s1) s1.innerHTML = '<option value="">— Sélectionner —</option>' + opts;
-  if (s2) s2.innerHTML = '<option value="">— Sélectionner —</option>' + opts;
+  var opts = A.lots.map(function(l) { return '<option value="' + l.id + '">' + l.ref + ' - ' + l.int + '</option>'; }).join('');
+  if (s1) s1.innerHTML = '<option value="">- Sélectionner -</option>' + opts;
+  if (s2) s2.innerHTML = '<option value="">- Sélectionner -</option>' + opts;
 }
 
 function delLot(id) {
@@ -1110,7 +1110,7 @@ function chargerLot() {
   fz.style.display = 'block'; ctx.style.display = 'block'; if (ctxb) ctxb.style.display = 'block';
   majBoutonsLot(lot);
   argosObjets(lot);
-  ctx.innerHTML = (/termin/i.test(lot.statut || '') ? '<span class="badge b-ok" style="margin-bottom:4px">' + esc(lot.statut) + '</span><br>' : '') + '<b>Début :</b> ' + (lot.dateDebut || '—') + ' &nbsp;|&nbsp; <b>Poids :</b> ' + (lot.poids || '—') + ' g &nbsp;|&nbsp; <b>Vol. bain :</b> ' + (lot.volume || '—') + ' L &nbsp;|&nbsp; <b>Bains :</b> ' + (lot.mesures ? lot.mesures.length : 0);
+  ctx.innerHTML = (/termin/i.test(lot.statut || '') ? '<span class="badge b-ok" style="margin-bottom:4px">' + esc(lot.statut) + '</span><br>' : '') + '<b>Début :</b> ' + (lot.dateDebut || '-') + ' &nbsp;|&nbsp; <b>Poids :</b> ' + (lot.poids || '-') + ' g &nbsp;|&nbsp; <b>Vol. bain :</b> ' + (lot.volume || '-') + ' L &nbsp;|&nbsp; <b>Bains :</b> ' + (lot.mesures ? lot.mesures.length : 0);
   gid('b-vol').value = lot.volume || '';
   autoFillBain(lot);
   affH(lot);
@@ -1128,12 +1128,12 @@ function affMes(lot) {
   gid('mes-list').innerHTML = (!lot.mesures || !lot.mesures.length) ? '<div style="font-size:11px;color:#4A5F72;padding:6px 0">Aucun bain.</div>' :
     '<div class="mlist">' + lot.mesures.map(function(m, i) {
       var k = computeKadj(m, lot);
-      return '<div class="mlist-row"><span>' + m.date + ' J+' + m.jplus + ' B.' + m.cycle + ' — Cond. ' + (m.cond != null ? m.cond + ' µS/cm' : '-') + ' K<sub>adj</sub> ' + (k != null ? k.toFixed(2) : '-') + '</span><button class="x-btn" onclick="delM(\'' + lot.id + '\',' + i + ')">✕</button></div>';
+      return '<div class="mlist-row"><span>' + m.date + ' J+' + m.jplus + ' B.' + m.cycle + ' - Cond. ' + (m.cond != null ? m.cond + ' µS/cm' : '-') + ' K<sub>adj</sub> ' + (k != null ? k.toFixed(2) : '-') + '</span><button class="x-btn" onclick="delM(\'' + lot.id + '\',' + i + ')">✕</button></div>';
     }).join('') + '</div>';
   var sechs = lot.sechages || [];
   gid('sech-list').innerHTML = (!sechs.length) ? '<div style="font-size:11px;color:#4A5F72;padding:6px 0">Aucun contrôle séchage.</div>' :
     '<div class="mlist">' + sechs.map(function(r, i) {
-      return '<div class="mlist-row"><span>' + r.date + ' J+' + r.num + ' — Cond. résid. ' + (r.cond || '-') + ' µS/cm | Cryst.: ' + (r.cryst || '-') + '</span><button class="x-btn" onclick="delSech(\'' + lot.id + '\',' + i + ')">✕</button></div>';
+      return '<div class="mlist-row"><span>' + r.date + ' J+' + r.num + ' - Cond. résid. ' + (r.cond || '-') + ' µS/cm | Cryst.: ' + (r.cryst || '-') + '</span><button class="x-btn" onclick="delSech(\'' + lot.id + '\',' + i + ')">✕</button></div>';
     }).join('') + '</div>';
 }
 
@@ -1182,7 +1182,7 @@ function affH(lot) {
   }).join('');
   rows.innerHTML = rh;
   var lastK = computeKadj(mms[mms.length - 1], lot);
-  if (ms && lastK != null) ms.textContent = '— K=' + lastK.toFixed(2);
+  if (ms && lastK != null) ms.textContent = '- K=' + lastK.toFixed(2);
   var mKv = mms.filter(function(m) { return computeKadj(m, lot) != null; });
   if (mKv.length >= 2) {
     cz.style.display = 'block';
@@ -1192,23 +1192,23 @@ function affH(lot) {
   var consNeg = checkConsecutiveNeg(lot);
   var ac = '', acl = 'a-info';
   if (lastK != null) {
-    if (lastK <= A.cfg.kadj && consNeg >= A.cfg.cons) { ac = '✅ Critères d\'arrêt atteints — K<sub>adj</sub> plateau + ' + consNeg + ' bains anioniques négatifs consécutifs.'; acl = 'a-ok'; }
+    if (lastK <= A.cfg.kadj && consNeg >= A.cfg.cons) { ac = '✅ Critères d\'arrêt atteints - K<sub>adj</sub> plateau + ' + consNeg + ' bains anioniques négatifs consécutifs.'; acl = 'a-ok'; }
     else if (lastK <= A.cfg.kadj) {
       // Plateau ne peut être affirmé qu'avec au moins 2 bains sous le seuil (Liégey 2012)
       var nbSousSeuil = lot.mesures.filter(function(m) {
         var k = computeKadj(m, lot); return k != null && k <= A.cfg.kadj;
       }).length;
       if (nbSousSeuil < 2) {
-        ac = 'K<sub>adj</sub> = ' + lastK.toFixed(2) + ' (sous le seuil de ' + A.cfg.kadj + '). Premier bain sous le seuil — poursuivre pour confirmer la stabilité.';
+        ac = 'K<sub>adj</sub> = ' + lastK.toFixed(2) + ' (sous le seuil de ' + A.cfg.kadj + '). Premier bain sous le seuil - poursuivre pour confirmer la stabilité.';
         acl = 'a-info';
       } else {
         ac = 'K<sub>adj</sub> plateau (' + nbSousSeuil + ' bains sous le seuil). Vérifier anions (' + consNeg + '/' + A.cfg.cons + ' bains négatifs consécutifs requis).';
         acl = 'a-warn';
       }
     }
-    else if (lastK > A.cfg.kadj * 5) { ac = 'Dessalement actif (K<sub>adj</sub> = ' + lastK.toFixed(2) + '). Extraction forte — relevé hebdomadaire recommandé.'; acl = 'a-alert'; }
-    else if (lastK > A.cfg.kadj * 2) { ac = 'Dessalement en cours (K<sub>adj</sub> = ' + lastK.toFixed(2) + '). Décroissance à surveiller — continuer.'; acl = 'a-info'; }
-    else { ac = 'K<sub>adj</sub> = ' + lastK.toFixed(2) + ' — proche du plateau. Vérifier la stabilité sur 2–3 bains avant de valider (Liégey 2012).'; acl = 'a-warn'; }
+    else if (lastK > A.cfg.kadj * 5) { ac = 'Dessalement actif (K<sub>adj</sub> = ' + lastK.toFixed(2) + '). Extraction forte - relevé hebdomadaire recommandé.'; acl = 'a-alert'; }
+    else if (lastK > A.cfg.kadj * 2) { ac = 'Dessalement en cours (K<sub>adj</sub> = ' + lastK.toFixed(2) + '). Décroissance à surveiller - continuer.'; acl = 'a-info'; }
+    else { ac = 'K<sub>adj</sub> = ' + lastK.toFixed(2) + ' - proche du plateau. Vérifier la stabilité sur 2-3 bains avant de valider (Liégey 2012).'; acl = 'a-warn'; }
   }
   ft.style.display = (ac || c0WarnMsg) ? 'block' : 'none';
   ft.innerHTML = c0WarnMsg + (ac ? '<div class="alert ' + acl + '" style="margin:0;font-size:10px">' + ac + '</div>' : '');
@@ -1230,7 +1230,7 @@ function calcKadj() {
   if (isNaN(cond) || !vol || !poids) { box.innerHTML = '<div style="font-size:10px;color:#4A5F72;margin-top:6px">Renseignez conductivité + volume + poids (depuis la fiche objet)</div>'; return; }
   var k = Math.max(0, (cond - c0) * vol / poids);
   var cl = k <= A.cfg.kadj ? 'a-ok' : k <= A.cfg.kadj * 3 ? 'a-warn' : 'a-info';
-  box.innerHTML = '<div class="kadj-box"><div class="kadj-val">K<sub>adj</sub> = ' + k.toFixed(3) + '</div><div class="kadj-lbl">(' + cond + ' − ' + c0 + ') × ' + vol + ' L / ' + poids + ' g</div></div><div class="alert ' + cl + '" style="margin:6px 0 0;font-size:10px">' + (k <= A.cfg.kadj ? 'Plateau — surveiller anions' : 'Courbe active — continuer le dessalement') + '</div>';
+  box.innerHTML = '<div class="kadj-box"><div class="kadj-val">K<sub>adj</sub> = ' + k.toFixed(3) + '</div><div class="kadj-lbl">(' + cond + ' − ' + c0 + ') × ' + vol + ' L / ' + poids + ' g</div></div><div class="alert ' + cl + '" style="margin:6px 0 0;font-size:10px">' + (k <= A.cfg.kadj ? 'Plateau - surveiller anions' : 'Courbe active - continuer le dessalement') + '</div>';
 }
 
 function evalAnions() {
@@ -1241,7 +1241,7 @@ function evalAnions() {
   var check = function(v, name) { if (!v) return; var ok = v === '-'; var warn = v === 'tr'; items.push('<span class="badge ' + (ok ? 'b-ok' : warn ? 'b-warn' : 'b-alert') + '">' + name + ' ' + v + '</span>'); };
   check(cl, 'Cl⁻'); check(no3, 'NO₃⁻'); check(so4, 'SO₄²⁻');
   var allNeg = cl === '-' && no3 === '-' && so4 === '-';
-  box.innerHTML = '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px">' + items.join('') + '</div><div class="alert ' + (allNeg ? 'a-ok' : 'a-warn') + '" style="margin:6px 0 0;font-size:10px">' + (allNeg ? 'Tous négatifs ✓ — incrémenter le compteur de bains négatifs' : 'Anions encore présents — poursuivre le dessalement') + '</div>';
+  box.innerHTML = '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:7px">' + items.join('') + '</div><div class="alert ' + (allNeg ? 'a-ok' : 'a-warn') + '" style="margin:6px 0 0;font-size:10px">' + (allNeg ? 'Tous négatifs ✓ - incrémenter le compteur de bains négatifs' : 'Anions encore présents - poursuivre le dessalement') + '</div>';
 }
 
 function evalSech() {
@@ -1249,14 +1249,14 @@ function evalSech() {
   var box = gid('r-eval'); if (!box || (!cryst && !cl)) return;
   var bad = cryst === 'oui' || cl === '+' || no3 === '+'; var warn = cryst === 'traces' || cl === 'tr' || no3 === 'tr';
   var msg = '', cls = 'a-info';
-  if (bad) { msg = '⚠️ Re-cristallisations ou anions détectés — dessalement insuffisant. Reprendre un bain.'; cls = 'a-alert'; }
-  else if (warn) { msg = 'Traces détectées — surveiller. Si elles persistent, reprendre un bain.'; cls = 'a-warn'; }
+  if (bad) { msg = '⚠️ Re-cristallisations ou anions détectés - dessalement insuffisant. Reprendre un bain.'; cls = 'a-alert'; }
+  else if (warn) { msg = 'Traces détectées - surveiller. Si elles persistent, reprendre un bain.'; cls = 'a-warn'; }
   else if (cryst === 'non' && (cl === '-' || !cl)) { msg = 'Surface propre. Séchage en bonne voie.'; cls = 'a-ok'; }
   if (msg) box.innerHTML = '<div class="alert ' + cls + '" style="margin:8px 0 0;font-size:11px">' + msg + '</div>';
 }
 
 // ============================================================
-// ENREGISTRER UN BAIN — avec Notion
+// ENREGISTRER UN BAIN - avec Notion
 // ============================================================
 function enregB() {
   var id = gid('s-sel').value, lot = gL(id);
@@ -1294,7 +1294,7 @@ function enregB() {
 }
 
 // ============================================================
-// ENREGISTRER UN SÉCHAGE — avec Notion
+// ENREGISTRER UN SÉCHAGE - avec Notion
 // ============================================================
 function enregSech() {
   var id = gid('s-sel').value, lot = gL(id);
@@ -1323,7 +1323,7 @@ function enregSech() {
 }
 
 // ============================================================
-// CRÉER UN OBJET — avec Notion
+// CRÉER UN OBJET - avec Notion
 // ============================================================
 function creerLot() {
   var ref = gid('lot-ref').value.trim(), int = gid('lot-int').value.trim();
@@ -1346,7 +1346,7 @@ function creerLot() {
     var qz = gid('qr-out'); qz.innerHTML = '';
     new QRCode(qz, {text: APP_URL + '?lot=' + lot.id, width: 130, height: 130, colorDark: '#125c8a', colorLight: '#fff'});
     gid('lp-name').textContent = lot.int; gid('lp-ref').textContent = lot.ref;
-    gid('lp-det').textContent = (lot.dateDebut || '-') + ' — ' + lot.poids + 'g / ' + lot.volume + 'L';
+    gid('lp-det').textContent = (lot.dateDebut || '-') + ' - ' + lot.poids + 'g / ' + lot.volume + 'L';
     gid('lp').style.display = 'block'; gid('btn-print').style.display = 'inline-flex'; gid('btn-pl').style.display = 'inline-flex';
     hideLoading();
     alert('✅ Objet créé : ' + lot.ref);
@@ -1366,21 +1366,21 @@ function loadRap() {
   var nb = lot.mesures ? lot.mesures.length : 0;
   var nbNeg = checkConsecutiveNeg(lot);
   var lastK = nb ? computeKadj(lot.mesures[nb - 1], lot) : null;
-  gid('r-info').innerHTML = '<div class="info-row"><span class="info-lbl">Référence</span><span class="info-val">' + lot.ref + '</span></div><div class="info-row"><span class="info-lbl">Désignation</span><span class="info-val">' + lot.int + '</span></div><div class="info-row"><span class="info-lbl">Collection</span><span class="info-val">' + (lot.operation || '—') + '</span></div><div class="info-row"><span class="info-lbl">Responsable</span><span class="info-val">' + (lot.responsable || '—') + '</span></div><div class="info-row"><span class="info-lbl">Poids / Volume</span><span class="info-val">' + (lot.poids || '—') + ' g / ' + (lot.volume || '—') + ' L</span></div><div class="info-row"><span class="info-lbl">Consolidation</span><span class="info-val">' + (lot.consol || 'non') + '</span></div><div class="info-row"><span class="info-lbl">Fragilité</span><span class="info-val">' + (lot.fragilite || '—') + '</span></div>';
-  gid('r-met').innerHTML = '<div class="metric"><div class="metric-val">' + nb + '</div><div class="metric-lbl">Bains</div></div><div class="metric"><div class="metric-val" style="font-size:13px">' + (lastK != null ? lastK.toFixed(2) : '—') + '</div><div class="metric-lbl">K<sub>adj</sub> dernier</div></div><div class="metric"><div class="metric-val">' + nbNeg + '</div><div class="metric-lbl">Bains négatifs consécutifs</div></div>';
+  gid('r-info').innerHTML = '<div class="info-row"><span class="info-lbl">Référence</span><span class="info-val">' + lot.ref + '</span></div><div class="info-row"><span class="info-lbl">Désignation</span><span class="info-val">' + lot.int + '</span></div><div class="info-row"><span class="info-lbl">Collection</span><span class="info-val">' + (lot.operation || '-') + '</span></div><div class="info-row"><span class="info-lbl">Responsable</span><span class="info-val">' + (lot.responsable || '-') + '</span></div><div class="info-row"><span class="info-lbl">Poids / Volume</span><span class="info-val">' + (lot.poids || '-') + ' g / ' + (lot.volume || '-') + ' L</span></div><div class="info-row"><span class="info-lbl">Consolidation</span><span class="info-val">' + (lot.consol || 'non') + '</span></div><div class="info-row"><span class="info-lbl">Fragilité</span><span class="info-val">' + (lot.fragilite || '-') + '</span></div>';
+  gid('r-met').innerHTML = '<div class="metric"><div class="metric-val">' + nb + '</div><div class="metric-lbl">Bains</div></div><div class="metric"><div class="metric-val" style="font-size:13px">' + (lastK != null ? lastK.toFixed(2) : '-') + '</div><div class="metric-lbl">K<sub>adj</sub> dernier</div></div><div class="metric"><div class="metric-val">' + nbNeg + '</div><div class="metric-lbl">Bains négatifs consécutifs</div></div>';
   var mKv = lot.mesures.filter(function(m) { return computeKadj(m, lot) != null; });
   if (mKv.length) { var ctx = gid('r-chart').getContext('2d'); A.mc = new Chart(ctx, {type: 'line', data: {labels: mKv.map(function(m) { return m.date || 'J+' + m.jplus; }), datasets: [{label: 'K_adj', data: mKv.map(function(m) { return parseFloat(computeKadj(m, lot).toFixed(3)); }), borderColor: '#125c8a', backgroundColor: 'rgba(18,92,138,0.08)', borderWidth: 2, pointRadius: 4, tension: 0.3, fill: true}, {label: 'Seuil plateau', data: mKv.map(function() { return A.cfg.kadj; }), borderColor: '#27623A', borderDash: [5, 4], borderWidth: 1, pointRadius: 0}]}, options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: true, labels: {font: {size: 11}, boxWidth: 14}}}, scales: {y: {title: {display: true, text: 'K_adj'}, grid: {color: 'rgba(0,0,0,0.04)'}, ticks: {font: {size: 10}}}, x: {grid: {display: false}, ticks: {font: {size: 10}}}}}}); }
   var mCv = lot.mesures.filter(function(m) { return m.cond != null; });
   var rcc = gid('rc-card');
   if (mCv.length) { rcc.style.display = 'block'; var ctx2 = gid('rc-chart').getContext('2d'); A.rc = new Chart(ctx2, {type: 'line', data: {labels: mCv.map(function(m) { return m.date || 'J+' + m.jplus; }), datasets: [{label: 'Conductivité (µS/cm)', data: mCv.map(function(m) { return m.cond; }), borderColor: '#5B9EC9', backgroundColor: 'rgba(91,158,201,0.08)', borderWidth: 2, pointRadius: 3, tension: 0.3, fill: true}]}, options: {responsive: true, maintainAspectRatio: false, plugins: {legend: {display: true, labels: {font: {size: 11}, boxWidth: 14}}}, scales: {y: {title: {display: true, text: 'µS/cm'}, grid: {color: 'rgba(0,0,0,0.04)'}, ticks: {font: {size: 10}}}, x: {grid: {display: false}, ticks: {font: {size: 10}}}}}}); } else rcc.style.display = 'none';
   gid('r-tbody').innerHTML = (!nb ? '<tr><td colspan="10" style="text-align:center;padding:12px;color:#4A5F72">Aucun bain</td></tr>' : lot.mesures.map(function(m, i) {
-    var k = computeKadj(m, lot); var kd = k != null ? k.toFixed(2) : '—';
+    var k = computeKadj(m, lot); var kd = k != null ? k.toFixed(2) : '-';
     var neg = anionNeg(m); var sc = k != null && k <= A.cfg.kadj && neg ? 'b-ok' : k != null && k <= A.cfg.kadj ? 'b-warn' : k != null && k > A.cfg.kadj * 3 ? 'b-alert' : 'b-neu';
     var st = k != null && k <= A.cfg.kadj && neg ? 'Arrêt' : k != null && k <= A.cfg.kadj ? 'Plateau' : k != null && k > A.cfg.kadj * 5 ? 'Actif' : 'En cours';
-    var clb = m.cl ? '<span class="badge ' + (m.cl === '-' ? 'b-ok' : m.cl === 'tr' ? 'b-warn' : 'b-alert') + '">' + m.cl + '</span>' : '—';
-    var no3b = m.no3 ? '<span class="badge ' + (m.no3 === '-' ? 'b-ok' : m.no3 === 'tr' ? 'b-warn' : 'b-alert') + '">' + m.no3 + '</span>' : '—';
-    var so4b = m.so4 ? '<span class="badge ' + (m.so4 === '-' ? 'b-ok' : m.so4 === 'tr' ? 'b-warn' : 'b-alert') + '">' + m.so4 + '</span>' : '—';
-    return '<tr><td>' + m.date + '</td><td>' + m.jplus + '</td><td>' + m.cycle + '</td><td>' + (m.cond != null ? m.cond + ' µS' : '—') + '</td><td style="font-weight:600">' + kd + '</td><td>' + clb + '</td><td>' + no3b + '</td><td>' + so4b + '</td><td><span class="badge ' + sc + '">' + st + '</span></td><td><button class="x-btn" onclick="delMR(\'' + lot.id + '\',' + i + ')">✕</button></td></tr>';
+    var clb = m.cl ? '<span class="badge ' + (m.cl === '-' ? 'b-ok' : m.cl === 'tr' ? 'b-warn' : 'b-alert') + '">' + m.cl + '</span>' : '-';
+    var no3b = m.no3 ? '<span class="badge ' + (m.no3 === '-' ? 'b-ok' : m.no3 === 'tr' ? 'b-warn' : 'b-alert') + '">' + m.no3 + '</span>' : '-';
+    var so4b = m.so4 ? '<span class="badge ' + (m.so4 === '-' ? 'b-ok' : m.so4 === 'tr' ? 'b-warn' : 'b-alert') + '">' + m.so4 + '</span>' : '-';
+    return '<tr><td>' + m.date + '</td><td>' + m.jplus + '</td><td>' + m.cycle + '</td><td>' + (m.cond != null ? m.cond + ' µS' : '-') + '</td><td style="font-weight:600">' + kd + '</td><td>' + clb + '</td><td>' + no3b + '</td><td>' + so4b + '</td><td><span class="badge ' + sc + '">' + st + '</span></td><td><button class="x-btn" onclick="delMR(\'' + lot.id + '\',' + i + ')">✕</button></td></tr>';
   }).join(''));
 }
 function delMR(lid, i) { var l = gL(lid); if (!l || !confirm('Supprimer ?')) return; var m = l.mesures[i]; showLoading('Suppression…'); archiveNotionPage(m.notionPageId).then(function() { l.mesures.splice(i, 1); hideLoading(); loadRap(); }).catch(function(e) { setStatus('Erreur : ' + e.message, 'error'); }); }
@@ -1398,18 +1398,18 @@ function expPDF() {
     var fk = computeKadj(lot.mesures[i], lot);
     if (fk != null) { firstK = fk; break; }
   }
-  var reduction = (firstK && lastK && firstK > 0) ? ((firstK - lastK) / firstK * 100).toFixed(1) : '—';
-  var duree = '—';
+  var reduction = (firstK && lastK && firstK > 0) ? ((firstK - lastK) / firstK * 100).toFixed(1) : '-';
+  var duree = '-';
   if (nb >= 2 && lot.mesures[0].date && lot.mesures[nb-1].date) {
     var d1 = new Date(lot.mesures[0].date), d2 = new Date(lot.mesures[nb-1].date);
     duree = Math.round((d2 - d1) / 86400000) + ' jours';
   }
 
   // Statut final
-  var statutFinal = '—';
+  var statutFinal = '-';
   if (lastK != null) {
-    if (lastK <= A.cfg.kadj && nbNeg >= A.cfg.cons) statutFinal = 'Critères atteints — K_adj plateau + anions négatifs';
-    else if (lastK <= A.cfg.kadj) statutFinal = 'K_adj plateau — anions à confirmer (' + nbNeg + '/' + A.cfg.cons + ')';
+    if (lastK <= A.cfg.kadj && nbNeg >= A.cfg.cons) statutFinal = 'Critères atteints - K_adj plateau + anions négatifs';
+    else if (lastK <= A.cfg.kadj) statutFinal = 'K_adj plateau - anions à confirmer (' + nbNeg + '/' + A.cfg.cons + ')';
     else statutFinal = 'Traitement en cours';
   }
 
@@ -1504,18 +1504,18 @@ function expPDF() {
       var k = computeKadj(m, lot);
       var neg = anionNeg(m);
       var bg = k == null ? '' : k <= A.cfg.kadj && neg ? 'background:#E5F5EA' : k <= A.cfg.kadj ? 'background:#FFF3DC' : '';
-      var statut = k == null ? '—' : k <= A.cfg.kadj && neg ? '✓ OK' : k <= A.cfg.kadj ? 'Plateau' : k <= A.cfg.kadj*3 ? 'En cours' : 'Actif';
-      var clIcon = function(v) { return v === '-' ? '●' : v === 'tr' ? '◐' : v === '+' ? '○' : v === '++' ? '◌' : '—'; };
+      var statut = k == null ? '-' : k <= A.cfg.kadj && neg ? '✓ OK' : k <= A.cfg.kadj ? 'Plateau' : k <= A.cfg.kadj*3 ? 'En cours' : 'Actif';
+      var clIcon = function(v) { return v === '-' ? '●' : v === 'tr' ? '◐' : v === '+' ? '○' : v === '++' ? '◌' : '-'; };
       return '<tr style="' + bg + '">' +
-        '<td>' + (m.date || '—') + '</td>' +
+        '<td>' + (m.date || '-') + '</td>' +
         '<td style="text-align:center">J+' + (m.jplus || 0) + '</td>' +
-        '<td style="text-align:center">' + (m.cycle || '—') + '</td>' +
-        '<td style="text-align:center">' + (m.temp != null ? m.temp + ' °C' : '—') + '</td>' +
-        '<td style="text-align:center">' + (m.cond != null ? m.cond : '—') + '</td>' +
-        '<td style="text-align:center;font-weight:600;color:' + (k != null && k <= A.cfg.kadj ? '#27623A' : '#125c8a') + '">' + (k != null ? k.toFixed(2) : '—') + '</td>' +
-        '<td style="text-align:center">' + (m.cl ? '<span style="color:' + (m.cl==='-'?'#27623A':m.cl==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.cl) + ' ' + m.cl + '</span>' : '—') + '</td>' +
-        '<td style="text-align:center">' + (m.no3 ? '<span style="color:' + (m.no3==='-'?'#27623A':m.no3==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.no3) + ' ' + m.no3 + '</span>' : '—') + '</td>' +
-        '<td style="text-align:center">' + (m.so4 ? '<span style="color:' + (m.so4==='-'?'#27623A':m.so4==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.so4) + ' ' + m.so4 + '</span>' : '—') + '</td>' +
+        '<td style="text-align:center">' + (m.cycle || '-') + '</td>' +
+        '<td style="text-align:center">' + (m.temp != null ? m.temp + ' °C' : '-') + '</td>' +
+        '<td style="text-align:center">' + (m.cond != null ? m.cond : '-') + '</td>' +
+        '<td style="text-align:center;font-weight:600;color:' + (k != null && k <= A.cfg.kadj ? '#27623A' : '#125c8a') + '">' + (k != null ? k.toFixed(2) : '-') + '</td>' +
+        '<td style="text-align:center">' + (m.cl ? '<span style="color:' + (m.cl==='-'?'#27623A':m.cl==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.cl) + ' ' + m.cl + '</span>' : '-') + '</td>' +
+        '<td style="text-align:center">' + (m.no3 ? '<span style="color:' + (m.no3==='-'?'#27623A':m.no3==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.no3) + ' ' + m.no3 + '</span>' : '-') + '</td>' +
+        '<td style="text-align:center">' + (m.so4 ? '<span style="color:' + (m.so4==='-'?'#27623A':m.so4==='tr'?'#B06B00':'#7B1A1A') + '">' + clIcon(m.so4) + ' ' + m.so4 + '</span>' : '-') + '</td>' +
         '<td>' + (m.obs || '') + '</td>' +
         '</tr>';
     }).join(''));
@@ -1527,13 +1527,13 @@ function expPDF() {
     sechs.map(function(s) {
       var ok = (s.cond || 999) <= 50 && s.cryst !== 'oui';
       var bg = ok ? 'background:#E5F5EA' : s.cryst === 'oui' ? 'background:#FDECEA' : '';
-      return '<tr style="' + bg + '"><td>' + (s.date||'—') + '</td><td>J+' + (s.num||0) + '</td><td style="text-align:center">' + (s.cond||'—') + '</td><td style="text-align:center">' + (s.hr||'—') + '</td><td>' + (s.cryst||'—') + '</td><td>' + (s.obs||'') + '</td></tr>';
+      return '<tr style="' + bg + '"><td>' + (s.date||'-') + '</td><td>J+' + (s.num||0) + '</td><td style="text-align:center">' + (s.cond||'-') + '</td><td style="text-align:center">' + (s.hr||'-') + '</td><td>' + (s.cryst||'-') + '</td><td>' + (s.obs||'') + '</td></tr>';
     }).join('') + '</tbody></table>');
 
   var now = new Date();
   var dateStr = now.toLocaleDateString('fr-FR') + ' à ' + now.toLocaleTimeString('fr-FR', {hour:'2-digit', minute:'2-digit'});
 
-  var H = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KERA — Rapport ' + lot.ref + '</title>' +
+  var H = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>KERA - Rapport ' + lot.ref + '</title>' +
     '<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700&display=swap" rel="stylesheet">' +
     '<style>' +
     '*{box-sizing:border-box;margin:0;padding:0} html{-webkit-print-color-adjust:exact;print-color-adjust:exact;color-adjust:exact}' +
@@ -1578,32 +1578,32 @@ function expPDF() {
     '</style></head><body><div class="page">';
 
   H += '<div class="header">' +
-    '<div style="display:flex;align-items:center;gap:12px"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gQ3JlYXRlZCB3aXRoIElua3NjYXBlIChodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy8pIC0tPgoKPHN2ZwogICB3aWR0aD0iMTAwJSIKICAgaGVpZ2h0PSIxMDAlIgogICB2aWV3Qm94PSIxOCAxMDUgMTU1IDQxIgogICB2ZXJzaW9uPSIxLjEiCiAgIGlkPSJzdmc1IgogICBzb2RpcG9kaTpkb2NuYW1lPSJMb2dvLUtFUkEyLnN2ZyIKICAgaW5rc2NhcGU6dmVyc2lvbj0iMS4xLjIgKDBhMDBjZjUzMzksIDIwMjItMDItMDQpIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIAogIDxkZWZzCiAgICAgaWQ9ImRlZnMyIiAvPgogIDxnCiAgICAgaW5rc2NhcGU6bGFiZWw9IkNhbHF1ZSAxIgogICAgIGlua3NjYXBlOmdyb3VwbW9kZT0ibGF5ZXIiCiAgICAgaWQ9ImxheWVyMSI+CiAgICA8ZwogICAgICAgaWQ9ImcxMzg1MiIKICAgICAgIHRyYW5zZm9ybT0idHJhbnNsYXRlKC00LjQ5ODIwMTcsLTEzNi42MTUwNykiPgogICAgICA8cGF0aAogICAgICAgICBzdHlsZT0iZmlsbDojMDAwMDAwO3N0cm9rZS13aWR0aDowLjM1Mjc3OCIKICAgICAgICAgZD0ibSA3Ny40ODIzMywyNTcuMDA2MjQgdiAtOS41MjUgaCAxLjU4NzUgMS41ODc1IHYgNC41ODYxMSBjIDAsMi41MjIzNiAwLjA1MTksNC41ODYxMSAwLjExNTI3LDQuNTg2MTEgMC4wNjM0LDAgMi4xNzE4NSwtMi4wNzMyNSA0LjY4NTQ1LC00LjYwNzIyIGwgNC41NzAxNywtNC42MDcyMiAxLjgyNTc1LDAuMTA5MyAxLjgyNTc0LDAuMTA5MzEgLTMuODQ4NDYsMy44ODA1NSBjIC0yLjExNjY1LDIuMTM0MzEgLTMuODU2MDYsNC4wMjAyMyAtMy44NjUzNiw0LjE5MDkzIC0wLjAwOSwwLjE3MDcgMS4zNjE3NCwyLjA3NTcgMy4wNDY3Myw0LjIzMzMzIDEuNjg1LDIuMTU3NjMgMy41MjM5Niw0LjUxODI4IDQuMDg2NTksNS4yNDU4OCBsIDEuMDIyOTYsMS4zMjI5MiBoIC0xLjkxMzkyIC0xLjkxMzkzIGwgLTMuMzA2NTUsLTQuMjc3NDUgLTMuMzA2NTUsLTQuMjc3NDQgLTEuNTA0NjksMS43MTk4IGMgLTEuNDcyMTcsMS42ODI2NCAtMS41MDQ4NSwxLjc3NTEgLTEuNTExOTUsNC4yNzc0NSBsIC0wLjAwNywyLjU1NzY0IGggLTEuNTg3NSAtMS41ODc1IHogbSAyOS4yODA1NSwwIHYgLTkuNTI1IGggNi41MjYzOSA2LjUyNjM5IHYgMS40MTExMSAxLjQxMTExIGggLTQuOTM4ODkgLTQuOTM4ODkgdiAyLjY0NTgzIDIuNjQ1ODQgaCA0LjQzMTAyIDQuNDMxMDEgbCAtMC4xMDk0OCwxLjMyMjkxIC0wLjEwOTUsMS4zMjI5MiAtNC4zMjE1MiwwLjA5OTEgLTQuMzIxNTMsMC4wOTkxIHYgMi42MzQ5NyAyLjYzNDk4IGggNS4xMTUyOCA1LjExNTI3IHYgMS40MTExMSAxLjQxMTExIGggLTYuNzAyNzcgLTYuNzAyNzggeiBtIDI2LjgxMTExLC0wLjAzMTcgdiAtOS41NTY2NyBsIDUuMzc5ODYsMC4xMTk4NiBjIDQuOTE5MjIsMC4xMDk1OSA1LjQ5NDA3LDAuMTkwODYgNi43MTM3NSwwLjk0OTE2IDMuNTYzNDgsMi4yMTU0OCAzLjYwMjg5LDguNDk2NTggMC4wNjM5LDEwLjE4NDIxIC0wLjY3MTc3LDAuMzIwMzQgLTEuMjIxNCwwLjcxNzg4IC0xLjIyMTQsMC44ODM0MSAwLDAuMTY1NTQgMC45NTI1LDEuNzE3NTUgMi4xMTY2NywzLjQ0ODkxIDEuMTY0MTYsMS43MzEzNiAyLjExNjY2LDMuMjMzNCAyLjExNjY2LDMuMzM3ODYgMCwwLjEwNDQ1IC0wLjc2NjM3LDAuMTg5OTIgLTEuNzAzMDYsMC4xODk5MiBoIC0xLjcwMzA3IGwgLTIuMDg5MjksLTMuMzM4MTMgLTIuMDg5MywtMy4zMzgxMiAtMi4xNTY5MSwtMC4wMTMzIC0yLjE1NjkxLC0wLjAxMzMgLTAuMjI0MzQsMS42MzY3NCBjIC0wLjEyMzM4LDAuOTAwMjEgLTAuMjI0MzQsMi40MDgzMyAtMC4yMjQzNCwzLjM1MTM5IHYgMS43MTQ2NSBoIC0xLjQxMTExIC0xLjQxMTExIHogbSAxMC4zODU3MSwtMC43MjAyMyBjIDEuMzIwOTMsLTEuMDM5MDQgMS43MjI0LC0yLjI0NDUxIDEuMjM3MTYsLTMuNzE0NzggLTAuNTY1MDksLTEuNzEyMjUgLTEuODMxMDIsLTIuMjM2MTEgLTUuNDAzNjYsLTIuMjM2MTEgaCAtMi45ODgwNSBsIC0wLjIzMjI1LDIuMjA0ODYgYyAtMC4xODQ5NSwxLjc1NTg2IC0wLjEyMzkxLDMuNTg1ODQgMC4xNDcwOCw0LjQwOTcyIDAuMDE2LDAuMDQ4NSAxLjQzNjM1LDAuMDg4MiAzLjE1NjQzLDAuMDg4MiAyLjY1NzQ5LDAgMy4yNzEwNiwtMC4xMTI5OCA0LjA4MzI5LC0wLjc1MTg5IHogbSAxNi41MjA0NCw5Ljg1NzEyIGMgMC4zMzYyOCwtMC44MzIwNCA3LjIyNjA1LC0xNi42NjUwOSA3LjY4NDgxLC0xNy42NjAwOSAwLjM4MjQxLC0wLjgyOTQyIDAuNjU2NTYsLTAuOTY5MTQgMS44ODk5NywtMC45NjMyNCBsIDEuNDQyNjgsMC4wMDcgNC4wOTk3NCw5LjUxODEgNC4wOTk3Myw5LjUxODEgaCAtMS42NjUzOSAtMS42NjUzOSBsIC0wLjg0NDQ3LC0yLjEyNjA3IC0wLjg0NDQ3LC0yLjEyNjA2IC00LjcwODA2LDAuMDk3NiAtNC43MDgwNiwwLjA5NzYgLTAuODE3NzEsMS45NDAyOCBjIC0wLjgxMjkyLDEuOTI4OTIgLTAuODI3NDcsMS45NDA5MiAtMi40ODM5NCwyLjA0OTY4IC0xLjI2Mzg4LDAuMDgzIC0xLjYyMTEzLC0wLjAwMiAtMS40Nzk0NCwtMC4zNTI3OCB6IG0gMTEuNjcyNTcsLTkuNTQ2MiBjIC0wLjY5MjEyLC0xLjYwMDczIC0xLjQyMDIsLTMuMzU5MDEgLTEuNjE3OTUsLTMuOTA3MjkgLTAuMTk3NzQsLTAuNTQ4MjcgLTAuNDgyODMsLTAuODY1NzcgLTAuNjMzNTIsLTAuNzA1NTUgLTAuMjgwNTQsMC4yOTgyNyAtMy4xNjYxNCw2Ljk3Nzc3IC0zLjE2NjE0LDcuMzI4ODggMCwwLjEwNjkgMS41MDIxLDAuMTk0MzcgMy4zMzgwMSwwLjE5NDM3IGggMy4zMzgwMSB6IgogICAgICAgICBpZD0icGF0aDEwNDMiCiAgICAgICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NjY3Nzc2NjY3Njc3NjY2NjY3NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY3Nzc3Nzc3NjY2NjY3NzY2NjY3Nzc2Nzc3Nzc3NjY2NjY2NjY2Njc3Nzc3Nzc3NzY3MiIC8+CiAgICAgIDxwYXRoCiAgICAgICAgIGQ9Im0gNDEuMTk4NCwyNzYuNTg3OTYgYyAtNS40OTgzOTMsLTAuOTY3OCAtMTAuMTg2NzU2LC00LjgwODk3IC0xMi4yMDE0MiwtOS45OTY2MSAtMC43MzE1NTEsLTEuODgzNjcgLTEuMzQ4Nzc0LC00Ljc5ODk4IC0xLjAzMzI0OCwtNC44ODAyNyAwLjA3MTUyLC0wLjAxODUgMC41OTYwMDIsLTAuMTgxMiAxLjE2NTUyNSwtMC4zNjE3MSAwLjg5MDQ5LC0wLjI4MjI1IDEuMTc4Nzk2LC0wLjMyMDY5IDIuMDU4ODE4LC0wLjI3NDUxIDAuOTgxNTEyLDAuMDUxNiAxLjA4NzY1NywwLjA4NjMgMi41OTgwNjIsMC44NTE5MyAxLjA2OTY4NCwwLjU0MjIyIDEuODYxMzA3LDAuODU4MDggMi40NjgyNCwwLjk4NDg2IDEuNTQwMDA4LDAuMzIxNjggMy4wOTM4NzYsMC4wMjY1IDQuNjUxMjcxLC0wLjg4MzU4IDEuMTIzNTkzLC0wLjY1NjU3IDEuNzM2MDE0LC0wLjg3MTYgMi42ODgzNTksLTAuOTQzODggMS4xNTMyNzQsLTAuMDg3NCAxLjg3MzMxMSwwLjEwNjE4IDMuNTAxNDgxLDAuOTQyMiAxLjYyNzgxOCwwLjgzNTc3IDIuNzMwNTM4LDEuMTExNzUgMy45Njg3NTksMC45OTMyNSAxLjA1NTg1MywtMC4xMDA5OSAxLjUxMTY1NywtMC4yNjIzOCAzLjI2MDQ0NywtMS4xNTM4NyAxLjM5OTEsLTAuNzEzMjYgMS40ODkwMDIsLTAuNzQxNTggMi41MDE3OTUsLTAuNzg3ODkgMC44OTI2NTEsLTAuMDQwOCAxLjE5MTU5NCwtMC4wMDIgMS45ODkwMjgsMC4yNjA3NyAwLjUxNjE3MiwwLjE2OTgxIDEuMDQzMTI1LDAuMzA4NzcgMS4xNzEwMTcsMC4zMDg3NyAwLjE5MDI0NiwwIDAuMjIwNTE3LDAuMDU5NiAwLjE2NjQ5NiwwLjMyNzYxIC0wLjAzNjMxLDAuMTgwMTcgLTAuMTUwMTY3LDAuODI3NjUgLTAuMjUzMDAzLDEuNDM4ODMgLTAuNTUyNjc5LDMuMjg0NjQgLTIuMDYzODAzLDYuMTk5NzIgLTQuNDYxNDY5LDguNjA2NTQgLTIuNDM2NTM2LDIuNDQ1ODMgLTUuMzk0OCwzLjk5OTMgLTguNjkxNjgsNC41NjQyNiAtMS4zODQ0NjMsMC4yMzcyNCAtNC4yMDk4MDYsMC4yMzg5MSAtNS41NDg0NzgsMC4wMDMgeiBtIDguMDUwNjQ1LC00LjA5MDQ0IGMgMC40NTE4NzQsLTAuNDUxODYgMC40NTE4NzQsLTAuODc2OTEgMCwtMS4zMjg3NiBsIC0wLjM0ODIzMywtMC4zNDgyMyBoIC00Ljg4NDQ3OSAtNC44ODQ0ODEgbCAtMC4zNjY1MzksMC4zMDg0MiBjIC0wLjI3Mzg1MywwLjIzMDQ0IC0wLjM2NjU0MSwwLjQwODUgLTAuMzY2NTQxLDAuNzA0MTggMCwwLjI5NTcxIDAuMDkyNjksMC40NzM3OSAwLjM2NjU0MSwwLjcwNDIxIGwgMC4zNjY1MzksMC4zMDg0NCBoIDQuODg0NDgxIDQuODg0NDc5IHogbSA1LjI0MzI0MywtNC4xNjIxNiBjIDAuMzI0NzQyLC0wLjQwMTA5IDAuMjk1NDIsLTEuMDMxOSAtMC4wNjQ3LC0xLjM5MjAxIGwgLTAuMjkyNDIyLC0wLjI5MjQyIEggNDQuMDEwMDg1IDMzLjg4NTAwMiBsIC0wLjMyODMwMiwwLjI4MjQgYyAtMC40NjExMTksMC4zOTY2MiAtMC40NjAwNzksMS4wNjQ3IDAuMDAyNCwxLjQ2MjQgbCAwLjMzMDU3OCwwLjI4NDM0IDEwLjE4NzUxMSwtMC4wMzE3IDEwLjE4NzUwOSwtMC4wMzE3IHogbSAtMTcuODIwOTQ0LC03LjIxMzg4IGMgLTAuMDY1NTMsLTAuMDI1NCAtMC40MDc2OTEsLTAuMTM1MzQgLTAuNzYwMzc1LC0wLjI0NDI2IC0wLjM1MjY4LC0wLjEwODk0IC0xLjA0OTYwOSwtMC40MzUxNiAtMS41NDg3MywtMC43MjQ5OSAtMS43NDUzNjIsLTEuMDEzNSAtMy43MjI3MDQsLTEuMjUwMyAtNS41ODM0NjEsLTAuNjY4NjMgbCAtMC43NDQ1ODIsMC4yMzI3NCB2IC0wLjQ0MzA1IGMgMCwtMC42OTY5MSAwLjM1NDQ0LC0yLjU5Njk2IDAuNjc5Mzg2LC0zLjY0MjAxIDAuMTYyOTksLTAuNTI0MTggMC41NDE2ODEsLTEuNDc4MDggMC44NDE1NDEsLTIuMTE5OCBsIDAuNTQ1MTk3LC0xLjE2Njc2IC0wLjI2NjY1NiwtMC40NDE1MSBjIC0wLjgxOTE1MSwtMS4zNTYzMyAtMS40NDIwNywtMy4yMjUxOSAtMS40NDIwNywtNC4zMjY0OCAwLC0xLjUwOTQzIDAuNTQ3MjM3LC0yLjc4ODczIDEuNjIzNjM4LC0zLjc5NTYyIDEuNDg2MDczLC0xLjM5MDEzIDMuNTkzMjIsLTEuNzA0NTIgNS40ODAwMTcsLTAuODE3NjMgMC4yOTE1MTQsMC4xMzcwMiAwLjU2ODE3MiwwLjIxMDcxIDAuNjE0Nzk0LDAuMTYzNzMgMC4wNDY2MiwtMC4wNDY5IDAuMDc5MjgsLTAuNDk2MSAwLjA3MjU3LC0wLjk5ODEgLTAuMDIwNTcsLTEuNTM3ODkgLTAuNzUzMDU4LC0yLjkyMjM5IC0xLjgzOTI4NywtMy40NzY1NCAtMC44NjA1MTMsLTAuNDM5IC0xLjEwNDg1OSwtMS4yODExOCAtMC41MzY1ODQsLTEuODQ5NDQgbCAwLjI5MjQxNCwtMC4yOTI0MiBoIDkuODc3Mzk3IGMgOS44MTIzMDMsMCA5Ljg3OTQ2NCwwLjAwMiAxMC4xOTEyOTMsMC4yNDY5MSAwLjI1MTIwNSwwLjE5NzYgMC4zMTM4OTgsMC4zNDgxIDAuMzEzODk4LDAuNzUzNiAwLDAuNTUwMTggLTAuMjE5NDk0LDAuODM3MDIgLTAuOTA1NTk3LDEuMTgzNCAtMC45NjA4OTUsMC40ODUxMyAtMS43MzMwOTcsMS44OTY0MiAtMS44MDIyMjcsMy4yOTM3OCAtMC4wNjA0MywxLjIyMTQxIC0wLjAxMDQzLDEuMjY4MjQgMC45MjgzMDQsMC44Njg3MyAwLjY3MTIyNiwtMC4yODU2NyAwLjkyMjkzMiwtMC4zMjY2MiAyLjAxNzc4OCwtMC4zMjgzMyAxLjE2ODkwOSwtMC4wMDIgMS4zMDIyMjUsMC4wMjMyIDIuMDM0MDM1LDAuMzgxMjggMS43MTMwMjIsMC44MzgyOCAyLjg1MDQyLDIuNzA0NTYgMi44NTA0Miw0LjY3NzA1IDAsMS4wMTA3NCAtMC45MTYzNTgsMy41OTY0MiAtMS41ODMxMjQsNC40NjcwNiAtMC4xNjQ2MywwLjIxNDk3IC0wLjE0NjUyOCwwLjMwMTcxIDAuMjExMzA2LDEuMDEyNjIgMC44Mjc5NzksMS42NDQ5NiAxLjUzMTE4OSw0LjA0ODg0IDEuNjgwMTk2LDUuNzQzNjUgbCAwLjA4MDUsMC45MTU2NyAtMC43NjAzMjQsLTAuMjM3NjMgYyAtMS44Njc2NDgsLTAuNTgzNzcgLTMuODEzODEsLTAuMzU2MzggLTUuNTY5OTEzLDAuNjUwNzMgLTIuMTE0NzEsMS4yMTI3NyAtMy43MTMwNjcsMS4zMTMwNiAtNS41NzczOSwwLjM0OTk3IC0xLjczNzI3OCwtMC44OTc0NiAtMi4wMTUxMTIsLTEuMDE0MDYgLTIuODI5Mzg0LC0xLjE4NzM1IC0xLjUxOTIxNCwtMC4zMjMzNCAtMy4yOTE2OTUsLTAuMDA5IC00LjY1MDc3NSwwLjgyMjIyIC0wLjkyNTY1NSwwLjU2Njc5IC0yLjA1NDU2OCwwLjk0NDE2IC0yLjk4MTE1NCwwLjk5NjUzIC0wLjQ1ODY2MywwLjAyNTkgLTAuODg3NTQyLDAuMDI2NCAtMC45NTMwNjIsOWUtNCB6IG0gLTQuNzcyMzA1LC0xMS4zMjkwNyBjIDAuMTc1NTE5LC0wLjIzMDEgMC43NzY1ODgsLTAuOTA4MzggMS4zMzU3MDUsLTEuNTA3MjYgMS4xMzY2NCwtMS4yMTc0NyAyLjEyOTAxNSwtMi42MjQxNiAyLjAzMTE2MSwtMi44NzkxNiAtMC4wMzU0LC0wLjA5MjMgLTAuMzQ3Mjk4LC0wLjMwODczIC0wLjY5MzEwMywtMC40ODEwNCAtMC44NTU3MTIsLTAuNDI2NDEgLTEuNjM1MjA1LC0wLjQyMTk0IC0yLjQ5NjUwNCwwLjAxNDQgLTEuMTk1NzA5LDAuNjA1NjIgLTEuNzEyOTI3LDEuNzk1MTkgLTEuNDI2OTEyLDMuMjgxNzkgMC4xNTU1MzUsMC44MDg0NCAwLjY0MTc0NSwxLjk4OTc3IDAuODE4OTM2LDEuOTg5NzcgMC4wNjEzOCwwIDAuMjU1MTk0LC0wLjE4ODI4IDAuNDMwNzE3LC0wLjQxODQgeiBtIDI1LjA1OTU3OCwtMC4zMzk0NyBjIDAuODYxMTMsLTIuMTQ3NTQgMC40NjY0NjgsLTMuNzc4OTUgLTEuMDk5NTIyLC00LjU0NTEyIC0wLjU0MTYyNCwtMC4yNjQ5NyAtMC43ODI0NCwtMC4zMTU3MyAtMS4yOTU4MTksLTAuMjczMTUgLTAuNjc2MDE0LDAuMDU2MSAtMS43Mjc5NjIsMC40OTcyNyAtMS44MzIwMDksMC43Njg0MyAtMC4xMDg4MzYsMC4yODM1OSAwLjY5MjAxNSwxLjQ1MjY3IDEuODM3NDQxLDIuNjgyMyAwLjYwNDc4MiwwLjY0OTIyIDEuMjcxNDEyLDEuMzk0MiAxLjQ4MTQwMSwxLjY1NTUgMC4yMDk5ODgsMC4yNjEzMSAwLjQzODkwMiwwLjQ1NjUzIDAuNTA4Njk1LDAuNDMzODggMC4wNjk3OSwtMC4wMjI3IDAuMjQ5NzA4LC0wLjM0NzUgMC4zOTk4MTMsLTAuNzIxODQgeiIKICAgICAgICAgc3R5bGU9ImZpbGw6IzEyNWM4YTtmaWxsLW9wYWNpdHk6MTtzdHJva2Utd2lkdGg6MC4wMzE1MjA0IgogICAgICAgICBpZD0icGF0aDExODciIC8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4K" style="height:38px;filter:brightness(0) invert(1)" alt="KERA"><div><div class="header-sub" style="margin-top:2px">Conservation-Restauration — Dessalement céramique archéologique</div></div></div>' +
+    '<div style="display:flex;align-items:center;gap:12px"><img src="data:image/svg+xml;base64,PD94bWwgdmVyc2lvbj0iMS4wIiBlbmNvZGluZz0iVVRGLTgiIHN0YW5kYWxvbmU9Im5vIj8+CjwhLS0gQ3JlYXRlZCB3aXRoIElua3NjYXBlIChodHRwOi8vd3d3Lmlua3NjYXBlLm9yZy8pIC0tPgoKPHN2ZwogICB3aWR0aD0iMTAwJSIKICAgaGVpZ2h0PSIxMDAlIgogICB2aWV3Qm94PSIxOCAxMDUgMTU1IDQxIgogICB2ZXJzaW9uPSIxLjEiCiAgIGlkPSJzdmc1IgogICBzb2RpcG9kaTpkb2NuYW1lPSJMb2dvLUtFUkEyLnN2ZyIKICAgaW5rc2NhcGU6dmVyc2lvbj0iMS4xLjIgKDBhMDBjZjUzMzksIDIwMjItMDItMDQpIgogICB4bWxuczppbmtzY2FwZT0iaHR0cDovL3d3dy5pbmtzY2FwZS5vcmcvbmFtZXNwYWNlcy9pbmtzY2FwZSIKICAgeG1sbnM6c29kaXBvZGk9Imh0dHA6Ly9zb2RpcG9kaS5zb3VyY2Vmb3JnZS5uZXQvRFREL3NvZGlwb2RpLTAuZHRkIgogICB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciCiAgIHhtbG5zOnN2Zz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgogIAogIDxkZWZzCiAgICAgaWQ9ImRlZnMyIiAvPgogIDxnCiAgICAgaW5rc2NhcGU6bGFiZWw9IkNhbHF1ZSAxIgogICAgIGlua3NjYXBlOmdyb3VwbW9kZT0ibGF5ZXIiCiAgICAgaWQ9ImxheWVyMSI+CiAgICA8ZwogICAgICAgaWQ9ImcxMzg1MiIKICAgICAgIHRyYW5zZm9ybT0idHJhbnNsYXRlKC00LjQ5ODIwMTcsLTEzNi42MTUwNykiPgogICAgICA8cGF0aAogICAgICAgICBzdHlsZT0iZmlsbDojMDAwMDAwO3N0cm9rZS13aWR0aDowLjM1Mjc3OCIKICAgICAgICAgZD0ibSA3Ny40ODIzMywyNTcuMDA2MjQgdiAtOS41MjUgaCAxLjU4NzUgMS41ODc1IHYgNC41ODYxMSBjIDAsMi41MjIzNiAwLjA1MTksNC41ODYxMSAwLjExNTI3LDQuNTg2MTEgMC4wNjM0LDAgMi4xNzE4NSwtMi4wNzMyNSA0LjY4NTQ1LC00LjYwNzIyIGwgNC41NzAxNywtNC42MDcyMiAxLjgyNTc1LDAuMTA5MyAxLjgyNTc0LDAuMTA5MzEgLTMuODQ4NDYsMy44ODA1NSBjIC0yLjExNjY1LDIuMTM0MzEgLTMuODU2MDYsNC4wMjAyMyAtMy44NjUzNiw0LjE5MDkzIC0wLjAwOSwwLjE3MDcgMS4zNjE3NCwyLjA3NTcgMy4wNDY3Myw0LjIzMzMzIDEuNjg1LDIuMTU3NjMgMy41MjM5Niw0LjUxODI4IDQuMDg2NTksNS4yNDU4OCBsIDEuMDIyOTYsMS4zMjI5MiBoIC0xLjkxMzkyIC0xLjkxMzkzIGwgLTMuMzA2NTUsLTQuMjc3NDUgLTMuMzA2NTUsLTQuMjc3NDQgLTEuNTA0NjksMS43MTk4IGMgLTEuNDcyMTcsMS42ODI2NCAtMS41MDQ4NSwxLjc3NTEgLTEuNTExOTUsNC4yNzc0NSBsIC0wLjAwNywyLjU1NzY0IGggLTEuNTg3NSAtMS41ODc1IHogbSAyOS4yODA1NSwwIHYgLTkuNTI1IGggNi41MjYzOSA2LjUyNjM5IHYgMS40MTExMSAxLjQxMTExIGggLTQuOTM4ODkgLTQuOTM4ODkgdiAyLjY0NTgzIDIuNjQ1ODQgaCA0LjQzMTAyIDQuNDMxMDEgbCAtMC4xMDk0OCwxLjMyMjkxIC0wLjEwOTUsMS4zMjI5MiAtNC4zMjE1MiwwLjA5OTEgLTQuMzIxNTMsMC4wOTkxIHYgMi42MzQ5NyAyLjYzNDk4IGggNS4xMTUyOCA1LjExNTI3IHYgMS40MTExMSAxLjQxMTExIGggLTYuNzAyNzcgLTYuNzAyNzggeiBtIDI2LjgxMTExLC0wLjAzMTcgdiAtOS41NTY2NyBsIDUuMzc5ODYsMC4xMTk4NiBjIDQuOTE5MjIsMC4xMDk1OSA1LjQ5NDA3LDAuMTkwODYgNi43MTM3NSwwLjk0OTE2IDMuNTYzNDgsMi4yMTU0OCAzLjYwMjg5LDguNDk2NTggMC4wNjM5LDEwLjE4NDIxIC0wLjY3MTc3LDAuMzIwMzQgLTEuMjIxNCwwLjcxNzg4IC0xLjIyMTQsMC44ODM0MSAwLDAuMTY1NTQgMC45NTI1LDEuNzE3NTUgMi4xMTY2NywzLjQ0ODkxIDEuMTY0MTYsMS43MzEzNiAyLjExNjY2LDMuMjMzNCAyLjExNjY2LDMuMzM3ODYgMCwwLjEwNDQ1IC0wLjc2NjM3LDAuMTg5OTIgLTEuNzAzMDYsMC4xODk5MiBoIC0xLjcwMzA3IGwgLTIuMDg5MjksLTMuMzM4MTMgLTIuMDg5MywtMy4zMzgxMiAtMi4xNTY5MSwtMC4wMTMzIC0yLjE1NjkxLC0wLjAxMzMgLTAuMjI0MzQsMS42MzY3NCBjIC0wLjEyMzM4LDAuOTAwMjEgLTAuMjI0MzQsMi40MDgzMyAtMC4yMjQzNCwzLjM1MTM5IHYgMS43MTQ2NSBoIC0xLjQxMTExIC0xLjQxMTExIHogbSAxMC4zODU3MSwtMC43MjAyMyBjIDEuMzIwOTMsLTEuMDM5MDQgMS43MjI0LC0yLjI0NDUxIDEuMjM3MTYsLTMuNzE0NzggLTAuNTY1MDksLTEuNzEyMjUgLTEuODMxMDIsLTIuMjM2MTEgLTUuNDAzNjYsLTIuMjM2MTEgaCAtMi45ODgwNSBsIC0wLjIzMjI1LDIuMjA0ODYgYyAtMC4xODQ5NSwxLjc1NTg2IC0wLjEyMzkxLDMuNTg1ODQgMC4xNDcwOCw0LjQwOTcyIDAuMDE2LDAuMDQ4NSAxLjQzNjM1LDAuMDg4MiAzLjE1NjQzLDAuMDg4MiAyLjY1NzQ5LDAgMy4yNzEwNiwtMC4xMTI5OCA0LjA4MzI5LC0wLjc1MTg5IHogbSAxNi41MjA0NCw5Ljg1NzEyIGMgMC4zMzYyOCwtMC44MzIwNCA3LjIyNjA1LC0xNi42NjUwOSA3LjY4NDgxLC0xNy42NjAwOSAwLjM4MjQxLC0wLjgyOTQyIDAuNjU2NTYsLTAuOTY5MTQgMS44ODk5NywtMC45NjMyNCBsIDEuNDQyNjgsMC4wMDcgNC4wOTk3NCw5LjUxODEgNC4wOTk3Myw5LjUxODEgaCAtMS42NjUzOSAtMS42NjUzOSBsIC0wLjg0NDQ3LC0yLjEyNjA3IC0wLjg0NDQ3LC0yLjEyNjA2IC00LjcwODA2LDAuMDk3NiAtNC43MDgwNiwwLjA5NzYgLTAuODE3NzEsMS45NDAyOCBjIC0wLjgxMjkyLDEuOTI4OTIgLTAuODI3NDcsMS45NDA5MiAtMi40ODM5NCwyLjA0OTY4IC0xLjI2Mzg4LDAuMDgzIC0xLjYyMTEzLC0wLjAwMiAtMS40Nzk0NCwtMC4zNTI3OCB6IG0gMTEuNjcyNTcsLTkuNTQ2MiBjIC0wLjY5MjEyLC0xLjYwMDczIC0xLjQyMDIsLTMuMzU5MDEgLTEuNjE3OTUsLTMuOTA3MjkgLTAuMTk3NzQsLTAuNTQ4MjcgLTAuNDgyODMsLTAuODY1NzcgLTAuNjMzNTIsLTAuNzA1NTUgLTAuMjgwNTQsMC4yOTgyNyAtMy4xNjYxNCw2Ljk3Nzc3IC0zLjE2NjE0LDcuMzI4ODggMCwwLjEwNjkgMS41MDIxLDAuMTk0MzcgMy4zMzgwMSwwLjE5NDM3IGggMy4zMzgwMSB6IgogICAgICAgICBpZD0icGF0aDEwNDMiCiAgICAgICAgIHNvZGlwb2RpOm5vZGV0eXBlcz0iY2NjY3Nzc2NjY3Njc3NjY2NjY3NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY2NjY3Nzc3Nzc3NjY2NjY3NzY2NjY3Nzc2Nzc3Nzc3NjY2NjY2NjY2Njc3Nzc3Nzc3NzY3MiIC8+CiAgICAgIDxwYXRoCiAgICAgICAgIGQ9Im0gNDEuMTk4NCwyNzYuNTg3OTYgYyAtNS40OTgzOTMsLTAuOTY3OCAtMTAuMTg2NzU2LC00LjgwODk3IC0xMi4yMDE0MiwtOS45OTY2MSAtMC43MzE1NTEsLTEuODgzNjcgLTEuMzQ4Nzc0LC00Ljc5ODk4IC0xLjAzMzI0OCwtNC44ODAyNyAwLjA3MTUyLC0wLjAxODUgMC41OTYwMDIsLTAuMTgxMiAxLjE2NTUyNSwtMC4zNjE3MSAwLjg5MDQ5LC0wLjI4MjI1IDEuMTc4Nzk2LC0wLjMyMDY5IDIuMDU4ODE4LC0wLjI3NDUxIDAuOTgxNTEyLDAuMDUxNiAxLjA4NzY1NywwLjA4NjMgMi41OTgwNjIsMC44NTE5MyAxLjA2OTY4NCwwLjU0MjIyIDEuODYxMzA3LDAuODU4MDggMi40NjgyNCwwLjk4NDg2IDEuNTQwMDA4LDAuMzIxNjggMy4wOTM4NzYsMC4wMjY1IDQuNjUxMjcxLC0wLjg4MzU4IDEuMTIzNTkzLC0wLjY1NjU3IDEuNzM2MDE0LC0wLjg3MTYgMi42ODgzNTksLTAuOTQzODggMS4xNTMyNzQsLTAuMDg3NCAxLjg3MzMxMSwwLjEwNjE4IDMuNTAxNDgxLDAuOTQyMiAxLjYyNzgxOCwwLjgzNTc3IDIuNzMwNTM4LDEuMTExNzUgMy45Njg3NTksMC45OTMyNSAxLjA1NTg1MywtMC4xMDA5OSAxLjUxMTY1NywtMC4yNjIzOCAzLjI2MDQ0NywtMS4xNTM4NyAxLjM5OTEsLTAuNzEzMjYgMS40ODkwMDIsLTAuNzQxNTggMi41MDE3OTUsLTAuNzg3ODkgMC44OTI2NTEsLTAuMDQwOCAxLjE5MTU5NCwtMC4wMDIgMS45ODkwMjgsMC4yNjA3NyAwLjUxNjE3MiwwLjE2OTgxIDEuMDQzMTI1LDAuMzA4NzcgMS4xNzEwMTcsMC4zMDg3NyAwLjE5MDI0NiwwIDAuMjIwNTE3LDAuMDU5NiAwLjE2NjQ5NiwwLjMyNzYxIC0wLjAzNjMxLDAuMTgwMTcgLTAuMTUwMTY3LDAuODI3NjUgLTAuMjUzMDAzLDEuNDM4ODMgLTAuNTUyNjc5LDMuMjg0NjQgLTIuMDYzODAzLDYuMTk5NzIgLTQuNDYxNDY5LDguNjA2NTQgLTIuNDM2NTM2LDIuNDQ1ODMgLTUuMzk0OCwzLjk5OTMgLTguNjkxNjgsNC41NjQyNiAtMS4zODQ0NjMsMC4yMzcyNCAtNC4yMDk4MDYsMC4yMzg5MSAtNS41NDg0NzgsMC4wMDMgeiBtIDguMDUwNjQ1LC00LjA5MDQ0IGMgMC40NTE4NzQsLTAuNDUxODYgMC40NTE4NzQsLTAuODc2OTEgMCwtMS4zMjg3NiBsIC0wLjM0ODIzMywtMC4zNDgyMyBoIC00Ljg4NDQ3OSAtNC44ODQ0ODEgbCAtMC4zNjY1MzksMC4zMDg0MiBjIC0wLjI3Mzg1MywwLjIzMDQ0IC0wLjM2NjU0MSwwLjQwODUgLTAuMzY2NTQxLDAuNzA0MTggMCwwLjI5NTcxIDAuMDkyNjksMC40NzM3OSAwLjM2NjU0MSwwLjcwNDIxIGwgMC4zNjY1MzksMC4zMDg0NCBoIDQuODg0NDgxIDQuODg0NDc5IHogbSA1LjI0MzI0MywtNC4xNjIxNiBjIDAuMzI0NzQyLC0wLjQwMTA5IDAuMjk1NDIsLTEuMDMxOSAtMC4wNjQ3LC0xLjM5MjAxIGwgLTAuMjkyNDIyLC0wLjI5MjQyIEggNDQuMDEwMDg1IDMzLjg4NTAwMiBsIC0wLjMyODMwMiwwLjI4MjQgYyAtMC40NjExMTksMC4zOTY2MiAtMC40NjAwNzksMS4wNjQ3IDAuMDAyNCwxLjQ2MjQgbCAwLjMzMDU3OCwwLjI4NDM0IDEwLjE4NzUxMSwtMC4wMzE3IDEwLjE4NzUwOSwtMC4wMzE3IHogbSAtMTcuODIwOTQ0LC03LjIxMzg4IGMgLTAuMDY1NTMsLTAuMDI1NCAtMC40MDc2OTEsLTAuMTM1MzQgLTAuNzYwMzc1LC0wLjI0NDI2IC0wLjM1MjY4LC0wLjEwODk0IC0xLjA0OTYwOSwtMC40MzUxNiAtMS41NDg3MywtMC43MjQ5OSAtMS43NDUzNjIsLTEuMDEzNSAtMy43MjI3MDQsLTEuMjUwMyAtNS41ODM0NjEsLTAuNjY4NjMgbCAtMC43NDQ1ODIsMC4yMzI3NCB2IC0wLjQ0MzA1IGMgMCwtMC42OTY5MSAwLjM1NDQ0LC0yLjU5Njk2IDAuNjc5Mzg2LC0zLjY0MjAxIDAuMTYyOTksLTAuNTI0MTggMC41NDE2ODEsLTEuNDc4MDggMC44NDE1NDEsLTIuMTE5OCBsIDAuNTQ1MTk3LC0xLjE2Njc2IC0wLjI2NjY1NiwtMC40NDE1MSBjIC0wLjgxOTE1MSwtMS4zNTYzMyAtMS40NDIwNywtMy4yMjUxOSAtMS40NDIwNywtNC4zMjY0OCAwLC0xLjUwOTQzIDAuNTQ3MjM3LC0yLjc4ODczIDEuNjIzNjM4LC0zLjc5NTYyIDEuNDg2MDczLC0xLjM5MDEzIDMuNTkzMjIsLTEuNzA0NTIgNS40ODAwMTcsLTAuODE3NjMgMC4yOTE1MTQsMC4xMzcwMiAwLjU2ODE3MiwwLjIxMDcxIDAuNjE0Nzk0LDAuMTYzNzMgMC4wNDY2MiwtMC4wNDY5IDAuMDc5MjgsLTAuNDk2MSAwLjA3MjU3LC0wLjk5ODEgLTAuMDIwNTcsLTEuNTM3ODkgLTAuNzUzMDU4LC0yLjkyMjM5IC0xLjgzOTI4NywtMy40NzY1NCAtMC44NjA1MTMsLTAuNDM5IC0xLjEwNDg1OSwtMS4yODExOCAtMC41MzY1ODQsLTEuODQ5NDQgbCAwLjI5MjQxNCwtMC4yOTI0MiBoIDkuODc3Mzk3IGMgOS44MTIzMDMsMCA5Ljg3OTQ2NCwwLjAwMiAxMC4xOTEyOTMsMC4yNDY5MSAwLjI1MTIwNSwwLjE5NzYgMC4zMTM4OTgsMC4zNDgxIDAuMzEzODk4LDAuNzUzNiAwLDAuNTUwMTggLTAuMjE5NDk0LDAuODM3MDIgLTAuOTA1NTk3LDEuMTgzNCAtMC45NjA4OTUsMC40ODUxMyAtMS43MzMwOTcsMS44OTY0MiAtMS44MDIyMjcsMy4yOTM3OCAtMC4wNjA0MywxLjIyMTQxIC0wLjAxMDQzLDEuMjY4MjQgMC45MjgzMDQsMC44Njg3MyAwLjY3MTIyNiwtMC4yODU2NyAwLjkyMjkzMiwtMC4zMjY2MiAyLjAxNzc4OCwtMC4zMjgzMyAxLjE2ODkwOSwtMC4wMDIgMS4zMDIyMjUsMC4wMjMyIDIuMDM0MDM1LDAuMzgxMjggMS43MTMwMjIsMC44MzgyOCAyLjg1MDQyLDIuNzA0NTYgMi44NTA0Miw0LjY3NzA1IDAsMS4wMTA3NCAtMC45MTYzNTgsMy41OTY0MiAtMS41ODMxMjQsNC40NjcwNiAtMC4xNjQ2MywwLjIxNDk3IC0wLjE0NjUyOCwwLjMwMTcxIDAuMjExMzA2LDEuMDEyNjIgMC44Mjc5NzksMS42NDQ5NiAxLjUzMTE4OSw0LjA0ODg0IDEuNjgwMTk2LDUuNzQzNjUgbCAwLjA4MDUsMC45MTU2NyAtMC43NjAzMjQsLTAuMjM3NjMgYyAtMS44Njc2NDgsLTAuNTgzNzcgLTMuODEzODEsLTAuMzU2MzggLTUuNTY5OTEzLDAuNjUwNzMgLTIuMTE0NzEsMS4yMTI3NyAtMy43MTMwNjcsMS4zMTMwNiAtNS41NzczOSwwLjM0OTk3IC0xLjczNzI3OCwtMC44OTc0NiAtMi4wMTUxMTIsLTEuMDE0MDYgLTIuODI5Mzg0LC0xLjE4NzM1IC0xLjUxOTIxNCwtMC4zMjMzNCAtMy4yOTE2OTUsLTAuMDA5IC00LjY1MDc3NSwwLjgyMjIyIC0wLjkyNTY1NSwwLjU2Njc5IC0yLjA1NDU2OCwwLjk0NDE2IC0yLjk4MTE1NCwwLjk5NjUzIC0wLjQ1ODY2MywwLjAyNTkgLTAuODg3NTQyLDAuMDI2NCAtMC45NTMwNjIsOWUtNCB6IG0gLTQuNzcyMzA1LC0xMS4zMjkwNyBjIDAuMTc1NTE5LC0wLjIzMDEgMC43NzY1ODgsLTAuOTA4MzggMS4zMzU3MDUsLTEuNTA3MjYgMS4xMzY2NCwtMS4yMTc0NyAyLjEyOTAxNSwtMi42MjQxNiAyLjAzMTE2MSwtMi44NzkxNiAtMC4wMzU0LC0wLjA5MjMgLTAuMzQ3Mjk4LC0wLjMwODczIC0wLjY5MzEwMywtMC40ODEwNCAtMC44NTU3MTIsLTAuNDI2NDEgLTEuNjM1MjA1LC0wLjQyMTk0IC0yLjQ5NjUwNCwwLjAxNDQgLTEuMTk1NzA5LDAuNjA1NjIgLTEuNzEyOTI3LDEuNzk1MTkgLTEuNDI2OTEyLDMuMjgxNzkgMC4xNTU1MzUsMC44MDg0NCAwLjY0MTc0NSwxLjk4OTc3IDAuODE4OTM2LDEuOTg5NzcgMC4wNjEzOCwwIDAuMjU1MTk0LC0wLjE4ODI4IDAuNDMwNzE3LC0wLjQxODQgeiBtIDI1LjA1OTU3OCwtMC4zMzk0NyBjIDAuODYxMTMsLTIuMTQ3NTQgMC40NjY0NjgsLTMuNzc4OTUgLTEuMDk5NTIyLC00LjU0NTEyIC0wLjU0MTYyNCwtMC4yNjQ5NyAtMC43ODI0NCwtMC4zMTU3MyAtMS4yOTU4MTksLTAuMjczMTUgLTAuNjc2MDE0LDAuMDU2MSAtMS43Mjc5NjIsMC40OTcyNyAtMS44MzIwMDksMC43Njg0MyAtMC4xMDg4MzYsMC4yODM1OSAwLjY5MjAxNSwxLjQ1MjY3IDEuODM3NDQxLDIuNjgyMyAwLjYwNDc4MiwwLjY0OTIyIDEuMjcxNDEyLDEuMzk0MiAxLjQ4MTQwMSwxLjY1NTUgMC4yMDk5ODgsMC4yNjEzMSAwLjQzODkwMiwwLjQ1NjUzIDAuNTA4Njk1LDAuNDMzODggMC4wNjk3OSwtMC4wMjI3IDAuMjQ5NzA4LC0wLjM0NzUgMC4zOTk4MTMsLTAuNzIxODQgeiIKICAgICAgICAgc3R5bGU9ImZpbGw6IzEyNWM4YTtmaWxsLW9wYWNpdHk6MTtzdHJva2Utd2lkdGg6MC4wMzE1MjA0IgogICAgICAgICBpZD0icGF0aDExODciIC8+CiAgICA8L2c+CiAgPC9nPgo8L3N2Zz4K" style="height:38px;filter:brightness(0) invert(1)" alt="KERA"><div><div class="header-sub" style="margin-top:2px">Conservation-Restauration - Dessalement céramique archéologique</div></div></div>' +
     '<div class="header-ref"><div>' + lot.ref + '</div><div class="header-ref-sub">' + lot.int + '</div></div>' +
     '</div>';
 
   H += '<h2>Identification</h2>' +
     '<div class="info-grid">' +
-    '<div class="info-cell"><span class="info-label">Référence</span><span class="info-val">' + (lot.ref||'—') + '</span></div>' +
-    '<div class="info-cell"><span class="info-label">Désignation</span><span class="info-val">' + (lot.int||'—') + '</span></div>' +
-    '<div class="info-cell"><span class="info-label">Opération / Collection</span><span class="info-val">' + (lot.operation||'—') + '</span></div>' +
-    '<div class="info-cell"><span class="info-label">Responsable</span><span class="info-val">' + (lot.responsable||'—') + '</span></div>' +
-    '<div class="info-cell"><span class="info-label">Début traitement</span><span class="info-val">' + (lot.dateDebut||'—') + '</span></div>' +
-    '<div class="info-cell"><span class="info-label">Poids sec / Volume bain</span><span class="info-val">' + (lot.poids||'—') + ' g / ' + (lot.volume||'—') + ' L</span></div>' +
+    '<div class="info-cell"><span class="info-label">Référence</span><span class="info-val">' + (lot.ref||'-') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Désignation</span><span class="info-val">' + (lot.int||'-') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Opération / Collection</span><span class="info-val">' + (lot.operation||'-') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Responsable</span><span class="info-val">' + (lot.responsable||'-') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Début traitement</span><span class="info-val">' + (lot.dateDebut||'-') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Poids sec / Volume bain</span><span class="info-val">' + (lot.poids||'-') + ' g / ' + (lot.volume||'-') + ' L</span></div>' +
     '<div class="info-cell"><span class="info-label">Consolidation</span><span class="info-val">' + (lot.consol||'non') + '</span></div>' +
-    '<div class="info-cell"><span class="info-label">Fragilité</span><span class="info-val">' + (lot.fragilite||'—') + '</span></div>' +
+    '<div class="info-cell"><span class="info-label">Fragilité</span><span class="info-val">' + (lot.fragilite||'-') + '</span></div>' +
     '</div>';
 
   H += '<h2>Synthèse du traitement</h2>' +
     '<div class="synthese-grid">' +
     '<div class="metric"><div class="metric-val">' + nb + '</div><div class="metric-lbl">Bains</div></div>' +
-    '<div class="metric ' + (lastK != null && lastK <= A.cfg.kadj ? 'ok' : '') + '"><div class="metric-val">' + (lastK != null ? lastK.toFixed(2) : '—') + '</div><div class="metric-lbl">K_adj final</div></div>' +
+    '<div class="metric ' + (lastK != null && lastK <= A.cfg.kadj ? 'ok' : '') + '"><div class="metric-val">' + (lastK != null ? lastK.toFixed(2) : '-') + '</div><div class="metric-lbl">K_adj final</div></div>' +
     '<div class="metric ' + (nbNeg >= A.cfg.cons ? 'ok' : '') + '"><div class="metric-val">' + nbNeg + '</div><div class="metric-lbl">Bains négatifs consécutifs</div></div>' +
     '</div>' +
     '<table class="synthese-table"><tbody>' +
     '<tr><td>Durée totale</td><td><b>' + duree + '</b></td><td></td></tr>' +
-    '<tr><td>K_adj initial</td><td><b>' + (firstK != null ? firstK.toFixed(2) : '—') + '</b></td><td>Premier bain</td></tr>' +
-    '<tr><td>K_adj final</td><td><b>' + (lastK != null ? lastK.toFixed(2) : '—') + '</b></td><td>' + (lastK != null && lastK <= A.cfg.kadj ? 'Sous seuil (' + A.cfg.kadj + ')' : 'Seuil : ' + A.cfg.kadj) + '</td></tr>' +
+    '<tr><td>K_adj initial</td><td><b>' + (firstK != null ? firstK.toFixed(2) : '-') + '</b></td><td>Premier bain</td></tr>' +
+    '<tr><td>K_adj final</td><td><b>' + (lastK != null ? lastK.toFixed(2) : '-') + '</b></td><td>' + (lastK != null && lastK <= A.cfg.kadj ? 'Sous seuil (' + A.cfg.kadj + ')' : 'Seuil : ' + A.cfg.kadj) + '</td></tr>' +
     '<tr><td>Réduction K_adj</td><td><b>' + reduction + ' %</b></td><td>vs. mesure initiale</td></tr>' +
     '<tr><td>Statut fin traitement</td><td><b>' + statutFinal + '</b></td><td></td></tr>' +
     '</tbody></table>';
@@ -1611,10 +1611,10 @@ function expPDF() {
   var statusClass = lastK != null && lastK <= A.cfg.kadj && nbNeg >= A.cfg.cons ? 'status-ok' :
                     lastK != null && lastK <= A.cfg.kadj ? 'status-warn' : 'status-info';
   var statusMsg = lastK != null && lastK <= A.cfg.kadj && nbNeg >= A.cfg.cons ?
-    '✅ Critères d\'arrêt atteints — K_adj ≤ ' + A.cfg.kadj + ' et ' + nbNeg + ' bains anioniques négatifs consécutifs.' :
+    '✅ Critères d\'arrêt atteints - K_adj ≤ ' + A.cfg.kadj + ' et ' + nbNeg + ' bains anioniques négatifs consécutifs.' :
     lastK != null && lastK <= A.cfg.kadj ?
-    '⚠ K_adj plateau atteint — confirmer arrêt sur anions (' + nbNeg + '/' + A.cfg.cons + ' bains négatifs consécutifs requis).' :
-    'ℹ Traitement en cours — K_adj = ' + (lastK != null ? lastK.toFixed(2) : '—') + '. Poursuivre le dessalement.';
+    '⚠ K_adj plateau atteint - confirmer arrêt sur anions (' + nbNeg + '/' + A.cfg.cons + ' bains négatifs consécutifs requis).' :
+    'ℹ Traitement en cours - K_adj = ' + (lastK != null ? lastK.toFixed(2) : '-') + '. Poursuivre le dessalement.';
   H += '<div class="status-box ' + statusClass + '">' + statusMsg + '</div>';
 
   if (svgKadj) {
@@ -1630,7 +1630,7 @@ function expPDF() {
       '</div></div>';
   }
 
-  H += '<h2>Détail des mesures — bains de dessalement</h2>' +
+  H += '<h2>Détail des mesures - bains de dessalement</h2>' +
     '<table><thead><tr>' +
     '<th>Date</th><th>J+</th><th>Bain</th><th>T °C</th><th>Cond. µS/cm</th><th>K_adj</th><th>Cl⁻</th><th>NO₃⁻</th><th>SO₄²⁻</th><th>Observations</th>' +
     '</tr></thead><tbody>' + lignes + '</tbody></table>';
@@ -1638,8 +1638,8 @@ function expPDF() {
   if (sechs.length) {
     H += lignesSech;
     if (svgSech) {
-      H += '<h2>Évolution de la conductivité — rinçages</h2>' +
-        '<div class="chart-box"><div class="chart-title">Conductivité résiduelle lors des contrôles de séchage (µS/cm) — cible : &lt; 50 µS/cm</div>' +
+      H += '<h2>Évolution de la conductivité - rinçages</h2>' +
+        '<div class="chart-box"><div class="chart-title">Conductivité résiduelle lors des contrôles de séchage (µS/cm) - cible : &lt; 50 µS/cm</div>' +
         svgSech + '</div>';
     }
   }
@@ -1648,14 +1648,14 @@ function expPDF() {
     '<b>Formules :</b> K_adj = (Conductivité mesurée − C₀ cycle) × V_bain(L) / Poids sec(g). C₀ = conductivité de l\'eau neuve en début de cycle.<br>' +
     '<b>Critères d\'arrêt KERA :</b> K_adj ≤ ' + A.cfg.kadj + ' (plateau) ET Cl⁻ / NO₃⁻ / SO₄²⁻ négatifs sur ' + A.cfg.cons + ' bains consécutifs.<br>' +
     '<b>Tests anioniques :</b> bandelettes semi-quantitatives (Quantofix / Merck / Hach) ou chromatographie ionique. ++ = fort, + = présent, tr = traces, − = négatif.<br>' +
-    '<b>Séchage :</b> Critères de fin — conductivité résiduelle &lt; 50 µS/cm, absence de cristallisations à la surface.<br>' +
+    '<b>Séchage :</b> Critères de fin - conductivité résiduelle &lt; 50 µS/cm, absence de cristallisations à la surface.<br>' +
     '<b>Références :</b> Unruh 2001 ; Liégey 2012 ; Montana 2018.<br>' +
     '</div>';
 
   H += '<div class="footer">' +
     '<span>Rapport généré le ' + dateStr + '</span>' +
-    '<span>KERA — Conservation-Restauration des céramiques archéologiques</span>' +
-    '<span>' + lot.ref + ' — ' + lot.int + '</span>' +
+    '<span>KERA - Conservation-Restauration des céramiques archéologiques</span>' +
+    '<span>' + lot.ref + ' - ' + lot.int + '</span>' +
     '</div>';
 
   H += '</div><div style="text-align:center;padding:10px"><button onclick="window.print()">🖨 Imprimer / Enregistrer en PDF</button></div>';
@@ -1696,7 +1696,7 @@ function logout() { A.user = null; localStorage.removeItem('kera_user'); uAuth()
 function uAuth() {
   var u = A.user;
   gid('auth-name').textContent = u ? (u.name || u.email) : 'Non connecté';
-  gid('auth-email').textContent = u ? u.email + ' — données dans Notion' : 'Configurez le token Notion dans ⚙ Config';
+  gid('auth-email').textContent = u ? u.email + ' - données dans Notion' : 'Configurez le token Notion dans ⚙ Config';
   var bl = gid('btn-lo'); if (bl) bl.style.display = u ? 'inline-flex' : 'none';
   var bl2 = gid('btn-lo2'); if (bl2) bl2.style.display = u ? 'inline-flex' : 'none';
 }
@@ -1707,10 +1707,10 @@ function renderCfgNotion() {
   var st = gid('cfg-a');
   if (st) {
     if (A.notionToken && A.dbObjetsId) {
-      st.textContent = '✅ Connecté à Notion — bases trouvées.';
+      st.textContent = '✅ Connecté à Notion - bases trouvées.';
       st.className = 'alert a-ok';
     } else if (A.notionToken) {
-      st.textContent = '⏳ Token configuré — connexion en cours…';
+      st.textContent = '⏳ Token configuré - connexion en cours…';
       st.className = 'alert a-warn';
     } else {
       st.innerHTML = '⚠ Token Notion non configuré. <a href="https://www.notion.so/my-integrations" target="_blank" style="color:#0A3D5C">Créer une intégration →</a>';
@@ -1730,7 +1730,7 @@ function sauvegarderTokenNotion() {
   }).then(function() {
     ref();
     renderCfgNotion();
-    setStatus('✅ Connecté — ' + A.lots.length + ' objet(s) chargé(s)', 'ok');
+    setStatus('✅ Connecté - ' + A.lots.length + ' objet(s) chargé(s)', 'ok');
   }).catch(function(e) {
     setStatus('Erreur : ' + e.message, 'error');
   });
@@ -1753,7 +1753,7 @@ function addCal() {
     next = new Date(Date.now() + freq * 864e5),
     pad = function(n) { return n < 10 ? '0' + n : n; },
     ymd = function(d) { return d.getFullYear() + '' + pad(d.getMonth() + 1) + '' + pad(d.getDate()); };
-  window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent('KERA — Bain' + (lot ? ' : ' + lot.ref : '')) + '&dates=' + ymd(next) + '/' + ymd(new Date(next.getTime() + 864e5)) + '&details=' + encodeURIComponent('Mesure conductivité + tests bandelettes Cl⁻ NO₃⁻ SO₄²⁻' + (lot ? ' — ' + lot.int : '')), '_blank');
+  window.open('https://calendar.google.com/calendar/render?action=TEMPLATE&text=' + encodeURIComponent('KERA - Bain' + (lot ? ' : ' + lot.ref : '')) + '&dates=' + ymd(next) + '/' + ymd(new Date(next.getTime() + 864e5)) + '&details=' + encodeURIComponent('Mesure conductivité + tests bandelettes Cl⁻ NO₃⁻ SO₄²⁻' + (lot ? ' - ' + lot.int : '')), '_blank');
 }
 
 function swTip(id) { var e = gid(id); if (e) e.classList.toggle('show'); setTimeout(function() { if (e) e.classList.remove('show'); }, 6000); }
@@ -1776,7 +1776,7 @@ function suggererVolume() {
 
   window._volSuggere = volReco;
 
-  txt.innerHTML = '📐 Pour <b>' + poids + ' g</b> : volume minimum <b>' + volMin + ' L</b> (ratio 10:1) — recommandé <b>' + volReco + ' L</b> (ratio 15:1, Unruh 2001)';
+  txt.innerHTML = '📐 Pour <b>' + poids + ' g</b> : volume minimum <b>' + volMin + ' L</b> (ratio 10:1) - recommandé <b>' + volReco + ' L</b> (ratio 15:1, Unruh 2001)';
   box.style.display = 'block';
 }
 
@@ -1798,13 +1798,13 @@ function updKadjInfo() {
 
 function calcC() {
   var cond = fv('c-cond'), c0 = fv('c-c0') || 0, vol = fv('c-vol'), poids = fv('c-poids');
-  if (isNaN(cond) || !vol || !poids) { gid('c-val').textContent = '—'; gid('c-int').innerHTML = 'K<sub>adj</sub> = (cond − C₀) × V / poids'; gid('c-al').innerHTML = ''; return; }
+  if (isNaN(cond) || !vol || !poids) { gid('c-val').textContent = '-'; gid('c-int').innerHTML = 'K<sub>adj</sub> = (cond − C₀) × V / poids'; gid('c-al').innerHTML = ''; return; }
   var k = Math.max(0, (cond - c0) * vol / poids);
   gid('c-val').textContent = 'K\u2090\u2097\u2097 = ' + k.toFixed(3);
   gid('c-int').innerHTML = '(' + cond + ' − ' + c0 + ') × ' + vol + ' / ' + poids;
   var cl = 'a-info', msg = '';
-  if (k <= A.cfg.kadj) { cl = 'a-ok'; msg = 'Plateau K<sub>adj</sub> ≤ ' + A.cfg.kadj + ' — vérifier anions pour confirmer arrêt'; }
-  else if (k <= A.cfg.kadj * 3) { cl = 'a-warn'; msg = 'Décroissance — poursuivre'; }
+  if (k <= A.cfg.kadj) { cl = 'a-ok'; msg = 'Plateau K<sub>adj</sub> ≤ ' + A.cfg.kadj + ' - vérifier anions pour confirmer arrêt'; }
+  else if (k <= A.cfg.kadj * 3) { cl = 'a-warn'; msg = 'Décroissance - poursuivre'; }
   else { cl = 'a-info'; msg = 'Dessalement actif'; }
   gid('c-al').innerHTML = '<div class="alert ' + cl + '" style="margin:6px 0 0">' + msg + '</div>';
 }
@@ -1976,14 +1976,14 @@ function carteEtiquetteLot(lid, cb) {
     var x = function(v) { return String(v == null ? '' : v).replace(/[<>&]/g, function(c) { return {'<': '&lt;', '>': '&gt;', '&': '&amp;'}[c]; }); };
     cb({cle: 'kera:' + lot.id, app: 'KERA', couleur: '#125c8a', filet: '#d8e4ee',
       tete: '<div class="kt">KERA</div>', qr: src, nm: lot.int, rf: lot.ref,
-      dt: x(lot.dateDebut || '—') + ' · ' + x(lot.poids || '—') + ' g · ' + x(lot.volume || '—') + ' L'}, lot);
+      dt: x(lot.dateDebut || '-') + ' · ' + x(lot.poids || '-') + ' g · ' + x(lot.volume || '-') + ' L'}, lot);
   }, 300);
 }
 function imprimerEtiquette(lid) {
   if (!(lid ? gL(lid) : A.lots[A.lots.length - 1])) return;
   var w = window.open('', '_blank', 'width=900,height=800'); if (!w) { alert('Fenêtre bloquée : autoriser les fenêtres surgissantes.'); return; }
   w.document.write('<p style="font-family:sans-serif;padding:20px">Préparation de l\'étiquette…</p>');
-  carteEtiquetteLot(lid, function(c) { planche16({titre: 'KERA — Étiquette', couleur: '#125c8a', filet: '#d8e4ee', cartes: [c]}).ouvrir(w); });
+  carteEtiquetteLot(lid, function(c) { planche16({titre: 'KERA - Étiquette', couleur: '#125c8a', filet: '#d8e4ee', cartes: [c]}).ouvrir(w); });
 }
 function planchelot(lid) { carteEtiquetteLot(lid, function(c) { plAjouter([c]); }); }
 
