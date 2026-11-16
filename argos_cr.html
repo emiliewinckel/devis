@@ -101,6 +101,29 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .row .d b{display:block;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .row .d span{font-size:11px;color:var(--txt2)}
 .dots{display:flex;gap:3px;margin-top:5px}
+.biglogo{width:min(220px,60%)!important}
+.lk2{margin-top:-4px}
+.dq{display:grid;grid-template-columns:1fr 1fr auto;gap:8px}.dq .big{min-height:48px}.dq-o{padding-inline:16px;white-space:nowrap}
+.outils-g{display:grid;grid-template-columns:1fr 1fr;gap:8px}.outils-g .lk{justify-content:flex-start;padding:12px}
+.dtabs{display:flex;gap:4px;border-bottom:1px solid var(--border);margin-top:4px}
+.dtabs button{flex:1;border:0;background:none;padding:10px 4px;font:inherit;font-weight:600;font-size:13px;color:var(--txt2);border-bottom:3px solid transparent;margin-bottom:-1px;cursor:pointer}
+.dtabs button em{font-style:normal;font-size:11px;background:var(--bg);border-radius:8px;padding:1px 6px;margin-left:5px;color:var(--txt2)}
+.dtabs button[aria-selected="true"]{color:var(--navy);border-bottom-color:var(--navy)}.dtabs button[aria-selected="true"] em{background:var(--navy-l);color:var(--navy)}
+.av-h{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.av-l{display:flex;flex-direction:column;gap:2px;margin-top:8px}
+.av-r{display:grid;grid-template-columns:minmax(92px,30%) minmax(40px,1fr) 44px 76px;gap:8px;align-items:center;border:0;background:none;padding:5px 6px;border-radius:8px;font:inherit;font-size:12px;text-align:left;cursor:pointer;color:var(--txt)}
+.av-r:hover{background:var(--bg)}.av-r.on{background:var(--sky-l)}
+.av-n{font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.av-b{height:6px;border-radius:3px;background:var(--border);overflow:hidden}.av-b i{display:block;height:100%;background:var(--green);border-radius:3px}
+.av-c{font-variant-numeric:tabular-nums;color:var(--txt2);text-align:right}
+.av-x{font-size:11px;font-weight:700;color:var(--navy);white-space:nowrap}
+.av-fin{margin-top:6px;border:1px solid var(--green);background:var(--green-l);color:var(--green);border-radius:8px;padding:6px 10px;font:inherit;font-size:12px;font-weight:600;cursor:pointer}.av-fin.on{box-shadow:0 0 0 2px var(--green)}
+.otools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}.osearch{flex:1 1 200px;min-width:0;margin:0}.osearch input{min-width:0}
+#app.wd .row .d>span:not(.dots){display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}#app.wd .row{padding:10px 14px}
+.otools .chip{white-space:nowrap}
+.dc-n{font-size:12px;font-weight:600;color:var(--navy)}
+.auj{display:flex;flex-direction:column;gap:10px}.auj .bains{margin:0}
+.auj-t{display:flex;flex-direction:column;gap:6px;font-size:13px}
 #app.wide{max-width:1100px}
 .objg{display:flex;flex-direction:column;gap:14px}.objc{display:flex;flex-direction:column;gap:14px;min-width:0}
 @media(min-width:900px){.objg{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:16px;align-items:start}.objg>.objc:first-child{position:sticky;top:76px}}
@@ -750,6 +773,8 @@ const Notion={
   async objets(did){return (await queryAll(DB.objets,{filter:{property:'Dossier',relation:{contains:did}},
     sorts:[{property:'ID objet',direction:'ascending'},{timestamp:'created_time',direction:'ascending'}]})).map(mapObjet)},
   async objet(id){return mapObjet(await nfetch('/pages/'+id))},
+  async objetsDe(ids){const out=[];for(let i=0;i<ids.length;i+=50){const part=ids.slice(i,i+50);
+      out.push(...(await queryAll(DB.objets,{filter:part.length===1?{property:'Dossier',relation:{contains:part[0]}}:{or:part.map(id=>({property:'Dossier',relation:{contains:id}}))}})).map(mapObjet))}return out},
   async journal(oid){const j=await nfetch('/databases/'+DB.interv+'/query','POST',{page_size:50,
     filter:{property:'Objet',relation:{contains:oid}},sorts:[{timestamp:'created_time',direction:'descending'}]});return (j.results||[]).map(mapIv)},
   async add(o,k,statut,proto,note){const P={
@@ -868,6 +893,7 @@ const Demo={
   async dossier(id){return (await this.dossiers()).find(d=>d.id===id)},
   async objets(did){return JSON.parse(JSON.stringify(DEMO.objets.filter(o=>o.dossier===did)))},
   async objet(id){return JSON.parse(JSON.stringify(DEMO.objets.find(o=>o.id===id)))},
+  async objetsDe(ids){return JSON.parse(JSON.stringify(DEMO.objets.filter(o=>ids.includes(o.dossier))))},
   async journal(oid){return DEMO.journal[oid]||[]},
   async add(o,k,statut,proto,note){const id='demo-i'+Date.now()+Math.random();(DEMO.journal[o.id]=DEMO.journal[o.id]||[]).unshift({id,etape:k?sn(k):'',statut,date:iso(),op:op(),proto,note});
     this._sync(o);dsave();return id},
@@ -936,6 +962,7 @@ function dcard(d){return `<button class="dcard ${d.etat==='à faire'?'todo':''}"
     <span class="dc-m">${d.ro?'RO '+esc(d.ro)+' · ':''}${d.nObj?d.nObj+' fiche'+(d.nObj>1?'s':'')+' objet':'pas encore de fiches objets'}${d.etat==='à faire'&&d.arrivee?' · arrivé le '+fr(d.arrivee):''}</span>
     ${d.nObj&&d.av?`<span class="bar"><i style="width:${Math.round(d.av*100)}%"></i></span>
     <span class="dc-m"><b>${Math.round(d.av*100)} %</b> des étapes · ${d.fin} / ${d.nObj} terminés</span>`:''}
+    ${S.dEt&&S.dEt[d.id]?`<span class="dc-n">${S.dEt[d.id]}</span>`:''}
     ${d.types.length?`<span class="dc-tags">${d.types.slice(0,4).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</span>`:''}
   </button>`}
 // Bandeau des bains : une ligne, la liste s'ouvre au toucher ; rien quand il n'y a rien à faire
@@ -972,8 +999,7 @@ function home(){
   <div class="biglogo-w">${LOGO_PAYSAGE}</div>
   <div class="hello"><div><div class="label">Labo CR · ${esc(op())}</div><h1>Dossiers</h1></div>
     <div class="tally"><span><b>${nEnc}</b>en cours</span><span class="t2"><b>${nTodo}</b>à faire</span></div></div>
-  ${bainsV()}
-  ${prodAlerteV()}
+  ${aujV()}
   ${planningV()}
   <button class="big primary" data-a="scan">${ICON.scan}Scanner un objet</button>
   <label class="search">${ICON.search}<input id="q" type="search" placeholder="N° labo, commune, RO…" value="${esc(view.q)}" autocomplete="off"></label>
@@ -981,7 +1007,7 @@ function home(){
   <div class="dlist">${enc.length?enc.map(dcardT).join(''):`<p class="empty card">${q?'Aucun dossier en cours ne correspond.':'Aucun dossier « en cours » dans Notion.'}</p>`}</div>
   <div class="sec"><h2>À faire</h2><span class="count">${nTodo}</span></div>
   <div class="dlist">${todo.length?todo.map(dcardT).join(''):`<p class="empty card">${q?'Aucun dossier à faire ne correspond.':'Aucun dossier « à faire » dans Notion.'}</p>`}</div>
-  <p class="foot"><button class="link" data-a="produits">Produits du labo</button> · <button class="link" data-a="cfg">Paramètres</button>${S.mode==='demo'?' · <button class="link" data-a="reset">Remettre la démo à zéro</button>':''}</p>`;
+  <p class="foot"><button class="link" data-a="cfg">Paramètres</button>${S.mode==='demo'?' · <button class="link" data-a="reset">Remettre la démo à zéro</button>':''}</p>`;
 }
 
 function links(d){
@@ -1023,13 +1049,18 @@ const tAv=p=>p.fiches?(p.n?p.ok+'/'+p.n+' fiches':p.ok+' fiche'+(p.ok>1?'s':''))
 function tLigne(t){const p=tProg(t);return `<button class="tl${tRetard(t)?' late':''}${p.fiches?' fic':''}" data-tache="${t.id}"><span class="tl-e">${esc(t.etape)}</span>
   <span class="tl-m">${esc(t.personne||'non attribuée')} · ${tAv(p)}${t.ech?' · '+(tRetard(t)?'en retard, ':'avant le ')+fr(t.ech):''}</span></button>`}
 // Frise par personne : une ligne par tâche, groupées par personne, sur 6 semaines
+// Bloc « Aujourd'hui » : bains KORE/KERA + mes tâches (en retard, en cours, à venir dans 7 jours)
+function aujV(){const t=iso(),lim=addJ(t,7),me=op();
+  const M=(S.taches||[]).filter(x=>x.personne&&x.personne===me&&(!x.debut||x.debut<=lim)).sort((a,b)=>(a.ech||'9').localeCompare(b.ech||'9'));
+  return `<section class="card auj"><div class="label">Aujourd’hui</div>${bainsV()}
+    <div class="auj-t"><b>Mes tâches</b>${S.taches===null?'<span class="hint" style="margin:0">Chargement…</span>':M.length?`<div class="tlist">${M.map(tLigne).join('')}</div>`:`<span class="hint" style="margin:0">${me&&me!=='—'?'Rien d’attribué à '+esc(me)+' cette semaine.':'Choisissez votre nom (Opérateur) pour voir vos tâches.'}</span>`}</div></section>`}
 function planningV(){
   if(S.taches===null)return '';
   const T=S.taches;if(!T.length&&!S.tErr)return `<div class="plan card"><div class="plan-h"><b>Planning</b><span class="hint">Aucune tâche en cours. On en crée depuis la page d’un dossier.</span></div></div>`;
   if(S.tErr&&!T.length)return `<div class="plan card"><div class="plan-h"><b>Planning</b><span class="hint">Tâches inaccessibles : ${esc(S.tErr)}</span></div></div>`;
   const NS=6,l0=lundi(iso()),sems=[...Array(NS)].map((_,i)=>addJ(l0,7*i)),idx=dt=>dt?Math.floor((new Date(lundi(dt))-new Date(l0))/6048e5):null;
   const pers=[...new Set(T.map(t=>t.personne||''))].sort((a,b)=>(a===op()?-1:b===op()?1:0)||(!a)-(!b)||a.localeCompare(b));
-  const ouvert=view.plan!==false;
+  const ouvert=!!view.plan;
   let h=`<div class="plan card"><button class="plan-h" data-a="plan" aria-expanded="${ouvert}"><b>Planning</b><span class="hint">${T.length} tâche${T.length>1?'s':''} en cours</span><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg></button>`;
   if(!ouvert)return h+'</div>';
   h+=`<div class="frise" style="grid-template-columns:minmax(70px,22%) repeat(${NS},1fr)"><span></span>${sems.map((s0,i)=>`<span class="fs${i===0?' now':''}">${i===0?'cette sem.':s0.slice(8,10)+'/'+s0.slice(5,7)}</span>`).join('')}`;
@@ -1152,14 +1183,38 @@ async function supprimerSelection(){closeSheet();const d=S.d,L=S.objs.filter(o=>
       S.objs=S.objs.filter(x=>x.id!==o.id);view.dsel.delete(o.id);ok++;if(S.mode!=='demo')await sleep(340)}
     busy=false;d.nObj=S.objs.length;view.selMode=false;render();toast(`${ok} objet${ok>1?'s':''} supprimé${ok>1?'s':''} (corbeille Notion)`)}
   catch(e){busy=false;d.nObj=S.objs.length;render();fail(e);if(ok)toast(`${ok} objet${ok>1?'s':''} supprimé${ok>1?'s':''} avant l’erreur`,0,1)}}
+function linksMain(d){
+  const t=(d.types||[]).join(' ').toLowerCase(),a=[];
+  if(/déchlo|stabil|fer/.test(t))a.push(`<a class="lk kore" href="${koreUrl(d,[])}" target="_blank" rel="noopener"><span class="dot"></span>KORE${ICON.ext}</a>`);
+  if(/dessal|céram/.test(t))a.push(`<a class="lk kera" href="${URLS.kera}" target="_blank" rel="noopener"><span class="dot"></span>KERA${ICON.ext}</a>`);
+  if(/^https?:\/\//i.test(d.drive||''))a.push(`<a class="lk drive" href="${esc(d.drive)}" target="_blank" rel="noopener"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg>Drive${ICON.ext}</a>`);
+  return `<a class="lk main" href="${URLS.rapport}?dossier=${hex(d.id)}" target="_blank" rel="noopener">${ICON.doc}<span><b>Rapport de traitement</b><small>${d.rapport?esc(d.rapport)+(d.dateRapport?' · '+fr(d.dateRapport):''):'pas encore commencé'}</small></span>${ICON.ext}</a>
+  ${a.length?`<div class="links lk2">${a.join('')}</div>`:''}`}
+function outilsV(){return `<div class="outils-g">
+  <button class="lk lab" data-a="renphotos"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h3l2-3h6l2 3h3v12H4z"/><circle cx="12" cy="13" r="3.5"/></svg>Renommer les photos</button>
+  <button class="lk lab" data-a="labels"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9V3h12v6M6 18H4a1 1 0 0 1-1-1v-6a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v6a1 1 0 0 1-1 1h-2"/><path d="M6 14h12v7H6z"/></svg>Étiquettes QR</button>
+  <button class="lk lab" data-a="labelsq" title="Ajouter les étiquettes à la planche commune (ARGOS CR, KORE, KERA)"><span aria-hidden="true" style="font-size:16px">🏷</span>Planche commune</button>
+  <button class="lk lab" data-a="bord"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6v3H9zM7 5.5H5v15h14v-15h-2"/><path d="m9 14 2 2 4-4"/></svg>Bordereau de restitution</button></div>`}
+const matsDe=objs=>[...new Set(objs.flatMap(o=>String(o.m||'').split(',').map(x=>x.trim()).filter(Boolean).map(x=>x[0].toUpperCase()+x.slice(1).toLowerCase())))].sort((a,b)=>a.localeCompare(b,'fr'));
+const aMat=(o,m)=>String(o.m||'').toLowerCase().split(',').map(x=>x.trim()).includes(m.toLowerCase());
+function avancementV(objs){
+  const nxt={};objs.forEach(o=>{const n=next(o);const k=n?n.k:'fin';nxt[k]=(nxt[k]||0)+1});
+  const rows=STEPS.map(s=>{const app=objs.filter(o=>st(o,s.k)!=='na').length;if(!app)return '';const done=objs.filter(o=>st(o,s.k)==='done').length,n=nxt[s.k]||0;
+    return `<button class="av-r${view.filter===s.k?' on':''}" data-f="${view.filter===s.k?'all':s.k}" aria-pressed="${view.filter===s.k}"><span class="av-n">${s.n}</span><span class="av-b"><i style="width:${Math.round(done/app*100)}%"></i></span><span class="av-c">${done}/${app}</span><span class="av-x">${n?n+' en attente':''}</span></button>`}).join('');
+  return `<section class="card av"><div class="av-h"><div class="label">État d’avancement</div>${view.filter!=='all'?`<button class="link" data-f="all">Voir tous les objets</button>`:''}</div>
+    <div class="av-l">${rows}</div>${nxt.fin?`<button class="av-fin${view.filter==='fin'?' on':''}" data-f="${view.filter==='fin'?'all':'fin'}">${nxt.fin} objet${nxt.fin>1?'s':''} terminé${nxt.fin>1?'s':''}</button>`:''}
+    <p class="hint" style="margin:6px 0 0">Touchez une étape pour voir les objets qui l’attendent.</p></section>`}
 function dossierV(){
   const d=S.d,objs=S.objs;
   if(!objs.length)return `<button class="back" data-a="home">‹ Dossiers</button>${topInfo()}
     <section class="card dossier"><div class="label">Dossier</div><h1>${esc(d.commune)}${d.site?' · '+esc(d.site):''}</h1><div class="meta">${esc(d.num)}${d.ro?' · RO '+esc(d.ro):''}</div></section>
     ${links(d)}${creerV(d,true)}${tachesDossierV(d)}${comV()}`;
   const tot=objs.reduce((a,o)=>a+progress(o),0)/objs.length,fin=objs.filter(o=>!next(o)).length;
-  const counts={};objs.forEach(o=>{const n=next(o);const k=n?n.k:'fin';counts[k]=(counts[k]||0)+1});
-  const list=objs.filter(o=>view.filter==='all'||(next(o)?next(o).k:'fin')===view.filter);
+  const tab=view.dtab||'obj',nT=(S.taches||[]).filter(t=>hex(t.dossier)===hex(d.id)).length,nC=(S.com||[]).length;
+  const q=sansAcc(view.oq||'').trim(),mats=matsDe(objs);
+  let list=objs.filter(o=>(view.filter==='all'||(next(o)?next(o).k:'fin')===view.filter)&&(!view.om||aMat(o,view.om))&&(!q||sansAcc([o.inv,o.d,o.idObj,o.m,lotDe(o),o.us].join(' ')).includes(q)));
+  if(view.osort==='av')list=list.slice().sort((a,b)=>progress(a)-progress(b));
+  const fl=view.filter==='all'?'':view.filter==='fin'?'terminés':'en attente de « '+sn(view.filter)+' »';
   return `<button class="back" data-a="home">‹ Dossiers</button>${topInfo()}
   <section class="card dossier">
     <div class="label">Dossier ${d.etat==='à faire'?'à faire':'en cours'}</div>
@@ -1167,25 +1222,32 @@ function dossierV(){
     <div class="meta">${esc(d.num)}${d.ro?' · RO '+esc(d.ro):''} · ${objs.length} objets</div>
     <div class="bar"><i style="width:${Math.round(tot*100)}%"></i></div>
     <div class="stats"><span><b>${Math.round(tot*100)} %</b> des étapes</span><span><b>${fin}</b> / ${objs.length} objets terminés</span></div>
-    <div class="dossier-steps"><span>Retour <b>${d.retour?fr(d.retour):'—'}</b></span>
-      ${fin===objs.length&&!d.retour?'<button class="link" data-a="retour">Marquer le retour aujourd’hui</button>':''}</div>
+    ${d.retour||fin===objs.length?`<div class="dossier-steps"><span>Retour <b>${d.retour?fr(d.retour):'—'}</b></span>${fin===objs.length&&!d.retour?'<button class="link" data-a="retour">Marquer le retour aujourd’hui</button>':''}</div>`:''}
   </section>
-  ${links(d)}
-  <div class="actions">
+  ${linksMain(d)}
+  <div class="dq">
     <button class="big primary" data-a="scan">${ICON.scan}Scanner</button>
     <button class="big secondary" data-a="lot">${ICON.lot}Mode lot</button>
+    <button class="big secondary dq-o" data-a="dtools" aria-expanded="${!!view.dtools}">Outils ${view.dtools?'▴':'▾'}</button>
   </div>
-  <div class="chips" role="toolbar" aria-label="Filtrer par étape suivante">
-    <button class="chip" data-f="all" aria-pressed="${view.filter==='all'}">Tous<em>${objs.length}</em></button>
-    ${STEPS.filter(s=>counts[s.k]).map(s=>`<button class="chip" data-f="${s.k}" aria-pressed="${view.filter===s.k}">${s.n}<em>${counts[s.k]}</em></button>`).join('')}
-    ${counts.fin?`<button class="chip" data-f="fin" aria-pressed="${view.filter==='fin'}">Terminés<em>${counts.fin}</em></button>`:''}
+  ${view.dtools?outilsV():''}
+  <div class="dtabs" role="tablist">
+    <button role="tab" data-dtab="obj" aria-selected="${tab==='obj'}">Objets<em>${objs.length}</em></button>
+    <button role="tab" data-dtab="taches" aria-selected="${tab==='taches'}">Tâches<em>${S.taches===null?'…':nT}</em></button>
+    <button role="tab" data-dtab="com" aria-selected="${tab==='com'}">Commentaires<em>${S.com===null?'…':nC}</em></button>
   </div>
-  <div class="lot-tools">${view.selMode?`<button class="link" data-a="dselall">${list.length&&list.every(o=>view.dsel.has(o.id))?'Tout désélectionner':'Tout sélectionner ('+list.length+')'}</button><button class="link" data-a="dselx">Annuler</button>`
-    :`<span class="hint" style="margin:0">${lotsDe().length?'':'Pour grouper des objets en lots : Sélectionner…'}</span><button class="link" data-a="dselon">Sélectionner…</button>`}</div>
-  ${listeHtml(list)}
-  <p class="foot"><button class="link" data-a="addobj">+ Ajouter des objets à ce dossier</button></p>
-  ${tachesDossierV(d)}
-  ${comV()}`;
+  ${tab==='taches'?tachesDossierV(d):tab==='com'?comV():`
+  ${avancementV(objs)}
+  <div class="otools">
+    <label class="search osearch">${ICON.search}<input id="oq" type="search" placeholder="N° d’inventaire, désignation, lot…" value="${esc(view.oq||'')}" autocomplete="off"></label>
+    <button class="chip" data-a="osort" title="Changer le tri">Tri : ${view.osort==='av'?'avancement':'n°'}</button>
+    ${view.selMode?'':`<button class="chip" data-a="dselon">Sélectionner</button>`}
+  </div>
+  ${mats.length>1?`<div class="chips cwrap"><span class="label" style="align-self:center">Matériau</span>${mats.map(m=>`<button class="chip sm" data-om="${esc(m)}" aria-pressed="${view.om===m}">${esc(m)}<em>${objs.filter(o=>aMat(o,m)).length}</em></button>`).join('')}</div>`:''}
+  ${view.selMode?`<div class="lot-tools"><button class="link" data-a="dselall">${list.length&&list.every(o=>view.dsel.has(o.id))?'Tout désélectionner':'Tout sélectionner ('+list.length+')'}</button><button class="link" data-a="dselx">Annuler</button></div>`:''}
+  ${fl||view.om||q?`<p class="hint" style="margin:0">${list.length} objet${list.length>1?'s':''}${fl?' '+fl:''}${view.om?' · '+esc(view.om):''}${q?' · « '+esc(view.oq)+' »':''} · <button class="link" data-a="ofx">tout afficher</button></p>`:''}
+  ${list.length?listeHtml(list):'<p class="empty card">Aucun objet ne correspond.</p>'}
+  <p class="foot"><button class="link" data-a="addobj">+ Ajouter des objets à ce dossier</button></p>`}`;
 }
 
 // Nom des photos : année_n° de dossier_n° d'inventaire (sans espaces), puis _avant_ ou _post_ et un numéro de 1 à n
@@ -1292,6 +1354,7 @@ function lotV(){
   <div class="lot-tools"><div class="label">2. Objets concernés</div>
     ${cand.length?`<button class="link" data-a="all">${view.sel.size===cand.length?'Tout désélectionner':'Tout sélectionner ('+cand.length+')'}</button>`:''}</div>
   ${lotsDe(cand).length?`<div class="chips cwrap"><span class="label" style="align-self:center">Cocher un lot :</span>${lotsDe(cand).map(n=>`<button class="chip sm" data-lvl="${esc(n)}" aria-pressed="${cand.filter(o=>lotDe(o)===n).every(o=>view.sel.has(o.id))}">${esc(n)}<em>${cand.filter(o=>lotDe(o)===n).length}</em></button>`).join('')}</div>`:''}
+  ${matsDe(cand).length>1?`<div class="chips cwrap"><span class="label" style="align-self:center">Cocher un matériau :</span>${matsDe(cand).map(m=>`<button class="chip sm" data-lvm="${esc(m)}" aria-pressed="${cand.filter(o=>aMat(o,m)).every(o=>view.sel.has(o.id))}">${esc(m)}<em>${cand.filter(o=>aMat(o,m)).length}</em></button>`).join('')}</div>`:''}
   <div class="list">${cand.length?cand.map(o=>`<button class="lot-row" role="checkbox" aria-checked="${view.sel.has(o.id)}" data-t="${o.id}">
      <span class="box"></span><span class="oi"><small>${/^OI/i.test(o.inv)?'OI':'N°'}</small>${esc(label(o))}</span>
      <span class="d" style="min-width:0"><b style="display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:600">${esc(o.d||o.nom)}${nrBadge(o)}</b><span style="font-size:11px;color:var(--txt2)">${lotDe(o)?esc(lotDe(o))+' · ':''}${esc(o.m)}${st(o,k)==='run'?' · en cours':''}</span></span></button>`).join('')
@@ -1304,12 +1367,13 @@ function render(){finirTaches();
   if(S.loading&&S.loading!=='journal'){$('#app').innerHTML=loadingV(S.loading);$('#dock').innerHTML='';return}
   // Œil seul dans le bandeau sur toutes les pages ; logo paysage en grand sous le bandeau sur l'accueil
   document.body.classList.add('compact');
-  $('#app').classList.toggle('wide',view.v==='obj');
+  $('#app').classList.toggle('wide',view.v==='obj');$('#app').classList.toggle('wd',view.v==='dossier');
   $('#app').innerHTML=view.v==='home'?home():view.v==='produits'?produitsV():view.v==='med'?medV():view.v==='dossier'?dossierV():view.v==='obj'?objetV():lotV();
   const n=view.sel.size,k=view.step,verb=view.lotSt==='en cours'?'Commencer':view.lotSt==='na'?'Non applicable :':'Valider';
   $('#dock').innerHTML=view.v==='dossier'&&view.selMode?(busy?`<div class="dock"><button class="big primary" disabled>${busy}</button></div>`:view.dsel.size?`<div class="dock"><div class="two-b"><button class="big secondary" data-a="lotset">Mettre dans un lot…</button><button class="big primary danger" data-a="delsel">Supprimer ${view.dsel.size}</button></div></div>`:`<div class="dock"><button class="big primary" disabled>Sélectionnez des objets</button></div>`):view.v==='lot'?`<div class="dock"><button class="big primary" data-a="apply" ${n&&!busy?'':'disabled'}>${ICON.check}${busy?busy:n?(view.lotSt==='na'?`« ${sn(k)} » non applicable pour ${n} objet${n>1?'s':''}`:`${verb} « ${sn(k)} » pour ${n} objet${n>1?'s':''}`):'Sélectionnez des objets'}</button></div>`:'';
   $('#opname').textContent=op();
   const pq=$('#pq');if(pq)pq.oninput=e=>{view.pq=e.target.value;const p=e.target.selectionStart;render();const n=$('#pq');n.focus();n.setSelectionRange(p,p)};
+  const oq=$('#oq');if(oq)oq.oninput=e=>{view.oq=e.target.value;const p=e.target.selectionStart;render();const n=$('#oq');n.focus();n.setSelectionRange(p,p)};
   const q=$('#q');if(q)q.oninput=e=>{view.q=e.target.value;const p=e.target.selectionStart;render();const n=$('#q');n.focus();n.setSelectionRange(p,p)};
 }
 
@@ -1328,10 +1392,17 @@ function sheet(html,k){closeSheet();const l=document.createElement('div');l.clas
 /* ---------- navigation / chargements ---------- */
 async function loadHome(){S.loading='Chargement des dossiers en cours…';render();
   const ech=API().echeances().catch(()=>null);
-  try{S.dossiers=await API().dossiers()}catch(e){fail(e)}S.ech=await ech;S.loading='';view={...view,v:'home'};render();chargerTaches();chargerProduits()}
+  try{S.dossiers=await API().dossiers()}catch(e){fail(e)}S.ech=await ech;S.loading='';view={...view,v:'home'};render();chargerTaches();chargerProduits();chargerEtapes()}
+// Étape où attendent le plus d'objets, pour chaque dossier en cours (affichée sur les cartes de l'accueil)
+async function chargerEtapes(){const ids=S.dossiers.filter(d=>d.etat!=='à faire'&&d.nObj).map(d=>d.id);if(!ids.length)return;
+  try{const objs=await API().objetsDe(ids),m={};S.dEt={};
+    objs.forEach(o=>{const n=next(o);if(!n)return;const k=o.dossier;(m[k]=m[k]||{})[n.n]=(m[k][n.n]||0)+1});
+    Object.keys(m).forEach(k=>{const [e,c]=Object.entries(m[k]).sort((a,b)=>b[1]-a[1])[0];S.dEt[k]=`Prochaine étape : ${e} · ${c} objet${c>1?'s':''}`});
+    if(view.v==='home')render()}catch(e){}}
 async function openDossier(id,thenObj){view.selMode=false;view.dsel=new Set();
   S.loading='Chargement du dossier…';render();
   try{S.d=S.dossiers.find(d=>d.id===id)||await API().dossier(id);S.objs=await API().objets(id);
+    if(!S.d0||S.d0!==id){view.dtab='obj';view.om='';view.oq='';view.dtools=false}S.d0=id;
     view={...view,v:'dossier',filter:'all',sel:new Set()};S.loading='';
     S.com=null;loadCom(id);
     if(thenObj)return openObj(thenObj);render();scrollTo(0,0);setUrl({dossier:hex(id)});setTimeout(checkBain,400)}
@@ -1623,6 +1694,9 @@ document.addEventListener('click',async e=>{
   if(d.tfall!=null){document.querySelectorAll('[data-tfo]').forEach(c=>{c.checked=d.tfall==='1'&&!c.disabled});tfCompte();return}
   if(d.tfp!=null){$('#tf-p').value=d.tfp;return}
   if(d.f){view.filter=d.f;render();return}
+  if(d.dtab){view.dtab=d.dtab;render();return}
+  if(d.om!==undefined){view.om=view.om===d.om?'':d.om;render();return}
+  if(d.lvm!=null){const c=lotCand().filter(o=>aMat(o,d.lvm)),tous=c.every(o=>view.sel.has(o.id));c.forEach(o=>tous?view.sel.delete(o.id):view.sel.add(o.id));render();return}
   if(d.step){view.step=d.step;view.sel=new Set();view.lotProto=new Set();view.lotSt='terminé';render();return}
   if(d.lp){view.lotProto.has(d.lp)?view.lotProto.delete(d.lp):view.lotProto.add(d.lp);render();return}
   if(d.ls){view.lotSt=d.ls;view.sel=new Set();render();return}
@@ -1674,7 +1748,10 @@ document.addEventListener('click',async e=>{
     case 'delselok':supprimerSelection();break;
     case 'tnew':tacheForm(null);break;
     case 'tsave':tSave();break;
-    case 'plan':view.plan=view.plan===false;render();break;
+    case 'plan':view.plan=!view.plan;render();break;
+    case 'dtools':view.dtools=!view.dtools;render();break;
+    case 'osort':view.osort=view.osort==='av'?'':'av';render();break;
+    case 'ofx':view.filter='all';view.om='';view.oq='';render();break;
     case 'delobj':delObjSheet();break;
     case 'delobjok':supprimerObjet();break;
     case 'op':try{sessionStorage.removeItem('argoslab:in')}catch(e){}await showLogin();await loadHome();break;
