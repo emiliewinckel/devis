@@ -165,6 +165,8 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .sh-foot{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 @media(max-width:899px){#app.wide .nav{position:sticky;bottom:0;z-index:6;background:var(--bg);padding:8px 0 calc(8px + env(safe-area-inset-bottom));margin-bottom:-8px}}
 .medb{font-style:normal;color:var(--sky);-webkit-text-stroke:.6px #5AAFD0;margin-left:6px;font-size:.9em}
+.sec-tog{width:100%;border:0;background:none;padding:0;font:inherit;cursor:pointer;text-align:left}
+.dcard.fini{opacity:.92;border-left-color:var(--green)}
 .selbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--sky-l);border:1px solid var(--sky);border-radius:10px;padding:8px 12px;font-size:13px}.selbar span{flex:1 1 220px}
 .rstar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;cursor:pointer;color:#9AA3B5}
 .rstar svg path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
@@ -775,6 +777,8 @@ const Notion={
   async dossiers(){return (await queryAll(DB.dossiers,{filter:{or:[{property:'Etat',status:{equals:'en cours'}},{property:'Etat',status:{equals:'à faire'}}]},
     sorts:[{property:"Date d'arrivée au labo",direction:'descending'}]})).map(mapDossier)},
   async dossier(id){return mapDossier(await nfetch('/pages/'+id))},
+  async termines(){return (await queryAll(DB.dossiers,{filter:{property:'Etat',status:{equals:'Terminé'}},
+    sorts:[{property:'Date de retour',direction:'descending'},{property:"Date d'arrivée au labo",direction:'descending'}]})).map(mapDossier)},
   async objets(did){return (await queryAll(DB.objets,{filter:{property:'Dossier',relation:{contains:did}},
     sorts:[{property:'ID objet',direction:'ascending'},{timestamp:'created_time',direction:'ascending'}]})).map(mapObjet)},
   async objet(id){return mapObjet(await nfetch('/pages/'+id))},
@@ -876,6 +880,7 @@ const DNA={radio:['Nettoyage','Stabilisation','Protection','Retouche'],etude:['S
 const DTR={radio:'radiographie',etude:'nettoyage pour étude',ns:'nettoyage et stabilisation'};
 function demoFresh(){return {
   dossiers:[{id:'demo-witry',etat:'en cours',num:'2026_8249-8',commune:'Witry-lès-Reims',site:'Les Cabouzets',ro:'S. Bündgen',nb:20,av:0,fin:0,rapport:'à rédiger',retour:'',arrivee:'2026-10-12',types:['Déchloruration','Nettoyage pour étude','Radiographie X'],nObj:20},
+    {id:'demo-fini',etat:'Terminé',num:'2026_7120-02',commune:'Bayeux',site:'Rue Saint-Jean',ro:'J. Martin',nb:0,av:1,fin:0,rapport:'rendu',retour:'2026-09-18',arrivee:'2026-03-02',types:['Nettoyage pour étude'],nObj:0},
     {id:'demo-autre',etat:'à faire',num:'2026_8870-01',commune:'Saint-Léonard (51)',site:'Centre Bourg',ro:'M-A Thierry',nb:0,av:0,fin:0,rapport:'',retour:'',arrivee:'2026-07-23',types:['Déchloruration'],nObj:0}],
   objets:SEED.map(([oi,d,m,t,nr],i)=>{const o={id:'demo-o'+i,dossier:'demo-witry',nom:'',idObj:'2026_8249-8_'+String(i+1).padStart(3,'0'),inv:'OI '+oi,d,m,nr,t:DTR[t],na:[...DNA[t]],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
     STEPS.forEach(s=>o.steps[s.k]=o.na.includes(s.n)?'n/a':s.k==='rx'?rxDefaut(o):'');return o}),
@@ -890,12 +895,14 @@ function demoFresh(){return {
 let DEMO=LS.get('argoslab:demo2',null)||demoFresh();
 // démo enregistrée avant l'ajout de l'étape Radiographie
 (DEMO.objets||[]).forEach(o=>{if(o.steps&&!('rx' in o.steps))o.steps.rx=rxDefaut(o)});
+if(DEMO.dossiers&&!DEMO.dossiers.some(d=>d.etat==='Terminé'))DEMO.dossiers.splice(1,0,demoFresh().dossiers.find(d=>d.etat==='Terminé'));
 if(!DEMO.kera)DEMO.kera=demoFresh().kera;if(!DEMO.produits)DEMO.produits=demoFresh().produits;DEMO.objets.forEach(o=>{if(!o.kera)o.kera=[]});
 const dsave=()=>LS.set('argoslab:demo2',DEMO);
 const Demo={
-  async dossiers(){return DEMO.dossiers.map(d=>{const ob=DEMO.objets.filter(o=>o.dossier===d.id);
+  async dossiers(){return DEMO.dossiers.filter(d=>d.etat!=='Terminé'||this._tous).map(d=>{const ob=DEMO.objets.filter(o=>o.dossier===d.id);
     return Object.assign({},d,ob.length?{av:ob.reduce((a,o)=>a+progress(o),0)/ob.length,fin:ob.filter(o=>progress(o)===1).length}:{})})},
-  async dossier(id){return (await this.dossiers()).find(d=>d.id===id)},
+  async dossier(id){this._tous=1;try{return (await this.dossiers()).find(d=>d.id===id)}finally{this._tous=0}},
+  async termines(){this._tous=1;try{return (await this.dossiers()).filter(d=>d.etat==='Terminé')}finally{this._tous=0}},
   async objets(did){return JSON.parse(JSON.stringify(DEMO.objets.filter(o=>o.dossier===did)))},
   async objet(id){return JSON.parse(JSON.stringify(DEMO.objets.find(o=>o.id===id)))},
   async objetsDe(ids){return JSON.parse(JSON.stringify(DEMO.objets.filter(o=>ids.includes(o.dossier))))},
@@ -961,11 +968,11 @@ function topInfo(){return S.mode==='demo'?`<div class="demo">Mode démonstration
 function dcardT(d){const L=(S.taches||[]).filter(t=>hex(t.dossier)===hex(d.id));if(!L.length)return dcard(d);
   const o=view.tOpen===d.id;
   return `<div class="dwrap">${dcard(d)}<button class="dtog${L.some(tRetard)?' late':''}" data-ttog="${d.id}" aria-expanded="${o}">${o?'▾':'▸'} ${L.length} tâche${L.length>1?'s':''} : ${[...new Set(L.map(t=>t.personne||'à attribuer'))].map(esc).join(', ')}</button>${o?dTachesV(d,1):''}</div>`}
-function dcard(d){return `<button class="dcard ${d.etat==='à faire'?'todo':''}" data-d="${d.id}">
+function dcard(d){return `<button class="dcard ${d.etat==='à faire'?'todo':d.etat==='Terminé'?'fini':''}" data-d="${d.id}">
     <span class="dc-top"><b>${esc(d.num)}</b>${d.rapport?`<span class="pill r-${esc(d.rapport).replace(/\s+/g,'-')}">Rapport : ${esc(d.rapport)}</span>`:''}</span>
     <span class="dc-t">${esc(d.commune)}${d.site?' · '+esc(d.site):''}</span>
-    <span class="dc-m">${d.ro?'RO '+esc(d.ro)+' · ':''}${d.nObj?d.nObj+' fiche'+(d.nObj>1?'s':'')+' objet':'pas encore de fiches objets'}${d.etat==='à faire'&&d.arrivee?' · arrivé le '+fr(d.arrivee):''}</span>
-    ${d.nObj&&d.av?`<span class="bar"><i style="width:${Math.round(d.av*100)}%"></i></span>
+    <span class="dc-m">${d.ro?'RO '+esc(d.ro)+' · ':''}${d.nObj?d.nObj+' fiche'+(d.nObj>1?'s':'')+' objet':'pas encore de fiches objets'}${d.etat==='à faire'&&d.arrivee?' · arrivé le '+fr(d.arrivee):''}${d.etat==='Terminé'&&d.retour?' · rendu le '+fr(d.retour):''}</span>
+    ${d.nObj&&d.av&&d.etat!=='Terminé'?`<span class="bar"><i style="width:${Math.round(d.av*100)}%"></i></span>
     <span class="dc-m"><b>${Math.round(d.av*100)} %</b> des étapes · ${d.fin} / ${d.nObj} terminés</span>`:''}
     ${S.dEt&&S.dEt[d.id]?`<span class="dc-n">${S.dEt[d.id]}</span>`:''}
     ${d.types.length?`<span class="dc-tags">${d.types.slice(0,4).map(t=>`<span class="tag">${esc(t)}</span>`).join('')}</span>`:''}
@@ -998,7 +1005,8 @@ const LOGO_PAYSAGE='<svg class="biglogo" role="img" aria-label="ARGOS CR" xmlns=
 function home(){
   const q=view.q.trim().toLowerCase();
   const list=S.dossiers.filter(d=>!q||[d.num,d.commune,d.site,d.ro].join(' ').toLowerCase().includes(q));
-  const enc=list.filter(d=>d.etat!=='à faire'),todo=list.filter(d=>d.etat==='à faire');
+  const enc=list.filter(d=>d.etat!=='à faire'&&d.etat!=='Terminé'),todo=list.filter(d=>d.etat==='à faire');
+  const TL=S.term?S.term.filter(d=>!q||[d.num,d.commune,d.site,d.ro].join(' ').toLowerCase().includes(q)):null;
   const nEnc=S.dossiers.filter(d=>d.etat!=='à faire').length,nTodo=S.dossiers.length-nEnc;
   return `${topInfo()}
   <div class="biglogo-w">${LOGO_PAYSAGE}</div>
@@ -1012,6 +1020,8 @@ function home(){
   <div class="dlist">${enc.length?enc.map(dcardT).join(''):`<p class="empty card">${q?'Aucun dossier en cours ne correspond.':'Aucun dossier « en cours » dans Notion.'}</p>`}</div>
   <div class="sec"><h2>À faire</h2><span class="count">${nTodo}</span></div>
   <div class="dlist">${todo.length?todo.map(dcardT).join(''):`<p class="empty card">${q?'Aucun dossier à faire ne correspond.':'Aucun dossier « à faire » dans Notion.'}</p>`}</div>
+  <button class="sec sec-tog" data-a="termtog" aria-expanded="${!!view.term}"><h2>${view.term?'▾':'▸'} Terminés</h2><span class="count">${TL?TL.length:'…'}</span></button>
+  ${view.term?`<div class="dlist">${TL===null?loadingV('Chargement des dossiers terminés…'):S.termErr?`<p class="empty card">Dossiers terminés inaccessibles : ${esc(S.termErr)}</p>`:TL.length?TL.map(dcard).join(''):`<p class="empty card">${q?'Aucun dossier terminé ne correspond.':'Aucun dossier « Terminé » dans Notion.'}</p>`}</div>`:''}
   <p class="foot"><button class="link" data-a="cfg">Paramètres</button>${S.mode==='demo'?' · <button class="link" data-a="reset">Remettre la démo à zéro</button>':''}</p>`;
 }
 
@@ -1399,8 +1409,9 @@ function sheet(html,k){closeSheet();const l=document.createElement('div');l.clas
 /* ---------- navigation / chargements ---------- */
 async function loadHome(){S.loading='Chargement des dossiers en cours…';render();
   const ech=API().echeances().catch(()=>null);
-  try{S.dossiers=await API().dossiers()}catch(e){fail(e)}S.ech=await ech;S.loading='';view={...view,v:'home'};render();chargerTaches();chargerProduits();chargerEtapes()}
+  try{S.dossiers=await API().dossiers()}catch(e){fail(e)}S.ech=await ech;S.loading='';view={...view,v:'home'};render();chargerTaches();chargerProduits();chargerEtapes();chargerTermines()}
 // Étape où attendent le plus d'objets, pour chaque dossier en cours (affichée sur les cartes de l'accueil)
+async function chargerTermines(){try{S.term=await API().termines();S.termErr=''}catch(e){S.term=[];S.termErr=e.message||String(e)}if(view.v==='home')render()}
 async function chargerEtapes(){const ids=S.dossiers.filter(d=>d.etat!=='à faire'&&d.nObj).map(d=>d.id);if(!ids.length)return;
   try{const objs=await API().objetsDe(ids),m={};S.dEt={};
     objs.forEach(o=>{const n=next(o);if(!n)return;const k=o.dossier;(m[k]=m[k]||{})[n.n]=(m[k][n.n]||0)+1});
@@ -1408,7 +1419,7 @@ async function chargerEtapes(){const ids=S.dossiers.filter(d=>d.etat!=='à faire
     if(view.v==='home')render()}catch(e){}}
 async function openDossier(id,thenObj){view.selMode=false;view.dsel=new Set();
   S.loading='Chargement du dossier…';render();
-  try{S.d=S.dossiers.find(d=>d.id===id)||await API().dossier(id);S.objs=await API().objets(id);
+  try{S.d=S.dossiers.find(d=>d.id===id)||(S.term||[]).find(d=>d.id===id)||await API().dossier(id);S.objs=await API().objets(id);
     if(!S.d0||S.d0!==id){view.dtab='obj';view.om='';view.oq='';view.dtools=false}S.d0=id;
     view={...view,v:'dossier',filter:'all',sel:new Set()};S.loading='';
     S.com=null;loadCom(id);
@@ -1760,6 +1771,7 @@ document.addEventListener('click',async e=>{
     case 'tsave':tSave();break;
     case 'plan':view.plan=!view.plan;render();break;
     case 'dtools':view.dtools=!view.dtools;render();break;
+    case 'termtog':view.term=!view.term;render();if(view.term&&!S.term)chargerTermines();break;
     case 'osort':view.osort=view.osort==='av'?'':'av';render();break;
     case 'ofx':view.filter='all';view.om='';view.oq='';render();break;
     case 'delobj':delObjSheet();break;
