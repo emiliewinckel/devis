@@ -1170,9 +1170,10 @@ function evalMesure(lot, m, liste) {
   if (estQ(m)) {
     var qmin = qMinMesure(m), zoneQ = Math.max(3 * s, qmin);
     if (m.borne === '<' || m.cl <= zoneQ)
-      return res({statut: 'Quantab - confirmer par Mohr', cls: 'b-warn', acl: 'a-warn', code: 'titrer', due: m.date, mohr: true,
+      // Pas de Mohr immédiat : le bain continue, le prochain titrage prévu se fera par Mohr
+      return res({statut: 'Quantab bas - Mohr au prochain titrage', cls: 'b-warn', acl: 'a-warn', code: 'titrer', mohr: true,
         msg: (m.borne === '<' ? 'Bandelette sous sa gamme (< ' + fNum(m.cl, 0) + ' mg/L)' : 'Bandelette à ' + c + ' ± ' + fNum(incAbs(m), 0) + ' mg/L') +
-          ' : la valeur approche le seuil de fin (' + fNum(s, 1) + ' mg/L), que la bandelette ne permet pas de trancher. Titrer ce bain par la méthode de Mohr' +
+          ' : valeur proche du seuil de fin (' + fNum(s, 1) + ' mg/L), que la bandelette ne permet pas de trancher. Le bain continue ; au prochain titrage prévu, utiliser la méthode de Mohr' +
           (conseilPrecision ? ' (' + conseilPrecision(s, bilanPrelevements(lot, cy).reste) + ')' : '') + '.'});
   }
   var da = incAbs(m);
@@ -2315,14 +2316,14 @@ function renderProtocole() {
     '<li>Plonger la bandelette (gamme basse 30-600 mg/L) et attendre que la bande du haut vire du jaune au noir, puis encore au moins 2 min (au plus 30 min).</li>' +
     '<li>Lire la pointe de la zone blanche au 0,2 près et la convertir avec la table <b>du flacon utilisé</b> : elle change à chaque lot.</li>' +
     '<li>Les bandelettes ne se réutilisent pas ; elles libèrent du dichromate (Cr VI) : déchets dangereux.</li></ol>' +
-    '<p>Précision ±10 %. Elles suffisent pour suivre la montée de la [Cl⁻] et repérer le plateau ; <b>près du seuil de fin (moins de ' + fNum(3 * C.sc, 0) + ' mg/L en conservation courante) ou sous leur gamme, KORE demande un titrage de Mohr</b>, seul retenu pour valider l\'arrêt.</p>' +
+    '<p>Précision ±10 %. Elles suffisent pour suivre la montée de la [Cl⁻] et repérer le plateau ; <b>près du seuil de fin (moins de ' + fNum(3 * C.sc, 0) + ' mg/L en conservation courante) ou sous leur gamme, le bain continue et KORE prévoit le prochain titrage par Mohr</b>, seul retenu pour valider l\'arrêt.</p>' +
     '<h3>Lecture des statuts</h3><table><thead><tr><th>Statut</th><th>Signification</th><th>Action</th></tr></thead><tbody>' +
     [['Extraction active', 'La [Cl⁻] monte encore dans un bain en bon état', 'Retitrer à la date prévue'],
      ['Renouveler le bain', 'Extraction en cours, mais bain très chargé (> ' + fNum(C.clFort, 0) + ' mg/L), soude consommée (> ' + fNum(C.ohMax, 0) + ' %) ou bain de plus de ' + C.jmax + ' j', 'Titrage final puis changement de bain, sans attendre le plateau'],
      ['Plateau - changer le bain', 'La [Cl⁻] ne monte plus (≤ +' + fNum(C.dc, 0) + ' % en ≥ ' + C.jecart + ' j) mais reste au-dessus du seuil', 'Titrage final puis changement de bain'],
      ['Sous seuil - renouveler le bain', '[Cl⁻] basse dans un bain n° < ' + C.nbmin, 'Changer le bain et vérifier que l\'extraction ne reprend pas'],
      ['Sous seuil - trop tôt', 'Bain en place depuis moins de ' + C.jmin + ' j', 'Retitrer après ' + C.jmin + ' j d\'immersion'],
-     ['Quantab - confirmer par Mohr', 'Bandelette proche du seuil de fin ou sous sa gamme', 'Titrer le même bain par Mohr'],
+     ['Quantab bas - Mohr au prochain titrage', 'Bandelette proche du seuil de fin ou sous sa gamme', 'Laisser le bain en place ; faire le prochain titrage prévu par Mohr'],
      ['Précision insuffisante', 'L\'incertitude du titrage englobe le seuil de fin', 'Retitrer avec AgNO₃ plus dilué ou un échantillon plus grand'],
      ['Sous seuil - à confirmer', 'Un titrage bas, confirmation nécessaire', 'Retitrer le même bain ≥ ' + C.jecart + ' j plus tard'],
      ['OK - arrêt validé', 'Critères de fin atteints', 'Passer aux rinçages'],
