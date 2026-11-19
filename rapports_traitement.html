@@ -182,6 +182,7 @@ label.f{display:block;font-size:10.5px;font-weight:600;letter-spacing:.14em;text
 .ph-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 .drop{border:1.5px dashed #C3C7E3;border-radius:10px;padding:12px;min-height:150px;background:var(--olive-ll);transition:all .12s}
 .drop.over{border-color:var(--olive);background:var(--olive-l)}
+.phlay{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;margin:0 0 8px;font-size:12px}.phlay label{font-weight:600;color:var(--olive-d);display:inline;margin:0;width:auto}.phlay select{font:inherit;width:auto!important;max-width:100%;margin:0;padding:4px 6px;border:1px solid #C3C7E3;border-radius:6px;background:#fff}.phlay a{color:var(--olive-d);font-size:11.5px}
 .drop .dh{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
 .drop .dh b{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--olive-d)}
 .drop .dh span{font-size:11.5px;color:var(--muted)}
@@ -641,7 +642,11 @@ function renderEditor(){
 }
 function photoSection(f,ph,id,title){
   var list=S.photos.filter(function(p){ return p.fiche===f.id && p.phase===ph; });
-  var h='<section class="card sec" id="'+id+'"><h2>'+title+'</h2><div class="drop" data-drop="'+ph+'"><div class="dh"><b>'+(ph==="av"?"Avant":"Après")+'</b><span>Glisser des images ici · <a href="#" onclick="pickPhotos(\''+ph+'\');return false" style="color:var(--olive-d)">parcourir</a></span></div>';
+  var lk=ph==="av"?"phLayAv":"phLayAp", lv=f[lk]||"auto";
+  var h='<section class="card sec" id="'+id+'"><h2>'+title+'</h2>'+
+    '<div class="phlay"><label>Mise en page</label><select data-k="'+lk+'">'+PHLAY.map(function(x){ return '<option value="'+x[0]+'"'+(x[0]===lv?' selected':'')+'>'+x[1]+'</option>'; }).join("")+'</select>'+
+    '<a href="#" onclick="phLayAll(\''+ph+'\');return false">appliquer à toutes les fiches</a></div>'+
+    '<div class="drop" data-drop="'+ph+'"><div class="dh"><b>'+(ph==="av"?"Avant":"Après")+'</b><span>Glisser des images ici · <a href="#" onclick="pickPhotos(\''+ph+'\');return false" style="color:var(--olive-d)">parcourir</a></span></div>';
   if(!list.length) h+='<div class="drop-empty">Aucune photo</div>';
   else {
     h+='<div class="thumbs">';
@@ -653,6 +658,11 @@ function photoSection(f,ph,id,title){
   }
   return h+'</div></section>';
 }
+/* formats de mise en page des photos dans le rapport : colonnes × lignes par page */
+var PHLAY=[["auto","Automatique"],["S","S - planche contact (24 photos / page)"],["M","M - 12 photos / page"],["L","L - 6 photos / page"],["XL","XL - 2 photos / page"],["XXL","XXL - 1 photo / page"]];
+var PHGRID={S:{c:4,r:6},M:{c:3,r:4},L:{c:2,r:3},XL:{c:1,r:2},XXL:{c:1,r:1}};
+function phLayAll(ph){ var f=curF(); if(!f) return; var k=ph==="av"?"phLayAv":"phLayAp", v=f[k]||"auto";
+  S.fiches.forEach(function(x){ x[k]=v; }); markDirty(); toast("Mise en page « "+(PHLAY.filter(function(x){ return x[0]===v; })[0]||["",v])[1]+" » appliquée aux photos "+(ph==="av"?"avant":"après")+" de toutes les fiches"); }
 function reportNo(idx){
   var base=S.dossier.numRapport || ((S.dossier.numLabo||"")+"_01");
   return S.fiches.length>1 ? base+"."+(idx+1) : base;
@@ -1165,7 +1175,7 @@ function buildDoc(f, idx){
 
   /* photos avant */
   var pav=S.photos.filter(function(p){ return p.fiche===f.id && p.phase==="av"; });
-  if(pav.length){ body.push(title("Photographies avant traitement",{pb:1,b:0})); photoBlocks(pav,isLot).forEach(function(b){ body.push(b); }); }
+  if(pav.length){ body.push(title("Photographies avant traitement",{pb:1,b:0})); photoBlocks(pav,isLot,f.phLayAv).forEach(function(b){ body.push(b); }); }
 
   /* intervention */
   body.push(title("Intervention",{pb:1,b:0}));
@@ -1182,15 +1192,38 @@ function buildDoc(f, idx){
 
   /* photos après */
   var pap=S.photos.filter(function(p){ return p.fiche===f.id && p.phase==="ap"; });
-  if(pap.length){ body.push(title("Photographies après traitement",{pb:1,b:0})); photoBlocks(pap,isLot).forEach(function(b){ body.push(b); }); }
+  if(pap.length){ body.push(title("Photographies après traitement",{pb:1,b:0})); photoBlocks(pap,isLot,f.phLayAp).forEach(function(b){ body.push(b); }); }
 
   function paras(t){ return String(t).split(/\n\s*\n|\n/).filter(function(s){ return s.trim(); }).map(function(s){ return new X.Paragraph({children:[run(s.trim(),{size:18})],alignment:X.AlignmentType.JUSTIFIED,spacing:{after:90,line:290}}); }); }
   function uniq(items,k){ var a=[]; (items||[]).forEach(function(i){ var v=String(i[k]||"").trim(); if(v&&a.indexOf(v)<0) a.push(v); }); return a.join(", "); }
   function sumNR(items){ var s=0; (items||[]).forEach(function(i){ s+=parseInt(i.nr,10)||0; }); return s||""; }
 
   /* mise en page des photos : 1 colonne si paysage, 2 colonnes si portrait ; pagination automatique */
-  function photoBlocks(list,caps){
+  function photoBlocks(list,caps,fmt){
     var out=[]; var maxW=655, gap=14, firstH=830, pageH=890, capH=caps?20:0;
+    var G=PHGRID[fmt];
+    if(G){ /* grille fixe : c colonnes × r lignes par page, chaque photo réduite pour tenir dans sa case */
+      var per=G.c*G.r, g2=10, tw2=Math.floor(CW/G.c), ws2=[]; for(var c3=0;c3<G.c;c3++) ws2.push(c3<G.c-1?tw2:CW-tw2*(G.c-1));
+      var bw=Math.floor((maxW-g2*(G.c-1))/G.c);
+      for(var s0=0,pi2=0;s0<list.length;s0+=per,pi2++){
+        if(pi2>0) out.push(new X.Paragraph({children:[new X.PageBreak()]}));
+        var avail2=(pi2===0?firstH:pageH)*0.94, bh=Math.floor(avail2/G.r)-capH-g2;
+        var chunk=list.slice(s0,s0+per), rows2=[];
+        for(var r0=0;r0<chunk.length;r0+=G.c){
+          var cells2=[];
+          for(var c4=0;c4<G.c;c4++){ var ph2=chunk[r0+c4];
+            if(!ph2){ cells2.push(C(P([]),ws2[c4])); continue; }
+            var k2=Math.min(bw/ph2.w,bh/ph2.h), w2=Math.max(1,Math.round(ph2.w*k2)), h2=Math.max(1,Math.round(ph2.h*k2));
+            var ch2=[P([new X.ImageRun({type:"jpg",data:b64bytes(ph2.data),transformation:{width:w2,height:h2}})],{al:X.AlignmentType.CENTER,a:caps?10:Math.round(g2*15)})];
+            if(caps) ch2.push(P([run(ph2.cap||"",{size:15,color:MUT,it:1})],{al:X.AlignmentType.CENTER,a:Math.round(g2*15)}));
+            cells2.push(C(ch2,ws2[c4],{m:{top:0,bottom:0,left:30,right:30},va:X.VerticalAlign.CENTER}));
+          }
+          rows2.push(R(cells2));
+        }
+        out.push(T(rows2,ws2));
+      }
+      return out;
+    }
     var portrait = list.filter(function(p){ return p.h>p.w*1.05; }).length > list.length/2;
     var cols = (caps && list.length>4) ? 3 : ((portrait && list.length>1) ? 2 : 1);
     var cw = Math.floor((maxW-gap*(cols-1))/cols);
