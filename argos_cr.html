@@ -271,7 +271,7 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .lotg-h .car{width:14px;color:var(--navy);font-size:13px}
 .lotg-h em{font-style:normal;font-size:12px;color:var(--txt2)}
 .nrb{font-style:normal;font-size:11px;font-weight:700;background:var(--navy);color:#fff;border-radius:8px;padding:1px 6px;margin-left:6px;vertical-align:1px}
-.dock .two-b{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:720px;margin:0 auto}
+.dock .two-b{display:grid;grid-template-columns:1fr 1fr;gap:8px;max-width:720px;margin:0 auto}.dock .three-b{grid-template-columns:1fr 1fr 1fr}@media (max-width:520px){.dock .three-b{grid-template-columns:1fr 1fr}.dock .three-b .danger{grid-column:1/-1}}
 .link{border:0;background:none;color:var(--navy);font-weight:600;font-size:12px;padding:4px 0}
 .dock{position:fixed;left:0;right:0;bottom:0;z-index:90;background:var(--card);border-top:1px solid var(--border);box-shadow:0 -4px 16px rgba(0,0,0,.06);
   padding-top:12px;padding-bottom:calc(12px + env(safe-area-inset-bottom,0px));
@@ -1189,6 +1189,13 @@ function lotOuvert(n){const v=(view.lotPli||{})[n];return v==null?S.objs.length<
 function lotHead(g){const ouv=lotOuvert(g.n),fin=g.objs.filter(o=>!next(o)).length,tous=g.objs.every(o=>view.dsel.has(o.id));
   return `<div class="lotg"><button class="lotg-h" data-lotg="${esc(g.n)}" aria-expanded="${ouv}"><span class="car">${ouv?'▾':'▸'}</span><b>${g.n?esc(g.n):'Sans lot'}</b><em>${g.objs.length} objet${g.objs.length>1?'s':''}${fin?' · '+fin+' terminé'+(fin>1?'s':''):''}</em></button>
     ${view.selMode?`<button class="link" data-lotsel="${esc(g.n)}">${tous?'Désélectionner':'Tout sélectionner'}</button>`:`<button class="link" data-lotpl="${esc(g.n)}" title="Ajouter les étiquettes de tout le lot à la planche">+ Planche (${g.objs.length})</button>`}</div>`}
+// Sélection d'objets (ou d'un lot) → une étape marquée « non applicable » pour tous, ex. Restauration pour une stabilisation simple
+function naSelSheet(){const L=S.objs.filter(o=>view.dsel.has(o.id));if(!L.length)return;const pl=L.length>1?'s':'';
+  sheet(`<div class="sh-h"><small>${esc(S.d.num)} · ${L.length} objet${pl} sélectionné${pl}</small><b>Étape non applicable</b></div>
+    <div class="label">Quelle étape ne concerne pas ${L.length>1?'ces objets':'cet objet'} ?</div>
+    <div class="chips cwrap">${STEPS.map(s=>{const n=L.filter(o=>['todo','run'].includes(st(o,s.k))).length;return `<button class="chip" data-naset="${s.k}" ${n?'':'disabled'}>${esc(s.n)}<em>${n}</em></button>`}).join('')}</div>
+    <p class="hint">Le chiffre indique combien d'objets sélectionnés ont encore cette étape à faire. Annulable juste après.</p>
+    <div class="sh-act"><button class="big secondary" data-a="close">Annuler</button></div>`,'naset')}
 function lotSetSheet(){const L=S.objs.filter(o=>view.dsel.has(o.id));if(!L.length)return;const lots=lotsDe(),pl=L.length>1?'s':'';
   sheet(`<div class="sh-h"><small>${esc(S.d.num)} · ${L.length} objet${pl} sélectionné${pl}</small><b>Mettre dans un lot</b></div>
     ${lots.length?`<div class="label">Lots de ce dossier</div><div class="chips cwrap">${lots.map(n=>`<button class="chip" data-lotset="${esc(n)}">${esc(n)}<em>${S.objs.filter(o=>lotDe(o)===n).length}</em></button>`).join('')}</div>`:''}
@@ -1519,7 +1526,7 @@ function render(){finirTaches();
   $('#app').classList.toggle('wide',view.v==='obj');$('#app').classList.toggle('wd',view.v==='dossier');
   $('#app').innerHTML=view.v==='home'?home():view.v==='produits'?produitsV():view.v==='med'?medV():view.v==='dossier'?dossierV():view.v==='obj'?objetV():lotV();
   const n=view.sel.size,k=view.step,verb=view.lotSt==='en cours'?'Commencer':view.lotSt==='na'?'Non applicable :':'Valider';
-  $('#dock').innerHTML=view.v==='dossier'&&view.selMode?(busy?`<div class="dock"><button class="big primary" disabled>${busy}</button></div>`:view.dsel.size?`<div class="dock"><div class="two-b"><button class="big secondary" data-a="lotset">Mettre dans un lot…</button><button class="big primary danger" data-a="delsel">Supprimer ${view.dsel.size}</button></div></div>`:`<div class="dock"><button class="big primary" disabled>Sélectionnez des objets</button></div>`):view.v==='lot'?`<div class="dock"><button class="big primary" data-a="apply" ${n&&!busy?'':'disabled'}>${ICON.check}${busy?busy:n?(view.lotSt==='na'?`« ${sn(k)} » non applicable pour ${n} objet${n>1?'s':''}`:`${verb} « ${sn(k)} » pour ${n} objet${n>1?'s':''}`):'Sélectionnez des objets'}</button></div>`:'';
+  $('#dock').innerHTML=view.v==='dossier'&&view.selMode?(busy?`<div class="dock"><button class="big primary" disabled>${busy}</button></div>`:view.dsel.size?`<div class="dock"><div class="two-b three-b"><button class="big secondary" data-a="lotset">Mettre dans un lot…</button><button class="big secondary" data-a="naset">Non applicable…</button><button class="big primary danger" data-a="delsel">Supprimer ${view.dsel.size}</button></div></div>`:`<div class="dock"><button class="big primary" disabled>Sélectionnez des objets</button></div>`):view.v==='lot'?`<div class="dock"><button class="big primary" data-a="apply" ${n&&!busy?'':'disabled'}>${ICON.check}${busy?busy:n?(view.lotSt==='na'?`« ${sn(k)} » non applicable pour ${n} objet${n>1?'s':''}`:`${verb} « ${sn(k)} » pour ${n} objet${n>1?'s':''}`):'Sélectionnez des objets'}</button></div>`:'';
   $('#opname').textContent=op();
   const pq=$('#pq');if(pq)pq.oninput=e=>{view.pq=e.target.value;const p=e.target.selectionStart;render();const n=$('#pq');n.focus();n.setSelectionRange(p,p)};
   const oq=$('#oq');if(oq)oq.oninput=e=>{view.oq=e.target.value;const p=e.target.selectionStart;render();const n=$('#oq');n.focus();n.setSelectionRange(p,p)};
@@ -1858,6 +1865,7 @@ document.addEventListener('click',async e=>{
   if(d.lvm!=null){const c=lotCand().filter(o=>aMat(o,d.lvm)),tous=c.every(o=>view.sel.has(o.id));c.forEach(o=>tous?view.sel.delete(o.id):view.sel.add(o.id));render();return}
   if(d.step){view.step=d.step;view.sel=new Set();view.lotProto=new Set();view.lotSt='terminé';render();return}
   if(d.lp){view.lotProto.has(d.lp)?view.lotProto.delete(d.lp):view.lotProto.add(d.lp);render();return}
+  if(d.naset){const k=d.naset,objs=S.objs.filter(o=>view.dsel.has(o.id)&&['todo','run'].includes(st(o,k)));closeSheet();view.selMode=false;view.dsel=new Set();if(objs.length)await naLot(objs,k);else render();return}
   if(d.ls){view.lotSt=d.ls;view.sel=new Set();render();return}
   if(d.t){view.sel.has(d.t)?view.sel.delete(d.t):view.sel.add(d.t);render();return}
   if(d.cm){view.cMode=d.cm;rerenderCreer();return}
@@ -1890,6 +1898,7 @@ document.addEventListener('click',async e=>{
     case 'dselall':{const L=listeDossier();if(L.every(o=>view.dsel.has(o.id)))L.forEach(o=>view.dsel.delete(o.id));else L.forEach(o=>view.dsel.add(o.id));render();break}
     case 'delsel':delSelSheet();break;
     case 'lotset':lotSetSheet();break;
+    case 'naset':naSelSheet();break;
     case 'bord':bordSheet();break;
     case 'bordok':imprimerBordereau();break;
     case 'produits':openProduits();break;
