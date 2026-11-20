@@ -167,6 +167,18 @@ button:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px sol
 .medb{font-style:normal;color:var(--sky);-webkit-text-stroke:.6px #5AAFD0;margin-left:6px;font-size:.9em}
 .sec-tog{width:100%;border:0;background:none;padding:0;font:inherit;cursor:pointer;text-align:left}
 .dcard.fini{opacity:.92;border-left-color:var(--green)}
+.romwi{display:block;font-size:13px;color:#8A5A1E;margin-top:2px}
+.romb{font-style:normal;font-size:10px;font-weight:700;color:#8A5A1E;background:#F6E9D4;border-radius:6px;padding:1px 5px;margin-left:6px;vertical-align:1px}
+.romc{display:flex;flex-direction:column;gap:10px}.romc.off{padding-block:12px}.romh{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.romh .hint{font-size:12px}
+.rom-tag{font-size:10px;font-weight:700;letter-spacing:.04em;text-transform:none;color:#8A5A1E;background:#F6E9D4;border-radius:6px;padding:1px 6px;margin-left:4px}
+.romw{background:#FBEFE3;border:1px solid #EBC8A4;color:#7A3E12;border-radius:10px;padding:8px 12px;font-size:12.5px;font-weight:600}
+.romsec{display:flex;flex-direction:column;gap:8px;border-top:1px solid var(--border);padding-top:12px}
+.romt{display:flex;align-items:center;gap:8px;font-weight:800;color:var(--navy);font-size:14px}.romt span{width:22px;height:22px;border-radius:50%;background:var(--navy);color:#fff;display:grid;place-items:center;font-size:12px}
+.romdl{margin:0;display:flex;flex-direction:column;gap:4px;font-size:12.5px}.romdl div{display:grid;grid-template-columns:110px minmax(0,1fr);gap:8px}.romdl dt{color:var(--txt2)}.romdl dd{margin:0}
+.romz{border:1px solid var(--border);border-left:4px solid var(--sky);border-radius:12px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;background:var(--bg)}.romz.sa{border-left-color:#C0602A}
+.romz-h{display:flex;align-items:center;gap:8px}.romz-h .ti{flex:1;min-width:0}.romz-h .zph{flex:0 0 86px}.zid{font-size:15px;color:var(--navy);min-width:26px}
+.romp{border:1px dashed var(--sky);border-radius:10px;padding:8px 10px;display:flex;flex-direction:column;gap:6px;background:var(--card)}
+.chip .cd{font-weight:800;font-size:10.5px;opacity:.75;margin-right:2px}.chip.sa[aria-pressed="true"]{background:#C0602A;border-color:#C0602A}
 .selbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 14px;background:var(--sky-l);border:1px solid var(--sky);border-radius:10px;padding:8px 12px;font-size:13px}.selbar span{flex:1 1 220px}
 .rstar{display:grid;place-items:center;width:34px;height:34px;border-radius:50%;cursor:pointer;color:#9AA3B5}
 .rstar svg path{fill:none;stroke:currentColor;stroke-width:1.6;stroke-linejoin:round}
@@ -672,8 +684,8 @@ const URLS={rapport:BASE+'rapports_traitement.html',kore:BASE+'kore_FER.html',ke
 
 const STEPS=[
   {k:'pa',n:'Photo avant',col:'① Photo avant'},{k:'ce',n:"Constat d'état",col:"② Constat d'état"},
-  {k:'rx',n:'Radiographie',col:'②b Radiographie'},{k:'ne',n:'Nettoyage',col:'③ Nettoyage'},{k:'st',n:'Stabilisation',col:'④ Stabilisation'},
-  {k:'pr',n:'Protection',col:'⑤ Protection'},{k:'re',n:'Retouche',col:'⑥ Retouche'},
+  {k:'rx',n:'Radiographie',col:'②b Radiographie'},{k:'ne',n:'Nettoyage',col:'③ Nettoyage'},{k:'rs',n:'Restauration',col:'③b Restauration'},{k:'st',n:'Stabilisation',col:'④ Stabilisation'},
+  {k:'pr',n:'Protection',col:'⑤ Protection'},
   {k:'pp',n:'Photo après',col:'⑦ Photo après'},{k:'co',n:'Conditionnement',col:'⑧ Conditionnement'}];
 // Protocoles proposés selon le matériau de l'objet (même vocabulaire que le module de rapports).
 // Plusieurs choix possibles par intervention ; un objet composite cumule les listes de ses matériaux.
@@ -690,7 +702,9 @@ const FAM={
 // Matériau non reconnu ou absent : tout est proposé
 const FAM_ALL={ne:[],st:[],pr:[]};Object.values(FAM).forEach(f=>['ne','st','pr'].forEach(k=>f[k].forEach(p=>{if(!FAM_ALL[k].includes(p))FAM_ALL[k].push(p)})));
 function fams(m){const f=Object.values(FAM).filter(x=>x.re.test(m||''));return f.length?f:[FAM_ALL]}
-function protos(o,k){if(!['ne','st','pr'].includes(k))return [];const out=[];fams(o.m).forEach(f=>(f[k]||[]).forEach(p=>{if(!out.includes(p))out.push(p)}));return out}
+// Restauration : mêmes options quel que soit le matériau (pas une étape chacune, pour garder la frise courte)
+const RESTAU=['Collage','Comblement','Retouche'];
+function protos(o,k){if(k==='rs')return RESTAU;if(!['ne','st','pr'].includes(k))return [];const out=[];fams(o.m).forEach(f=>(f[k]||[]).forEach(p=>{if(!out.includes(p))out.push(p)}));return out}
 function protosLot(k){const out=[];S.objs.forEach(o=>protos(o,k).forEach(p=>{if(!out.includes(p))out.push(p)}));return out}
 const hasP=(o,k)=>protos(o,k).length>0;
 const pj=p=>Array.isArray(p)?p.join(' + '):(p||'');
@@ -754,13 +768,16 @@ function mapDossier(pg){const P=pg.properties;return {id:pg.id,num:pv(P['N° lab
   types:pv(P["Type d'intervention"])||[],nObj:(pv(P['Objets'])||[]).length,op:pv(P['Type Opération']),etat:pv(P['Etat']),drive:pv(P['Lien Drive']),rxDrive:pv(P['Lien Drive radiographies'])}}
 function mapObjet(pg){const P=pg.properties,o={id:pg.id,nom:pv(P['Nom']),idObj:pv(P['ID objet']),inv:pv(P['N° inventaire']),us:pv(P['US']),
   d:pv(P['Description']),m:(pv(P['Matériau'])||[]).join(', '),nr:pv(P['NR']),t:pv(P["Description de l'intervention"]),
-  na:pv(P['Étapes non applicables'])||[],kore:pv(P['Bain KORE'])||[],koreStat:pv(P['Statut KORE']),kera:pv(P['Lot KERA'])||[],keraStat:pv(P['Statut KERA']),masse:pv(P['Masse (g)']),lot:pv(P['Lot'])||'',cont:pv(P['Contenant'])||[],cal:pv(P['Protection / calage'])||[],tamp:pv(P['Tampon hygroscopique'])||[],hr:pv(P['HR cible stockage'])||'',etatC:pv(P['État de conservation'])||'',dossier:(pv(P['Dossier'])||[])[0],steps:{}};
-  o.med=!!pv(P['Intérêt médiation']);o.altM=pv(P['Altérations mécaniques'])||[];o.altP=pv(P['Altérations physico-chimique'])||[];o.altB=pv(P['Altérations biologiques'])||[];
+  na:[...new Set((pv(P['Étapes non applicables'])||[]).map(etapeAlias))],kore:pv(P['Bain KORE'])||[],koreStat:pv(P['Statut KORE']),kera:pv(P['Lot KERA'])||[],keraStat:pv(P['Statut KERA']),masse:pv(P['Masse (g)']),lot:pv(P['Lot'])||'',cont:pv(P['Contenant'])||[],cal:pv(P['Protection / calage'])||[],tamp:pv(P['Tampon hygroscopique'])||[],hr:pv(P['HR cible stockage'])||'',etatC:pv(P['État de conservation'])||'',dossier:(pv(P['Dossier'])||[])[0],steps:{}};
+  o.med=!!pv(P['Intérêt médiation']);o.romSusp=!!pv(P['Restes organiques suspectés']);try{const j=pv(P['Restes organiques (données)']);o.rom=j?JSON.parse(j):null}catch(e){o.rom=null}
+  o.altM=pv(P['Altérations mécaniques'])||[];o.altP=pv(P['Altérations physico-chimique'])||[];o.altB=pv(P['Altérations biologiques'])||[];
   o.dL=pv(P['Longueur (mm) ']);o.dl=pv(P['Largeur (mm)']);o.dH=pv(P['Hauteur (mm)']);o.dD=pv(P['Diamètre (mm)']);o.dnum=pv(P['N° labo dossier']);o.dcom=pv(P['Commune']);
   STEPS.forEach(s=>o.steps[s.k]=pv(P[s.col]));return o}
 function mapTache(pg){const P=pg.properties;return {id:pg.id,titre:pv(P['Titre']),dossier:(pv(P['Dossier'])||[])[0]||'',objets:pv(P['Objets'])||[],
-  etape:pv(P['Étape']),personne:pv(P['Personne']),debut:pv(P['Début']),ech:pv(P['Échéance']),note:pv(P['Note']),par:pv(P['Créée par'])}}
-function mapIv(pg){const P=pg.properties;return {id:pg.id,etape:pv(P['Étape']),statut:pv(P['Statut']),date:pv(P['Date']),
+  etape:etapeAlias(pv(P['Étape'])),personne:pv(P['Personne']),debut:pv(P['Début']),ech:pv(P['Échéance']),note:pv(P['Note']),par:pv(P['Créée par'])}}
+// « Retouche » est devenue une option de l'étape Restauration
+const etapeAlias=e=>e==='Retouche'?'Restauration':e;
+function mapIv(pg){const P=pg.properties;return {id:pg.id,etape:etapeAlias(pv(P['Étape'])),statut:pv(P['Statut']),date:pv(P['Date']),
   op:pv(P['Opérateur']),proto:pv(P['Protocole']),note:pv(P['Note'])}}
 
 /* ---------- accès Notion (proxy) ---------- */
@@ -844,6 +861,9 @@ const Notion={
     return nfetch('/pages/'+o.id,'PATCH',{properties:{'État de conservation':{select:x.etatC?{name:x.etatC}:null},
       'Altérations mécaniques':ms(x.altM),'Altérations physico-chimique':ms(x.altP),'Altérations biologiques':ms(x.altB),
       'Longueur (mm) ':num(x.dL),'Largeur (mm)':num(x.dl),'Hauteur (mm)':num(x.dH),'Diamètre (mm)':num(x.dD),'Masse (g)':num(x.masse)}})},
+  // Documentation restes organiques : case + données JSON (texte découpé en morceaux de 2000 caractères, limite Notion)
+  setRom(o){const j=o.romSusp&&o.rom?JSON.stringify(o.rom):'',parts=[];for(let i=0;i<j.length;i+=1900)parts.push({text:{content:j.slice(i,i+1900)}});
+    return nfetch('/pages/'+o.id,'PATCH',{properties:{'Restes organiques suspectés':{checkbox:!!o.romSusp},'Restes organiques (données)':{rich_text:parts}}})},
   setMed(o,v){return nfetch('/pages/'+o.id,'PATCH',{properties:{'Intérêt médiation':{checkbox:!!v}}})},
   async mediation(){return (await queryAll(DB.objets,{filter:{property:'Intérêt médiation',checkbox:{equals:true}},
     sorts:[{property:'ID objet',direction:'ascending'}]})).map(mapObjet)},
@@ -876,14 +896,20 @@ const SEED=[['1','force','Fer','ns',2],['14','indéterminé (tige)','Fer','ns',1
  ['37','anneau de suspension','Alliage cuivreux','ns',1],['38','anneau de suspension','Alliage cuivreux','ns',1],
  ['39','indéterminé','Alliage cuivreux','ns',1],['40','plaque percée ?','Fer','etude',1],['41','tige','Fer','radio',2],
  ['42','tige','Fer','etude',1],['43','fibule ? barbelé ?','Fer','radio',1],['44','indéterminé (plaque repliée)','Fer','radio',1],['45','tige','Fer','etude',1]];
-const DNA={radio:['Nettoyage','Stabilisation','Protection','Retouche'],etude:['Stabilisation','Protection','Retouche'],ns:['Retouche']};
+function demoObj(oi,d,m,t,nr,i){const o={id:'demo-o'+i,dossier:'demo-witry',nom:'',idObj:'2026_8249-8_'+String(i+1).padStart(3,'0'),inv:'OI '+oi,d,m,nr,t:DTR[t],na:[...DNA[t]],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
+  STEPS.forEach(s=>o.steps[s.k]=o.na.includes(s.n)?'n/a':s.k==='rx'?rxDefaut(o):'');return o}
+function romDemo(){return {romSusp:true,rom:{contexte:'fun',zones:[
+  {loc:'Soie / manche',facies:'PS',matiere:['CO'],statut:'FN',decision:'PR',just:'',photo:'Z1_1',prel:null},
+  {loc:'Lame, face A, talon',facies:'PS',matiere:['CU'],statut:'FN',decision:'DB',just:'',photo:'Z2_1',prel:{num:'T1',cond:'alu',integ:'vierge',produit:''}},
+  {loc:'Lame, face B, pointe',facies:'EN',matiere:['TX'],statut:'VE',decision:'DG',just:'',photo:'Z3_1',prel:null}],
+  bilan:'prob',spe:['cu','tx'],arbitrage:'ro',arbJust:'',stock:'sec',rem:'Sédiment résiduel conservé en sachet S1.'}}}
+const DNA={radio:['Nettoyage','Restauration','Stabilisation','Protection'],etude:['Restauration','Stabilisation','Protection'],ns:['Restauration']};
 const DTR={radio:'radiographie',etude:'nettoyage pour étude',ns:'nettoyage et stabilisation'};
 function demoFresh(){return {
   dossiers:[{id:'demo-witry',etat:'en cours',num:'2026_8249-8',commune:'Witry-lès-Reims',site:'Les Cabouzets',ro:'S. Bündgen',nb:20,av:0,fin:0,rapport:'à rédiger',retour:'',arrivee:'2026-10-12',types:['Déchloruration','Nettoyage pour étude','Radiographie X'],nObj:20},
     {id:'demo-fini',etat:'Terminé',num:'2026_7120-02',commune:'Bayeux',site:'Rue Saint-Jean',ro:'J. Martin',nb:0,av:1,fin:0,rapport:'rendu',retour:'2026-09-18',arrivee:'2026-03-02',types:['Nettoyage pour étude'],nObj:0},
     {id:'demo-autre',etat:'à faire',num:'2026_8870-01',commune:'Saint-Léonard (51)',site:'Centre Bourg',ro:'M-A Thierry',nb:0,av:0,fin:0,rapport:'',retour:'',arrivee:'2026-07-23',types:['Déchloruration'],nObj:0}],
-  objets:SEED.map(([oi,d,m,t,nr],i)=>{const o={id:'demo-o'+i,dossier:'demo-witry',nom:'',idObj:'2026_8249-8_'+String(i+1).padStart(3,'0'),inv:'OI '+oi,d,m,nr,t:DTR[t],na:[...DNA[t]],kore:[],koreStat:'',kera:[],keraStat:'',steps:{}};
-    STEPS.forEach(s=>o.steps[s.k]=o.na.includes(s.n)?'n/a':s.k==='rx'?rxDefaut(o):'');return o}),
+  objets:SEED.map(([oi,d,m,t,nr],i)=>{if(i===3)return Object.assign(demoObj(oi,d,m,t,nr,i),romDemo());return demoObj(oi,d,m,t,nr,i)}),
   journal:{},kore:[{id:'demo-k1',int:'WITRY-LES-REIMS - Les Cabouzets',ref:'2026_8249-8 lot fer 1',statut:'En cours'},{id:'demo-k2',int:'SAINT-LEONARD - Centre Bourg',ref:'2026-8870-01 lot 2',statut:'En cours'}],
   kera:[{id:'demo-c1',int:'Saint-Léonard - Centre Bourg',ref:'2026_8870-01 céramiques',statut:'En cours',kid:'KDEMO1'}],
   produits:[{id:'demo-p1',nom:'Acétone',cat:'Solvant',four:'VWR',ref:'',empl:'Armoire solvants',q:2,u:'L',seuil:1,ouv:'2026-09-02',per:'',dang:['Inflammable','Nocif / irritant'],fds:'',note:'',mav:'Danger',h:'H225 — Liquide et vapeurs très inflammables.\nH319 — Provoque une sévère irritation des yeux.\nH336 — Peut provoquer somnolence ou vertiges.',pp:'P210 — Tenir à l’écart de la chaleur, des surfaces chaudes, des étincelles, des flammes nues et de toute autre source d’inflammation. Ne pas fumer.\nP233 — Maintenir le récipient fermé de manière étanche.'},
@@ -895,6 +921,7 @@ function demoFresh(){return {
 let DEMO=LS.get('argoslab:demo2',null)||demoFresh();
 // démo enregistrée avant l'ajout de l'étape Radiographie
 (DEMO.objets||[]).forEach(o=>{if(o.steps&&!('rx' in o.steps))o.steps.rx=rxDefaut(o)});
+if(DEMO.objets&&!DEMO.objets.some(o=>o.romSusp)){const o=DEMO.objets.find(x=>x.id==='demo-o3');if(o)Object.assign(o,romDemo())}
 if(DEMO.dossiers&&!DEMO.dossiers.some(d=>d.etat==='Terminé'))DEMO.dossiers.splice(1,0,demoFresh().dossiers.find(d=>d.etat==='Terminé'));
 if(!DEMO.kera)DEMO.kera=demoFresh().kera;if(!DEMO.produits)DEMO.produits=demoFresh().produits;DEMO.objets.forEach(o=>{if(!o.kera)o.kera=[]});
 const dsave=()=>LS.set('argoslab:demo2',DEMO);
@@ -919,6 +946,7 @@ const Demo={
   async setRetour(d,date){const x=DEMO.dossiers.find(y=>y.id===d.id);x.retour=date;dsave()},
   async setRxDrive(d,url){const x=DEMO.dossiers.find(y=>y.id===d.id);x.rxDrive=url;dsave()},
   async setConstat(o,x){this._sync(o);dsave()},
+  async setRom(o){this._sync(o);dsave()},
   async setMed(o,v){const x=DEMO.objets.find(y=>y.id===o.id);if(x)x.med=!!v;dsave()},
   async mediation(){return DEMO.objets.filter(o=>o.med).map(o=>{const d=DEMO.dossiers.find(y=>y.id===o.dossier)||{};return {...JSON.parse(JSON.stringify(o)),dnum:d.num,dcom:d.commune}})},
   async majObjet(o,x){this._sync(o);dsave()},
@@ -952,7 +980,7 @@ let undo=null,toastT=null,busy=false;
 const API=()=>S.mode==='demo'?Demo:Notion;
 const COM_TITRE='💬 Commentaires ARGOS CR';
 const op=()=>LS.get('argoslab:op','')||'—';
-function st(o,k){if(o.na.includes(sn(k)))return 'na';return parseStep(o.steps[k]).x}
+function st(o,k){if(o.na.includes(sn(k)))return 'na';const x=parseStep(o.steps[k]).x;return x}
 function next(o){return STEPS.find(s=>['todo','run'].includes(st(o,s.k)))}
 function progress(o){return STEPS.filter(s=>['done','na'].includes(st(o,s.k))).length/STEPS.length}
 const cur=()=>S.objs.find(o=>o.id===view.oid);
@@ -1257,7 +1285,7 @@ function dossierV(){
   ${avancementV(objs)}
   <div class="otools">
     <label class="search osearch">${ICON.search}<input id="oq" type="search" placeholder="N° d’inventaire, désignation, lot…" value="${esc(view.oq||'')}" autocomplete="off"></label>
-    <button class="chip" data-a="osort" title="Changer le tri">Tri : ${view.osort==='av'?'avancement':'n°'}</button>
+        <button class="chip" data-a="osort" title="Changer le tri">Tri : ${view.osort==='av'?'avancement':'n°'}</button>
     ${view.selMode?'':`<button class="chip" data-a="dselon">Sélectionner</button>`}
   </div>
   ${mats.length>1?`<div class="chips cwrap"><span class="label" style="align-self:center">Matériau</span>${mats.map(m=>`<button class="chip sm" data-om="${esc(m)}" aria-pressed="${view.om===m}">${esc(m)}<em>${objs.filter(o=>aMat(o,m)).length}</em></button>`).join('')}</div>`:''}
@@ -1292,6 +1320,109 @@ function constatV(o){const r=constatResume(o),cond=[(o.cont||[]).join(', '),(o.c
     <dl>${li('État',o.etatC)}${Object.keys(ALT).map(k=>li('Altérations '+ALT_T[k].toLowerCase(),(o[k]||[]).join(', '))).join('')}${li('Dimensions',dims(o))}${li('US',o.us)}${li('Conditionnement',cond)}</dl>
     <button class="big secondary" data-a="constat" style="width:100%">${r?'Modifier le constat':'Compléter le constat'}</button></details>`}
 function evLine(l){return `<div class="ev"><time>${fr(l.date)}</time><span>${l.etape?esc(l.statut||''):'Observation'}${pj(l.proto)?' · '+esc(pj(l.proto)):''}${l.note?' — '+esc(l.note):''}${l.op?' · <i>'+esc(l.op)+'</i>':''}</span><button class="del" data-del="${l.id}" aria-label="Supprimer cette saisie" title="Supprimer cette saisie"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button></div>`}
+/* ---------- restes organiques (ROM) : signalement et documentation conservatoire ---------- */
+const ROMO={
+  contexte:[['fun','Funéraire'],['dep','Dépôt'],['hab','Habitat / dépotoir'],['aut','Autre']],
+  facies:[['PS','Pseudomorphose positive'],['EN','Empreinte négative'],['OR','Organique résiduel'],['IP','Minéralisation partielle'],['AM','Amorphe (résine, poix, graisse, cire)']],
+  matiere:[['BO','Bois / ligneux'],['TX','Textile'],['CU','Cuir / peau'],['CO','Corne / matière dure animale'],['FO','Fourrure / poils'],['PL','Plumes / duvet'],['IN','Insectes (pupes, cocons)'],['ID','Indéterminé']],
+  statut:[['FN','Fonctionnel / composant'],['VE','Vestimentaire / parure'],['EV','Environnement'],['?','Indéterminé']],
+  decision:[['PR','Préservé in situ'],['DB','Douteux = préservé'],['DG','Dégagé pour lecture'],['PV','Prélevé'],['SA','Sacrifié après concertation']],
+  cond:[['alu','Aluminium / tube verre'],['pp','Tube polypropylène sec']],
+  integ:[['vierge','Vierge (sans produit)'],['conso','Consolidé']],
+  bilan:[['prob','Présence probable'],['dout','Indices douteux'],['absent','Aucun reste observé']],
+  spe:[['tx','Textile'],['xy','Xylologie'],['cu','Cuir / peau'],['az','Archéozoologie'],['bc','Biochimie']],
+  arbitrage:[['std','Déchloruration standard'],['doc','Déchloruration après documentation complète'],['sec','Pas de bain : stockage sec contrôlé'],['ro','À décider avec le RO / SRA']],
+  stock:[['sec','Sec strict (HR < 15-20 %)'],['hum','Humide scellé au frais']]};
+const romL=(k,v)=>(ROMO[k].find(x=>x[0]===v)||[,v||''])[1];
+const romLs=(k,a)=>(a||[]).map(v=>romL(k,v)).join(', ');
+const romVide=()=>({contexte:'',zones:[],bilan:'',spe:[],arbitrage:'',arbJust:'',stock:'',rem:''});
+const romZone=()=>({loc:'',facies:'',matiere:[],statut:'',decision:'',just:'',photo:'',prel:null});
+const ROM_PRES=['PR','DB','PV'];
+function romPreserve(o){return !!(o.romSusp&&o.rom&&o.rom.zones.some(z=>ROM_PRES.includes(z.decision)))}
+function romAlerteBain(o){return !!(o.romSusp&&!(o.rom&&o.rom.arbitrage&&o.rom.arbitrage!=='ro'))}
+// Antécédents repris d'ARGOS (pas de ressaisie)
+function romAnte(o){const L=[],sd=parseStep(o.steps.st),bain=st(o,'st')==='done'||st(o,'st')==='run';
+  L.push(['Support',o.m||'-']);
+  L.push(['Radiographie',st(o,'rx')==='done'?'réalisée'+(parseStep(o.steps.rx).d?' le '+parseStep(o.steps.rx).d:''):st(o,'rx')==='na'?'non applicable':'pas encore réalisée']);
+  L.push(['Déchloruration',st(o,'st')==='done'?'réalisée'+(sd.d?' ('+sd.d+')':''):sd.app?'en cours dans '+BATH[sd.app].nom:st(o,'st')==='run'?'en cours':'aucune']);
+  L.push(['Nettoyage',st(o,'ne')==='done'?'réalisé':st(o,'ne')==='run'?'en cours':'aucun']);
+  const cons=(S.journal||[]).filter(l=>/consolid|paraloid|klucel/i.test(pj(l.proto)+' '+(l.note||'')));
+  L.push(['Consolidation',cons.length?pj(cons[0].proto)||'oui':'aucune']);
+  return {L,bain}}
+function romResume(o){const r=o.rom||romVide(),z=r.zones,np=z.filter(x=>ROM_PRES.includes(x.decision)).length,pr=z.filter(x=>x.prel).length;
+  return [z.length+' zone'+(z.length>1?'s':''),np?np+' préservée'+(np>1?'s':''):'',pr?pr+' prélèvement'+(pr>1?'s':''):'',r.arbitrage?'arbitrage : '+romL('arbitrage',r.arbitrage):'arbitrage à faire'].filter(Boolean).join(' · ')}
+function romV(o){
+  if(!o.romSusp)return '';// prise en charge exceptionnelle : n'apparaît que si signalée depuis le Nettoyage
+  const w=romPreserve(o)?'zones à préserver : ni micro-sablage ni outil dur':romAlerteBain(o)&&st(o,'st')==='todo'?'arbitrage à faire avant la mise en bain':'';
+  return `<section class="card romc"><div class="romh"><div><div class="label">Restes organiques <span class="rom-tag">suspectés</span></div>${w?`<span class="romwi">⚠ ${w}</span>`:`<span class="cst-r">${esc(romResume(o))}</span>`}</div><button class="link" data-a="romdoc">Documentation</button></div></section>`}
+function romChips(k,path,cur,multi,codes){return `<div class="chips cwrap">${ROMO[k].map(([v,l])=>{const on=multi?(cur||[]).includes(v):cur===v;
+  return `<button class="chip${v==='SA'?' sa':''}" data-rp="${path}" data-rv="${esc(v)}" data-rm="${multi?1:0}" aria-pressed="${on}">${codes?`<b class="cd">${esc(v)}</b> `:''}${esc(l)}</button>`}).join('')}</div>`}
+function romSheetHtml(){const o=cur(),R=view.romD,A=romAnte(o);
+  const zones=R.zones.map((z,i)=>`<div class="romz${z.decision==='SA'?' sa':''}">
+    <div class="romz-h"><b class="zid">Z${i+1}</b><input class="ti" data-rt="zones.${i}.loc" value="${esc(z.loc)}" placeholder="Localisation (soie, fourreau, face A…)"><input class="ti zph" data-rt="zones.${i}.photo" value="${esc(z.photo)}" placeholder="Photo"><button class="link danger" data-romzdel="${i}">Retirer</button></div>
+    <div class="label">Faciès</div>${romChips('facies','zones.'+i+'.facies',z.facies,0,1)}
+    <div class="label">Matière observée · plusieurs choix</div>${romChips('matiere','zones.'+i+'.matiere',z.matiere,1,1)}
+    <div class="label">Statut présumé</div>${romChips('statut','zones.'+i+'.statut',z.statut,0,1)}
+    <div class="label">Décision</div>${romChips('decision','zones.'+i+'.decision',z.decision,0,1)}
+    ${ROM_PRES.includes(z.decision)?'<div class="romw">Zone à préserver : aiguille, spatule en bois ou en os, pinceau doux. Ni micro-sablage ni outil dur.</div>':''}
+    ${z.decision==='SA'?`<label class="fl">Justification obligatoire (avec qui, pourquoi, date)<textarea class="ta" data-rt="zones.${i}.just" rows="2">${esc(z.just)}</textarea></label>`:''}
+    ${z.prel?`<div class="romp"><div class="romz-h"><b>Prélèvement</b><input class="ti zph" data-rt="zones.${i}.prel.num" value="${esc(z.prel.num)}" placeholder="Tube n°"><button class="link danger" data-romprel="${i}">Retirer</button></div>
+      <div class="label">Conditionnement</div>${romChips('cond','zones.'+i+'.prel.cond',z.prel.cond)}
+      <div class="label">Intégrité</div>${romChips('integ','zones.'+i+'.prel.integ',z.prel.integ)}
+      ${z.prel.integ==='conso'?`<label class="fl">Produit de consolidation<input class="ti" data-rt="zones.${i}.prel.produit" value="${esc(z.prel.produit)}"></label>`:''}</div>`
+      :`<button class="link" data-romprel="${i}">+ Prélèvement sur cette zone</button>`}
+  </div>`).join('');
+  return `<div class="sh-h"><small>${esc(o.inv||'')}${o.idObj?' · '+esc(o.idObj):''} · ${esc(o.d||'')}</small><b>Restes organiques</b></div>
+    <div class="romsec"><div class="romt"><span>1</span>Contexte et antécédents</div>
+      <div class="label">Contexte de découverte</div>${romChips('contexte','contexte',R.contexte)}
+      <dl class="romdl">${A.L.map(x=>`<div><dt>${x[0]}</dt><dd>${esc(x[1])}</dd></div>`).join('')}</dl>
+      <p class="hint">Repris automatiquement d'ARGOS, de KORE et du journal.</p>
+      ${A.bain?'<div class="romw">Objet passé en bain avant l’examen : à signaler au spécialiste.</div>':''}</div>
+    <div class="romsec"><div class="romt"><span>2</span>Examen par zone</div>
+      <p class="hint">Loupe, lumière rasante. En cas de doute : DB, préservé par défaut. Photos : nom de base + _Z1_1.jpg…</p>
+      ${zones||'<p class="hint">Aucune zone pour l’instant.</p>'}
+      <button class="big secondary" data-a="romzadd">+ Ajouter une zone</button></div>
+    <div class="romsec"><div class="romt"><span>3</span>Conclusion</div>
+      <div class="label">Bilan</div>${romChips('bilan','bilan',R.bilan)}
+      ${R.bilan==='prob'?`<div class="label">Spécialiste à consulter</div>${romChips('spe','spe',R.spe,1)}`:''}
+      <div class="label">Arbitrage du traitement de stabilisation</div>${romChips('arbitrage','arbitrage',R.arbitrage)}
+      ${R.arbitrage?`<label class="fl">Justification (avec qui, pourquoi, date)<textarea class="ta" data-rt="arbJust" rows="2">${esc(R.arbJust)}</textarea></label>`:''}
+      <div class="label">Stockage immédiat</div>${romChips('stock','stock',R.stock)}
+      <label class="fl">Remarques<textarea class="ta" data-rt="rem" rows="2">${esc(R.rem)}</textarea></label></div>
+    <p class="hint"><i>Constat technique de présence, établi au cours des opérations de conservation-restauration : ni identification ni étude des matériaux.</i></p>
+    <div class="sh-act"><button class="big secondary" data-a="romrap">Aperçu du rapport</button><button class="big primary" data-a="romok">Enregistrer</button></div>
+    <div class="sh-foot"><button class="link danger" data-a="romoff">Aucun reste finalement</button><button class="link" data-a="close">Fermer</button></div>`}
+function romSheet(){const o=cur();if(!o)return;view.romD=JSON.parse(JSON.stringify(o.rom||romVide()));sheet(romSheetHtml(),'rom')}
+function romRerender(){const sh=document.querySelector('.sheet[data-k="rom"] .sheet-in');if(!sh)return;const y=sh.scrollTop;sh.innerHTML=romSheetHtml();sh.scrollTop=y}
+function romGet(path){return path.split('.').reduce((o,k)=>o==null?o:o[k],view.romD)}
+function romSet(path,v){const ks=path.split('.'),l=ks.pop();ks.reduce((o,k)=>o[k],view.romD)[l]=v}
+async function romEnregistrer(){const o=cur();if(!o)return;const R=view.romD;
+  const sa=R.zones.findIndex(z=>z.decision==='SA'&&!String(z.just||'').trim());if(sa>=0)return toast('Zone Z'+(sa+1)+' sacrifiée : justification obligatoire',0,1);
+  const prev=o.rom;o.rom=R;closeSheet();render();try{await API().setRom(o);toast('Restes organiques enregistrés')}catch(e){o.rom=prev;render();fail(e)}}
+// Aperçu de l'annexe du rapport de traitement (la version finale sera produite par l'outil de rapports)
+function romRapport(){const o=cur(),R=view.romD||o.rom||romVide(),A=romAnte(o),d=S.d||{};
+  const zr=R.zones.map((z,i)=>`<tr><td><b>Z${i+1}</b></td><td>${esc(z.loc||'-')}</td><td>${esc(romL('facies',z.facies)||'-')}</td><td>${esc(romLs('matiere',z.matiere)||'-')}</td><td>${esc(romL('statut',z.statut)||'-')}</td><td>${esc(romL('decision',z.decision)||'-')}${z.decision==='SA'&&z.just?'<br><i>'+esc(z.just)+'</i>':''}</td><td>${esc(z.photo||'-')}</td></tr>`).join('');
+  const pr=R.zones.map((z,i)=>z.prel?`<li>${esc(z.prel.num||'-')}, zone Z${i+1} : ${esc(romL('cond',z.prel.cond)||'-')}, ${esc(romL('integ',z.prel.integ)||'-')}${z.prel.integ==='conso'&&z.prel.produit?' ('+esc(z.prel.produit)+')':''}</li>`:'').join('')||'<li>Aucun prélèvement</li>';
+  const bil={prob:'Présence probable de restes organiques. Consultation d’un spécialiste recommandée'+(R.spe.length?' ('+romLs('spe',R.spe).toLowerCase()+')':'')+'.',dout:'Indices douteux : préservation conservatoire maintenue.',absent:'Aucun reste organique observé.'}[R.bilan]||'-';
+  const h=`<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Restes organiques - ${esc(o.idObj||'')}</title><style>
+  body{font:10.5pt/1.5 Arial,sans-serif;color:#1d1d1b;margin:0;background:#fff}.pg{max-width:190mm;margin:0 auto;padding:12mm}
+  .hd{display:flex;justify-content:space-between;align-items:flex-end;border-bottom:1.5px solid #79874C;padding-bottom:6px;margin-bottom:14px;color:#79874C}.hd b{font-size:13pt;letter-spacing:.06em}.hd span{font-size:9pt;letter-spacing:.08em}
+  h1{font-size:13pt;color:#5E6A37;margin:0 0 4px}.sub{font-size:9pt;color:#666;margin:0 0 10px}
+  h2{font:600 10pt Arial;color:#79874C;text-transform:uppercase;letter-spacing:.12em;margin:14px 0 6px}
+  dl{display:grid;grid-template-columns:150px 1fr;gap:3px 12px;margin:0;font-size:10pt}dt{color:#79874C;font-variant:small-caps;letter-spacing:.06em}dd{margin:0}
+  table{border-collapse:collapse;width:100%;font-size:9pt}th{background:#EEF0E3;color:#5E6A37;text-align:left;padding:4px 5px;font-weight:600}td{border-bottom:.5px solid #C9D0AE;padding:4px 5px;vertical-align:top}
+  ul{margin:0;padding-left:16px}.m{font-size:8.5pt;font-style:italic;color:#666;margin-top:16px;border-top:.5px solid #C9D0AE;padding-top:6px}
+  .ann{display:inline-block;background:#79874C;color:#fff;font-size:8pt;letter-spacing:.1em;text-transform:uppercase;padding:2px 8px;border-radius:2px;margin-bottom:6px}
+  </style></head><body><div class="pg"><div class="hd"><b>Éveha</b><span>Pôle Conservation-Restauration · Rapport de traitement</span></div>
+  <span class="ann">Annexe</span><h1>Restes organiques - ${esc(o.d||'')} ${esc(o.inv||'')}</h1><p class="sub">${esc(o.idObj||'')} · ${esc([d.commune,d.site].filter(Boolean).join(' - '))} · ${esc(d.num||'')}</p>
+  <h2>Contexte et antécédents</h2><dl><dt>Contexte</dt><dd>${esc(romL('contexte',R.contexte)||'-')}</dd>${A.L.map(x=>`<dt>${x[0]}</dt><dd>${esc(x[1])}</dd>`).join('')}</dl>
+  ${A.bain?'<p style="margin:6px 0 0"><b>Objet passé en bain alcalin avant l’examen.</b></p>':''}
+  <h2>Examen par zone</h2><table><thead><tr><th>Zone</th><th>Localisation</th><th>Faciès</th><th>Matière observée</th><th>Statut présumé</th><th>Décision</th><th>Photo</th></tr></thead><tbody>${zr||'<tr><td colspan="7">Aucune zone</td></tr>'}</tbody></table>
+  <h2>Prélèvements</h2><ul>${pr}</ul>
+  <h2>Conclusion et préconisations</h2><p style="margin:0">${esc(bil)}</p>
+  <dl style="margin-top:6px"><dt>Arbitrage</dt><dd>${esc(romL('arbitrage',R.arbitrage)||'-')}${R.arbJust?' ('+esc(R.arbJust)+')':''}</dd><dt>Stockage</dt><dd>${esc(romL('stock',R.stock)||'-')}</dd>${R.rem?`<dt>Remarques</dt><dd>${esc(R.rem)}</dd>`:''}</dl>
+  <p class="m">Le présent constat établit la présence de restes organiques au cours des opérations de conservation-restauration. Il ne constitue pas une identification ni une étude des matériaux organiques, qui relèvent des spécialistes de ces disciplines.</p></div></body></html>`;
+  const w=window.open('','_blank');if(!w)return toast('Fenêtre bloquée par le navigateur',0,1);w.document.open();w.document.write(h);w.document.close()}
 function objetV(){
   const i=S.objs.findIndex(o=>o.id===view.oid),o=S.objs[i],n=next(o),r=n&&st(o,n.k)==='run',d=S.d;
   let go;
@@ -1319,6 +1450,7 @@ function objetV(){
     ${pb?`<details class="phinfo"><summary>Nommage des photos</summary><p>${esc(pb)}_avant_1.jpg … _avant_n<br>${esc(pb)}_post_1.jpg … _post_n</p></details>`:''}
   </section>
   ${constatV(o)}
+  ${romV(o)}
   </div><div class="objc">
   ${go}
   <section class="card"><div class="label">Traitement</div><ol class="otl">${tl}</ol>${J?'':'<p class="empty">Chargement du journal…</p>'}</section>
@@ -1537,6 +1669,9 @@ function stepSheet(o,k){
   const l=sheet(`<div class="sh-h"><small>${esc(o.inv||'')}${o.idObj?' · '+esc(o.idObj):''}</small><b>${sn(k)}</b></div>
     ${protos(o,k).length?`<div class="label">Protocole · plusieurs choix possibles</div>`:''}
     <div class="chips cwrap" id="pp">${protos(o,k).map(p=>`<button class="chip" data-pp="${esc(p)}" aria-pressed="false">${esc(p)}</button>`).join('')}</div>
+    ${k==='ne'&&romPreserve(o)?'<div class="romw">⚠ Restes organiques : zones à préserver. Ni micro-sablage ni outil dur au contact (aiguille, spatule bois ou os, pinceau doux).</div>':''}
+    ${k==='st'&&romAlerteBain(o)?'<div class="romw">⚠ Restes organiques suspectés : arbitrage du traitement à faire (et à justifier) avant la mise en bain.</div>':''}
+    ${k==='ne'?(o.romSusp?`<div class="kbox"><div><b>Restes organiques suspectés</b><span>${esc(romResume(o))}</span></div><button class="big secondary" data-a="romdoc">Ouvrir la documentation</button></div>`:`<button class="link" data-a="romon" style="align-self:flex-start">+ Restes organiques suspectés (documenter avant nettoyage)</button>`):''}
     ${k==='rx'?(S.d&&S.d.rxDrive?`<a class="lk drive rxl" href="${esc(S.d.rxDrive)}" target="_blank" rel="noopener">${ICON.rx}Dossier Drive des radiographies${ICON.ext}</a>`:`<button class="link" data-a="rxlien" style="align-self:flex-start">+ Lien vers le dossier Drive des radiographies</button>`):''}
     <div class="label">Note (facultatif)</div><textarea id="snote" rows="2" class="ta" placeholder="${k==='rx'?'Appareil, kV, temps de pose, n° des clichés…':'Paramètres, durée, remarque…'}"></textarea>
     ${B?`<div class="kbox"><div><b>${B.act} ?</b><span>Reliez l'objet à son ${B.lot} : ${B.nom} prend le relais, rien à ressaisir ici.</span></div>
@@ -1678,6 +1813,9 @@ document.addEventListener('click',async e=>{
     try{await API().setBain(o,app,d.bain);const id=await API().add(o,'st','en cours',[B.proto]);
       undo={ids:[id],bain:{o,app,prev:prevK},prev:[{o,s:prev}],k:'st',restore:()=>{o[app]=prevK?[prevK]:[]}};bainName(o);toast(`Objet relié au ${B.lot} ${B.nom}`,true);
       S.journal=await API().journal(o.id).catch(()=>S.journal);render()}catch(err){o[app]=prevK?[prevK]:[];o.steps.st=prev;render();fail(err)}return}
+  if(d.rp){const m=d.rm==='1',v=d.rv,c=romGet(d.rp);if(m){const a=(c||[]).slice(),i=a.indexOf(v);i<0?a.push(v):a.splice(i,1);romSet(d.rp,a)}else romSet(d.rp,c===v?'':v);romRerender();return}
+  if(d.romzdel!==undefined){view.romD.zones.splice(+d.romzdel,1);romRerender();return}
+  if(d.romprel!==undefined){const z=view.romD.zones[+d.romprel];z.prel=z.prel?null:{num:'T'+(view.romD.zones.filter(x=>x.prel).length+1),cond:'',integ:'vierge',produit:''};romRerender();return}
   if(d.cet!==undefined){const on=b.getAttribute('aria-pressed')!=='true';b.parentNode.querySelectorAll('[data-cet]').forEach(x=>x.setAttribute('aria-pressed','false'));b.setAttribute('aria-pressed',on);return}
   if(d.calt){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')!=='true');return}
   if(d.na){e.stopPropagation();closeSheet();const o=cur(),n=sn(d.na),on=!o.na.includes(n),prevNa=[...o.na],prev=o.steps[d.na];
@@ -1740,6 +1878,12 @@ document.addEventListener('click',async e=>{
     case 'rendl':telechargerRenommage(d.os);break;
     case 'editok':enregistrerObjet();break;
     case 'constat':constatSheet();break;
+    case 'romdoc':romSheet();break;
+    case 'romzadd':view.romD.zones.push(romZone());romRerender();{const sh=document.querySelector('.sheet[data-k="rom"] .sheet-in');const zs=sh&&sh.querySelectorAll('.romz');if(zs&&zs.length)zs[zs.length-1].scrollIntoView({block:'start'})}break;
+    case 'romok':romEnregistrer();break;
+    case 'romrap':romRapport();break;
+    case 'romon':{const o=cur();if(!o)break;o.romSusp=true;if(!o.rom)o.rom=romVide();render();try{await API().setRom(o)}catch(e){}romSheet();break}
+    case 'romoff':{const o=cur();if(!o)break;closeSheet();o.romSusp=false;render();try{await API().setRom(o);toast('Restes organiques : aucun')}catch(e){fail(e)}break}
     case 'constatok':enregistrerConstat();break;
     case 'dselon':view.selMode=true;view.dsel=new Set();render();break;
     case 'dselx':view.selMode=false;view.dsel=new Set();render();break;
@@ -1807,6 +1951,7 @@ document.addEventListener('click',async e=>{
     case 'reset':DEMO=demoFresh();dsave();loadHome();toast('Démo remise à zéro');break;
   }
 });
+document.addEventListener('input',e=>{const t=e.target,p=t.dataset&&t.dataset.rt;if(!p||!view.romD)return;romSet(p,t.value)});
 document.addEventListener('toggle',e=>{if(e.target.matches&&e.target.matches('details.cst'))view.cstOpen=e.target.open},true);
 document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.matches('[data-s],[data-rmed]')){e.preventDefault();e.target.click()}
   if(e.key==='Enter'&&e.target.id==='newop'){e.preventDefault();$('[data-a="addop"]').click()}});
