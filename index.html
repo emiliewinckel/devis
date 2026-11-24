@@ -159,6 +159,7 @@ var o=[];var l=Array.isArray(e);for(f=n.s.c;f<=n.e.c;++f)s[f]=ya(f);for(var c=n.
   <div class="sub">Remplissez les champs ci-dessous, puis cliquez sur « Générer le devis » en bas de page. Le fichier .odt et la DPGF .ods se téléchargent automatiquement.</div>
   <div class="card barre">
     <button onclick="nouveauDevis()">Nouveau devis</button>
+    <select id="dv-notion" onchange="if(this.value)reprendreNotion(this.value);this.value=''"><option value="">Dossier Notion (prospect / devis)…</option></select>
     <select id="dv-recents" onchange="if(this.value!=='')repartirDe(+this.value);this.value=''"></select>
     <button onclick="document.getElementById('dv-file').click()">Ouvrir un devis enregistré…</button>
     <input type="file" id="dv-file" accept=".json,application/json" style="display:none" onchange="ouvrirJSON(this.files[0]);this.value=''">
@@ -1855,6 +1856,95 @@ genererDevis = async function() { if (!verifierAvant()) return; await _gd0(); if
 genererDPGF = async function() { if (!verifierAvant()) return; await _gp0(); if (document.getElementById('status').className === 'ok') historiser(); };
 document.addEventListener('input', e => { if (e.target.closest && e.target.closest('.wrap') && !e.target.closest('#grille-box')) { planSave(); clearTimeout(window._rt); window._rt = setTimeout(majRecap, 300); } });
 document.addEventListener('change', e => { if (e.target.closest && e.target.closest('.objet-card')) { planSave(); majRecap(); } });
+
+
+// =====================================================================
+// REPRISE D'UN DOSSIER NOTION (état « prospect » ou « devis »)
+// Remplit les parties 1 (informations générales) et 2 (client) depuis le Suivi dossiers
+// et la fiche du client. Même accès que ARGOS CR (clé enregistrée sur cet appareil).
+// =====================================================================
+const NOTION_DOSSIERS = '38fd72a9-3a1d-80c0-b86c-efb3b089a640';
+const NOTION_PROXY = 'https://kera-proxy.emiliewinckel.workers.dev';
+function notionCfg() { try { const c = JSON.parse(localStorage.getItem('argoslab:cfg') || 'null'); return c && c.key ? {proxy: c.proxy || NOTION_PROXY, key: c.key} : null; } catch (e) { return null; } }
+async function nApi(path, method, body) {
+  const c = notionCfg(); if (!c) throw new Error('accès Notion non configuré');
+  const r = await fetch(c.proxy.replace(/\/$/, '') + '/v1' + path, {method: method || 'GET',
+    headers: {'Content-Type': 'application/json', 'Notion-Version': '2022-06-28', 'X-App-Key': c.key}, body: body ? JSON.stringify(body) : undefined});
+  const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.message || ('Erreur ' + r.status)); return j;
+}
+function nVal(p) {
+  if (!p) return '';
+  switch (p.type) {
+    case 'title': case 'rich_text': return (p[p.type] || []).map(t => t.plain_text).join('');
+    case 'select': case 'status': return p[p.type] ? p[p.type].name : '';
+    case 'multi_select': return (p.multi_select || []).map(o => o.name);
+    case 'number': return p.number == null ? '' : String(p.number);
+    case 'relation': return (p.relation || []).map(r => r.id);
+    case 'date': return p.date ? p.date.start : '';
+    case 'phone_number': case 'email': case 'url': return p[p.type] || '';
+    default: return '';
+  }
+}
+const MOB_LIB = {'MET': 'métal', 'FER': 'fer', 'ALL. CU': 'alliage cuivreux', 'VER': 'verre', 'CER': 'céramique', 'NUM': 'monnaies', 'LIGNITE': 'lignite'};
+const listeEt = a => a.length < 2 ? (a[0] || '') : a.slice(0, -1).join(', ') + ' et ' + a[a.length - 1];
+let NOTION_LISTE = [];
+async function chargerDossiersNotion() {
+  const sel = document.getElementById('dv-notion'); if (!sel) return;
+  if (!notionCfg()) { sel.innerHTML = '<option value="">Dossier Notion : ouvrez d’abord ARGOS CR connecté à Notion sur cet appareil</option>'; sel.disabled = true; return; }
+  sel.innerHTML = '<option value="">Chargement des dossiers Notion…</option>';
+  try {
+    let out = [], cur = null;
+    do {
+      const j = await nApi('/databases/' + NOTION_DOSSIERS + '/query', 'POST', Object.assign({page_size: 100,
+        filter: {or: [{property: 'Etat', status: {equals: 'prospect'}}, {property: 'Etat', status: {equals: 'devis'}}]},
+        sorts: [{timestamp: 'last_edited_time', direction: 'descending'}]}, cur ? {start_cursor: cur} : {}));
+      out = out.concat(j.results || []); cur = j.has_more ? j.next_cursor : null;
+    } while (cur);
+    NOTION_LISTE = out;
+    sel.innerHTML = '<option value="">' + (out.length ? 'Reprendre un dossier Notion (' + out.length + ')…' : 'Aucun dossier « prospect » ou « devis » dans Notion') + '</option>' +
+      out.map(pg => { const P = pg.properties, et = nVal(P['Etat']);
+        const lib = [nVal(P['N° labo']), nVal(P['Commune']), nVal(P['Site'])].filter(Boolean).join(' · ') || 'Dossier sans titre';
+        return '<option value="' + pg.id + '">' + echapper(lib) + (et === 'devis' ? ' (reprise de devis)' : ' (prospect)') + '</option>'; }).join('');
+    sel.disabled = !out.length;
+  } catch (e) { sel.innerHTML = '<option value="">Dossiers Notion indisponibles : ' + echapper(e.message) + '</option>'; sel.disabled = true; }
+}
+function echapper(t) { return String(t == null ? '' : t).replace(/[&<>"]/g, c => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;'}[c])); }
+async function reprendreNotion(id) {
+  const pg = NOTION_LISTE.find(x => x.id === id); if (!pg) return;
+  const P = pg.properties, info = document.getElementById('dv-info');
+  const champs = ['f_projet', 'f_dep', 'f_commune', 'f_siteclient', 'f_intitule', 'f_typetraitement', 'f_nbreelemts', 'f_materiaux', 'f_client', 'f_siret', 'f_adresse', 'f_representant', 'f_titrerepresentant'];
+  if (champs.some(k => document.getElementById(k).value.trim()) && !confirm('Remplacer les informations générales et le client par celles du dossier Notion ? Les objets et le chiffrage ne changent pas.')) return;
+  info.textContent = 'Lecture du dossier Notion…';
+  try {
+    const put = (k, v) => { document.getElementById(k).value = v || ''; };
+    put('f_projet', nVal(P['N° EVEHA']));
+    put('f_dep', nVal(P['Département']));
+    put('f_commune', nVal(P['Commune']));
+    put('f_siteclient', nVal(P['Site']));
+    // « Objet de la demande » reprend l'objet du mail : l'intitulé se construit à partir des types d'intervention
+    const types = listeEt((nVal(P["Type d'intervention"]) || []).map(t => t.charAt(0).toLowerCase() + t.slice(1)));
+    put('f_intitule', types ? types.charAt(0).toUpperCase() + types.slice(1) + ' de mobilier archéologique' : '');
+    put('f_typetraitement', types);
+    put('f_nbreelemts', nVal(P['Nombre objets']));
+    put('f_materiaux', listeEt((nVal(P['Type Mobilier']) || []).map(m => MOB_LIB[m] || m.toLowerCase())));
+    ['f_client', 'f_siret', 'f_adresse', 'f_representant', 'f_titrerepresentant'].forEach(k => put(k, ''));
+    const cli = (nVal(P['Client']) || [])[0];
+    if (cli) { const C = (await nApi('/pages/' + cli)).properties;
+      put('f_client', nVal(C['Nom client'])); put('f_siret', nVal(C['SIRET'])); put('f_adresse', nVal(C['Adresse']));
+      put('f_representant', nVal(C['Représentant'])); put('f_titrerepresentant', nVal(C['Fonction représentant'])); }
+    // Reprise de devis : on garde le numéro du dernier devis lié (« proposer » en crée un nouveau)
+    const dv = nVal(P['Devis']) || [];
+    if (dv.length) { const D = (await Promise.all(dv.map(x => nApi('/pages/' + x)))).map(x => ({n: nVal(x.properties['Numéro de devis']), d: nVal(x.properties['Date du devis']) || x.created_time}))
+        .sort((a, b) => String(b.d).localeCompare(String(a.d)))[0];
+      if (D && D.n) put('f_num_devis', D.n); }
+    else if (!document.getElementById('f_num_devis').value && document.getElementById('f_projet').value) proposerNumero();
+    if (!document.getElementById('f_date_devis').value) put('f_date_devis', dateFrAujourdhui());
+    planSave(); majRecap();
+    const msg = 'Repris de Notion : ' + ([nVal(P['N° labo']), nVal(P['Commune'])].filter(Boolean).join(' · ')) + (cli ? '' : ' (aucun client relié dans Notion)');
+    info.textContent = msg; setTimeout(() => { info.textContent = msg; }, 700);
+  } catch (e) { info.textContent = 'Notion : ' + e.message; }
+}
+chargerDossiersNotion();
 
 // =====================================================================
 // DÉMARRAGE : brouillon (sauf si la page est ouverte avec des paramètres depuis Notion)
