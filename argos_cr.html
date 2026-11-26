@@ -874,7 +874,7 @@ const Notion={
   _prProps(x){const t=v=>({rich_text:rtChunks(v)}),dt=v=>({date:v?{start:v}:null}),num=v=>({number:v==null||v===''?null:Number(v)});
     return {'Produit':{title:[{type:'text',text:{content:x.nom||'produit'}}]},'Catégorie':{select:x.cat?{name:x.cat}:null},'Fournisseur':t(x.four),'Référence':t(x.ref),'Emplacement':t(x.empl),
       'Quantité':num(x.q),'Unité':{select:x.u?{name:x.u}:null},"Seuil d'alerte":num(x.seuil),"Date d'ouverture":dt(x.ouv),'Péremption':dt(x.per),
-      'Dangers':{multi_select:(x.dang||[]).map(name=>({name}))},'FDS':{url:x.fds||null},'Note':t(x.note),
+      'Dangers':{multi_select:(x.dang||[]).map(name=>({name}))},'FDS':{url:x.fds||null},'Fiche toxicologique INRS':{url:x.inrs||null},'Note':t(x.note),
       "Mention d'avertissement":{select:x.mav?{name:x.mav}:null},'Mentions de danger (H)':t(x.h),'Conseils de prudence (P)':t(x.pp)}},
   async creerProduit(x){return mapProduit(await nfetch('/pages','POST',{parent:{database_id:DB.produits},properties:this._prProps(x)}))},
   majProduit(p,x){return nfetch('/pages/'+p.id,'PATCH',{properties:this._prProps(x)})},
@@ -2277,7 +2277,7 @@ const PR_CATS=['Solvant','Consolidant / adhésif','Réactif','Inhibiteur','Prote
 const PR_UNITES=['mL','L','g','kg','pièce','flacon','boîte','rouleau'];
 const PR_DANGERS=['Inflammable','Toxique','Corrosif','Nocif / irritant','CMR','Comburant',"Dangereux pour l'environnement",'Gaz sous pression'];
 function mapProduit(pg){const P=pg.properties;return {id:pg.id,nom:pv(P['Produit']),cat:pv(P['Catégorie']),four:pv(P['Fournisseur']),ref:pv(P['Référence']),empl:pv(P['Emplacement']),
-  q:pv(P['Quantité']),u:pv(P['Unité']),seuil:pv(P["Seuil d'alerte"]),ouv:pv(P["Date d'ouverture"]),per:pv(P['Péremption']),dang:pv(P['Dangers'])||[],fds:pv(P['FDS']),note:pv(P['Note']),
+  q:pv(P['Quantité']),u:pv(P['Unité']),seuil:pv(P["Seuil d'alerte"]),ouv:pv(P["Date d'ouverture"]),per:pv(P['Péremption']),dang:pv(P['Dangers'])||[],fds:pv(P['FDS']),inrs:pv(P['Fiche toxicologique INRS'])||'',note:pv(P['Note']),
   fam:pv(P['Famille chimique']),usage:pv(P['Usage']),mats:pv(P['Matériaux concernés']),rev:pv(P['Réversibilité']),vig:pv(P['Vigilance']),lien:pv(P['Lien fournisseur']),ops:pv(P['Opérations']),
   mav:pv(P["Mention d'avertissement"]),h:pv(P['Mentions de danger (H)']),pp:pv(P['Conseils de prudence (P)'])}}
 function pEtat(p){const n=v=>v!=null&&v!=='',per=p.per&&p.per<iso(),bientot=p.per&&!per&&p.per<=addJ(iso(),30);
@@ -2351,12 +2351,14 @@ function produitSheet(id){const p=id?(S.prod||[]).find(x=>x.id===id):null;if(id&
       <p class="hint">Saisis une fois ici, les pictogrammes et les phrases sont repris automatiquement sur les étiquettes de flacon.</p></div>
     <label class="fl">Fiche de données de sécurité (lien)<input id="pf-fds" class="ti" type="url" value="${esc(x.fds||'')}" placeholder="https://…"></label>
     ${x.fds&&/^https?:/i.test(x.fds)?`<a class="link" href="${esc(x.fds)}" target="_blank" rel="noopener">Ouvrir la FDS ${ICON.ext}</a>`:''}
+    <label class="fl">Fiche toxicologique INRS (lien)<input id="pf-inrs" class="ti" type="url" value="${esc(x.inrs||'')}" placeholder="https://www.inrs.fr/…"></label>
+    ${x.inrs&&/^https?:/i.test(x.inrs)?`<a class="link" href="${esc(x.inrs)}" target="_blank" rel="noopener">Ouvrir la fiche INRS ${ICON.ext}</a>`:''}
     <label class="fl">Note<input id="pf-note" class="ti" value="${esc(x.note||'')}"></label>
     <div class="sh-act"><button class="big secondary" data-a="close">Annuler</button><button class="big primary" data-a="psave">${ICON.check}${p?'Enregistrer':'Ajouter'}</button></div>
     ${p?'<button class="link danger" data-a="pdel" style="align-self:center">Supprimer ce produit…</button>':''}`,'prod')}
 function pLire(){const v=id=>(($('#'+id)||{}).value||'').trim(),n=id=>{const t=v(id).replace(',','.');return t===''?null:Number(t)};
   return {nom:v('pf-nom'),cat:v('pf-cat'),q:n('pf-q'),u:v('pf-u'),seuil:n('pf-s'),empl:v('pf-empl'),four:v('pf-four'),ref:v('pf-ref'),ouv:v('pf-ouv'),per:v('pf-per'),
-    dang:[...document.querySelectorAll('[data-prdg][aria-pressed="true"]')].map(b=>b.dataset.prdg),fds:v('pf-fds'),note:v('pf-note'),
+    dang:[...document.querySelectorAll('[data-prdg][aria-pressed="true"]')].map(b=>b.dataset.prdg),fds:v('pf-fds'),inrs:v('pf-inrs'),note:v('pf-note'),
     mav:v('pf-mav'),h:hpExpand(v('pf-h')),pp:hpExpand(v('pf-pp'))}}
 function pfGhsHtml(dang,h){const g=ghsDe([{dang:dang||[],h:h||''}]);return g.length?g.map(x=>ghsSvg(x,12)).join(''):'<span class="hint">Pictogrammes : ils apparaissent d’après les codes H ou les familles de danger.</span>'}
 // Fiche produit : pictogrammes et mention d'avertissement suivent la saisie
@@ -2369,6 +2371,7 @@ document.addEventListener('change',e=>{const t=e.target;if(!t||!t.id)return;
   if(t.dataset&&(t.dataset.etqi==='h'||t.dataset.etqi==='pp')){t.value=hpExpand(t.value);view.etq[t.dataset.etqi]=t.value;etqRender()}});
 async function pSave(garder){const x=pLire();if(!x.nom)return toast('Indiquez le nom du produit',0,1);
   if(x.fds&&!/^https?:\/\//i.test(x.fds))return toast('Le lien de la FDS doit commencer par https://',0,1);
+  if(x.inrs&&!/^https?:\/\//i.test(x.inrs))return toast('Le lien de la fiche INRS doit commencer par https://',0,1);
   const p=view.pid?(S.prod||[]).find(y=>y.id===view.pid):null;if(!garder)closeSheet();
   try{if(p){const prev={...p};Object.assign(p,x);render();try{await API().majProduit(p,x)}catch(e){Object.assign(p,prev);throw e}toast(garder?'Date d’ouverture enregistrée':'Produit enregistré')}
     else{const n=await API().creerProduit(x);(S.prod=S.prod||[]).push(n);S.prod.sort((a,b)=>a.nom.localeCompare(b.nom,'fr'));toast('Produit ajouté')}render()}catch(e){render();fail(e)}}
